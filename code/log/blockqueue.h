@@ -70,6 +70,7 @@ template <typename T>
 void BlockQueue<T>::push_back(const T& item) {
     unique_lock<mutex> locker(mtx_);
     while (deq_.size() >= capacity_) {
+         // Unlock the mutex, allow consumers to consume, wait for notification from the consumer
         condProducer_.wait(locker);
     }
     deq_.push_back(item);
@@ -90,7 +91,7 @@ template <typename T>
 bool BlockQueue<T>::pop(T& item) {
     unique_lock<mutex> locker(mtx_);
     while (deq_.empty()) {
-        // If the queue is empty, the consumer waits
+        // If the queue is empty, the consumer waits for the notification from the producer
         condConsumer_.wait(locker);
     }
     item = deq_.front();
@@ -141,7 +142,7 @@ size_t BlockQueue<T>::size() {
 }
 
 
-// Notify all threads to wake up
+// Notify all consumer threads to wake up
 template <typename T>
 void BlockQueue<T>::flush() {
     condConsumer_.notify_all();

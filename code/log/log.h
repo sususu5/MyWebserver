@@ -26,7 +26,7 @@ public:
     void flush();
 
     int GetLevel();
-    void Setlevel(int level);
+    void SetLevel(int level);
     bool IsOpen() {return isOpen_;}
 
 private:

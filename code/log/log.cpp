@@ -10,7 +10,7 @@ Log::Log() {
 }
 
 Log::~Log() {
-    // Wake up the writing thread and 
+    // Wake up the writing thread and handle the remaining tasks
     while (!deque_->empty()) {
         deque_->flush();
     }
@@ -30,7 +30,7 @@ void Log::flush() {
     if (isAsync_) {
         deque_->flush();
     }
-    // Clear the input buffer
+    // Force the data in the buffer to be written to the log file
     fflush(fp_);
 }
 
@@ -61,7 +61,6 @@ void Log::init(int level, const char* path, const char* suffix, int maxQueCapaci
     if (maxQueCapacity) {
         // Asynchronous mode
         isAsync_ = true;
-        // If the queue is empty, create a new queue
         if (!deque_) {
             unique_ptr<BlockQueue<std::string>> newQue(new BlockQueue<std::string>);
             deque_ = move(newQue);
@@ -115,6 +114,7 @@ void Log::write(int level, const char* format, ...) {
     // or the number of lines in the log file reaches the maximum, create a new log file
     if (toDay_ != t.tm_mday || (lineCount_ && (lineCount_ % MAX_LINES == 0))) {
         unique_lock<mutex> locker(mtx_);
+        // Ensure thread safety while avoiding unnecessary lock holding
         locker.unlock();
 
         char newFile[LOG_NAME_LEN];
@@ -149,7 +149,6 @@ void Log::write(int level, const char* format, ...) {
         va_start(vaList, format);
         int m = vsnprintf(buff_.BeginWrite(), buff_.WritableBytes(), format, vaList);
         va_end(vaList);
-
         buff_.HasWritten(m);
         buff_.Append("\n\0", 2);
 
@@ -160,6 +159,7 @@ void Log::write(int level, const char* format, ...) {
             // Write the log content to the log file directly
             fputs(buff_.Peek(), fp_);
         }
+        // Clear the buffer to prepare for the next log content
         buff_.RetrieveAll();
     }
 }
@@ -188,7 +188,7 @@ int Log::GetLevel() {
     return level_;
 }
 
-void Log::Setlevel(int level) {
+void Log::SetLevel(int level) {
     lock_guard<mutex> locker(mtx_);
     level_ = level;
 }

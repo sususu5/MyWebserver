@@ -2,7 +2,7 @@
 #include "../code/pool/threadpool.h"
 #include <features.h>
 
-#if __GLIBC__ == 2 && __GLLIBC_MINOR__ < 30
+#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
 #include <sys/syscall.h>
 #define gettid() syscall(SYS_gettid)
 #endif
@@ -31,16 +31,16 @@ void TestLog() {
 }
 
 void ThreadLogTask(int i, int cnt) {
-    for (int j = 0; j < 10000;  j++) {
+    for (int j = 0; j < 10000; j++) {
         LOG_BASE(i,"PID:[%04d]======= %05d ========= ", gettid(), cnt++);
     }
 }
 
 void TestThreadPool() {
-    Log::Instance()->init(0, "./testThreadPool", ".log", 5000);
-    ThreadPool threadPool(6);
+    Log::Instance()->init(0, "./testThreadpool", ".log", 5000);
+    ThreadPool threadpool(6);
     for (int i = 0; i < 18; i++) {
-        threadPool.AddTask(std::bind(ThreadLogTask, i % 4, i * 10000));
+        threadpool.AddTask(std::bind(ThreadLogTask, i % 4, i * 10000));
     }
     getchar();
 }

@@ -1,7 +1,10 @@
-#include <stdio.h>
+#include <unistd.h>
+#include "server/webserver.h"
 
-int main()
-{
-    printf("hello world!!!\n");
-    return 1;
-}
+int main() {
+    Webserver server(
+        1316, 3, 60000,
+        3306, "root", "13456", "testdb",
+        12, 8, true, 1, 1024);
+    server.start();
+} 

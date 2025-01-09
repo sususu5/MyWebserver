@@ -15,37 +15,36 @@ public:
     Buffer(int initBuffSize = 1024);
     ~Buffer() = default;
 
-    // Return the numebr of writable, readable, prependable bytes
     size_t WritableBytes() const;
-    size_t ReadableBytes() const;
+    size_t ReadableBytes() const ;
+    // Return the number of prependable bytes (the bytes before the readable bytes)
+    // These bytes has been read but not processes
     size_t PrependableBytes() const;
 
     // Return a pointer to the begin of the readable bytes
     const char* Peek() const;
+    // If the space is not enough, resize the buffer
     void EnsureWritable(size_t len);
-    // Update the writePos_ after writing len bytes
+    // This function updates the writePos_ after writing len bytes
     void HasWritten(size_t len);
 
-    // Retrieve bytes with len from the buffer
+    // These functions are used to read data from the buffer
     void Retrieve(size_t len);
-    // Retrieve bytes until the end of the buffer
     void RetrieveUntil(const char* end);
-
-    void RetrieveAll();
+    void RetrieveAll() ;
     std::string RetrieveAllToStr();
 
     const char* BeginWriteConst() const;
     char* BeginWrite();
 
+    void Append(const std::string& str);
     void Append(const char* str, size_t len);
-    void Append(const std::string &str);
     void Append(const void* data, size_t len);
-    void Append(const Buffer &buff);
+    void Append(const Buffer& buff);
 
-    // Read data from fd to buffer, return the number of bytes read
+    // Read / write data from a file descriptor to the buffer
     ssize_t ReadFd(int fd, int* Errno);
-    // Write data from buffer to fd, return the number of bytes written
-    ssize_t WriteFde(int fd, int* Errno);
+    ssize_t WriteFd(int fd, int* Errno);
 
 private:
     char* BeginPtr_();
@@ -53,9 +52,9 @@ private:
     void MakeSpace_(size_t len);
 
     std::vector<char> buffer_;
-    // The index of the first readable byte, use atomic to ensure thread safety
+    // The index of the first readable and writable byte, use atomic to ensure thread safety
     std::atomic<std::size_t> readPos_;
     std::atomic<std::size_t> writePos_;
 };
 
-#endif
+#endif //BUFFER_H

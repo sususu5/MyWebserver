@@ -1,4 +1,5 @@
 #include "sqlconnpool.h"
+using namespace std;
 
 SqlConnPool* SqlConnPool::Instance() {
     static SqlConnPool pool;

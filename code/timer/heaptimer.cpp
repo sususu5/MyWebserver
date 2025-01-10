@@ -3,7 +3,7 @@
 void HeapTimer::swapNode_(size_t i, size_t j) {
     assert(i >= 0 && i < heap_.size());
     assert(j >= 0 && j < heap_.size());
-    swap(heap_[i], heap_[j]);
+    std::swap(heap_[i], heap_[j]);
     ref_[heap_[i].id] = i;
     ref_[heap_[j].id] = j;
 }

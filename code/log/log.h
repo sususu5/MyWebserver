@@ -9,7 +9,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <sys/stat.h>
-#include "blockqueue.h"
+#include "blockdeque.h"
 #include "../buffer/buffer.h"
 
 class Log {
@@ -23,6 +23,7 @@ public:
 
     // Format the output content according to the standard format
     void write(int level, const char* format, ...);
+    // Write the log content in the buffer to the log file immediately
     void flush();
 
     int GetLevel();
@@ -31,14 +32,15 @@ public:
 
 private:
     Log();
-    void AppendLogLevelTitle_(int level);
     virtual ~Log();
+    void AppendLogLevelTitle_(int level);
+    // Write the log content in the deque into the log file
     void AsyncWrite_();
 
 private:
     static const int LOG_PATH_LEN = 256;    // The maximum length of the log path
     static const int LOG_NAME_LEN = 256;    // The maximum length of the log name
-    static const int MAX_LINES = 50000;    // The maximum number of lines in a log file
+    static const int MAX_LINES = 50000;     // The maximum number of lines in a log file
 
     const char* path_;
     const char* suffix_;
@@ -55,12 +57,12 @@ private:
     bool isAsync_;
 
     FILE* fp_;                                          // The file pointer to the log file
-    std::unique_ptr<BlockQueue<std::string>> deque_;    // The queue to store the log content
-    std::unique_ptr<std::thread> writeThread_;          // The thread to write the log content
+    std::unique_ptr<BlockDeque<std::string>> deque_;    // The queue to store the log content
+    std::unique_ptr<std::thread> writeThread_;          // The thread to write the log content from the queue to the log file
     std::mutex mtx_;                                    // The mutex to protect the log content
 };
 
-#define LOG_BASE(level, format, ...) \
+#define LOG_BASE(level, format, ...)\
     do {\
         Log* log = Log::Instance();\
         if (log->IsOpen() && log->GetLevel() <= level) {\
@@ -78,4 +80,4 @@ private:
 #define LOG_WARN(format, ...) do {LOG_BASE(2, format, ##__VA_ARGS__)} while (0);
 #define LOG_ERROR(format, ...) do {LOG_BASE(3, format, ##__VA_ARGS__)} while (0);
 
-#endif
+#endif // LOG_H

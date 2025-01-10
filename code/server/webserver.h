@@ -60,7 +60,7 @@ private:
     std::unique_ptr<HeapTimer> timer_;
     std::unique_ptr<ThreadPool> threadPool_;
     std::unique_ptr<Epoller> epoller_;
-    unordered_map<int, HttpConn> users_;
+    std::unordered_map<int, HttpConn> users_;
 };
     
 #endif

@@ -81,7 +81,7 @@ void Webserver::start() {
                 dealListen_();
             }
             else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
-                assert(users_.count(fd > 0));
+                assert(users_.count(fd) > 0);
                 closeConn_(&users_[fd]);
             }
             else if (events & EPOLLIN) {

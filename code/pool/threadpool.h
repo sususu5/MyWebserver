@@ -13,9 +13,9 @@ public:
     ThreadPool() = default;
     ThreadPool(ThreadPool&&) = default;
     // Use make_shared instead of new to avoid memory fragmentation
-    explicit ThreadPool(int threadCount = 8): pool_(std::make_shared<Pool>()) {
+    explicit ThreadPool(size_t threadCount = 8): pool_(std::make_shared<Pool>()) {
         assert(threadCount > 0);
-        for (int i = 0; i < threadCount; i++) {
+        for (size_t i = 0; i < threadCount; i++) {
             // Use detach to avoid joining the threads
             std::thread([this]() {
                 std::unique_lock<std::mutex> locker(pool_->mtx_);

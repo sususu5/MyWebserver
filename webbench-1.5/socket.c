@@ -44,7 +44,7 @@ int Socket(const char *host, int clientPort)
         hp = gethostbyname(host);
         if (hp == NULL)
             return -1;
-        memcpy(&ad.sin_addr, hp->h_addr, hp->h_length);
+        memcpy(&ad.sin_addr, hp->h_addr_list, hp->h_length);
     }
     ad.sin_port = htons(clientPort);
 

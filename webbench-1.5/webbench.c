@@ -14,11 +14,13 @@
  *    2 - bad param
  *    3 - internal error, fork failed
  * 
- */ 
+ */
+#define _POSIX_C_SOURCE 199309L
+
 #include "socket.c"
 #include <unistd.h>
 #include <sys/param.h>
-#include <rpc/types.h>
+#include <tirpc/rpc/types.h>
 #include <getopt.h>
 #include <strings.h>
 #include <time.h>

@@ -1,4 +1,4 @@
-CFLAGS?=	-Wall -ggdb -W -O
+CFLAGS?= -Wall -ggdb -W -O -I/usr/include/tirpc
 CC?=		gcc
 LIBS?=
 LDFLAGS?=

@@ -2,3 +2,4 @@
 bin/
 webbench-1.5/webbench
 webbench-1.5/webbench.o
+log/

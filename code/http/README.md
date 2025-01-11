@@ -1,0 +1,5 @@
+## Master-Slave Finite State Machine
+1. Initialization: The master state machine starts and initializes the entire system. It assigns tasks and resources to the slave state machines.
+2. Command Issuance: The master state machine sends commands or inputs to notify the slave state machine to perform a certain action (e.g., start a task, enter a particular state, etc.).
+3. State Updates: The slave state machine enters the corresponding state and performs tasks based on the master state machine's commands, or it reports progress or results back to the master state machine.
+4. Feedback and Control: The slave state machine may return feedback to the master state machine, and based on this information, the master state machine decides whether to continue, switch states, or adjust the system's behavior.

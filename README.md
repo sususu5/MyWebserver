@@ -30,10 +30,50 @@ A high-performance web server implemented in C++.
 │   ├── fonts
 │   ├── js
 │   └── css
-├── webbench-1.5    Pressure test
+├── webbench-1.5    Stress test
 ├── build          
 │   └── Makefile
 ├── Makefile
 ├──.gitignore
 └── README.md
 ```
+
+## Project Initiation
+Download MySQL first, replace "yourdb" to the name of the databse you wnat to create.
+```
+// create a new database
+create database yourdb;
+
+// create the user table
+USE yourdb;
+CREATE TABLE user(
+    username char(50) NULL,
+    password char(50) NULL
+)ENGINE=InnoDB;
+
+// add data
+INSERT INTO user(username, password) VALUES('name', 'password');
+
+// compile the project
+make
+
+// run the project
+./bin/server
+```
+
+## Run test for Log and ThreadPool
+```
+cd test
+make
+./test
+```
+
+## Stress Testing
+Start the server before running the following test
+```
+cd webbench-1.5
+make
+./webbench -c [number of client] -t [number of seond] http://ip:1316/
+```
+This is my testing result  
+![stress-testing-image](/resources/images/stress-testing.png)

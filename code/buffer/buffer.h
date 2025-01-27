@@ -15,11 +15,11 @@ public:
     Buffer(int initBuffSize = 1024);
     ~Buffer() = default;
 
-    size_t WritableBytes() const;
-    size_t ReadableBytes() const ;
+    size_t writableBytes() const;
+    size_t readableBytes() const ;
     // Return the number of prependable bytes (the bytes before the readable bytes)
     // These bytes has been read but not processes
-    size_t PrependableBytes() const;
+    size_t prependableBytes() const;
 
     // Return a pointer to the begin of the readable bytes
     const char* Peek() const;

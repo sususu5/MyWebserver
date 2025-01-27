@@ -31,6 +31,7 @@ private:
     sem_t semId_;
 };
 
+// The RAII principle: get the connection when the object is created and release the connection when the object is destroyed
 class SqlConnRAII {
 public:
     SqlConnRAII(MYSQL** sql, SqlConnPool* connPool) {
@@ -45,7 +46,7 @@ public:
     }
 
 private:
-    MYSQL* sql_;            // The pointer to the MySQL connection
+    MYSQL* sql_;            // The pointer to a MySQL connection
     SqlConnPool* connPool_; // The pointer to the connection pool
 };
 

@@ -33,6 +33,8 @@ MYSQL* SqlConnPool::GetConn() {
         LOG_WARN("SqlConnPool busy!");
         return nullptr;
     }
+    // Check if the semaphore is greater than 0 which means there are available connections
+    // If the semaphore is 0, the thread will be blocked
     sem_wait(&semId_);
     lock_guard<mutex> locker(mtx_);
     conn = connQue_.front();

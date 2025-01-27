@@ -68,7 +68,9 @@ void Webserver::initEventMode_(int trigMode) {
 
 void Webserver::start() {
     int timeMS = -1;
-    if (!isClose_) {LOG_INFO("========== Server start ==========");}
+    if (!isClose_) {
+        LOG_INFO("========== Server start ==========");
+    }
     while (!isClose_) {
         if (timeoutMS_ > 0) {
             timeMS = timer_->getNextTick();
@@ -77,17 +79,20 @@ void Webserver::start() {
         for (int i = 0; i < eventCnt; i++) {
             int fd = epoller_->getEventFd(i);
             uint32_t events = epoller_->getEvents(i);
+            // If the file descriptor is the listen socket, deal with the new connection
             if (fd == listenFd_) {
                 dealListen_();
             }
+            // If the file descriptor is an error, close the connection
             else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
-                assert(users_.count(fd) > 0);
-                closeConn_(&users_[fd]);
+                closeConn_(&users_.at(fd));
             }
+            // If the file descriptor is readable, deal with the read event
             else if (events & EPOLLIN) {
                 assert(users_.count(fd) > 0);
                 dealRead_(&users_[fd]);
             }
+            // If the file descriptor is writable, deal with the write event
             else if (events & EPOLLOUT) {
                 assert(users_.count(fd) > 0);
                 dealWrite_(&users_[fd]);
@@ -127,6 +132,7 @@ void Webserver::addClient_(int fd, sockaddr_in addr) {
 void Webserver::dealListen_() {
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
+    // In ET mode, the loop is used to accept all incoming connections
     do {
         int fd = accept(listenFd_, (struct sockaddr*)&addr, &len);
         if (fd <= 0) {return;}

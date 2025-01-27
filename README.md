@@ -61,7 +61,7 @@ make
 ./bin/server
 ```
 
-## Run test for Log and ThreadPool
+## Log and ThreadPool Testing
 ```
 cd test
 make
@@ -69,11 +69,11 @@ make
 ```
 
 ## Stress Testing
-Start the server before running the following test
+Start the server before running the following test.
 ```
 cd webbench-1.5
 make
 ./webbench -c [number of client] -t [number of seond] http://ip:1316/
 ```
-This is my testing result  
+This is my testing result for 8000 clients in 10 seconds.  
 ![stress-testing-image](/resources/images/stress-testing.png)

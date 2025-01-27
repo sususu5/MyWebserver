@@ -2,15 +2,15 @@
 
 Buffer::Buffer(int initBuffSize): buffer_(initBuffSize), readPos_(0), writePos_(0) {}
 
-size_t Buffer::ReadableBytes() const {
+size_t Buffer::readableBytes() const {
     return writePos_ - readPos_;
 }
 
-size_t Buffer::WritableBytes() const {
+size_t Buffer::writableBytes() const {
     return buffer_.size() - writePos_;
 }
 
-size_t Buffer::PrependableBytes() const {
+size_t Buffer::prependableBytes() const {
     return readPos_;
 }
 
@@ -19,10 +19,10 @@ const char* Buffer::Peek() const {
 }
 
 void Buffer::EnsureWritable(size_t len) {
-    if(WritableBytes() < len) {
+    if(writableBytes() < len) {
         MakeSpace_(len);
     }
-    assert(WritableBytes() >= len);
+    assert(writableBytes() >= len);
 }
 
 void Buffer::HasWritten(size_t len) {
@@ -30,7 +30,7 @@ void Buffer::HasWritten(size_t len) {
 } 
 
 void Buffer::Retrieve(size_t len) {
-    assert(len <= ReadableBytes());
+    assert(len <= readableBytes());
     readPos_ += len;
 }
 
@@ -46,7 +46,7 @@ void Buffer::RetrieveAll() {
 }
 
 std::string Buffer::RetrieveAllToStr() {
-    std::string str(Peek(), ReadableBytes());
+    std::string str(Peek(), readableBytes());
     RetrieveAll();
     return str;
 }
@@ -78,7 +78,7 @@ void Buffer::Append(const void* data, size_t len) {
 }
 
 void Buffer::Append(const Buffer& buff) {
-    Append(buff.Peek(), buff.ReadableBytes());
+    Append(buff.Peek(), buff.readableBytes());
 }
 
 ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
@@ -87,7 +87,7 @@ ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
     // The iovec structure is used to gather scattered I/O
     // It is often used with readv() and writev() to read or write multiple buffers in a single I/O operation
     struct iovec iov[2];
-    const size_t writable = WritableBytes();
+    const size_t writable = writableBytes();
     // Ensure all the data can be read into the buffer by using two iovec
     iov[0].iov_base = BeginPtr_() + writePos_;
     iov[0].iov_len = writable;
@@ -109,7 +109,7 @@ ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
 ssize_t Buffer::WriteFd(int fd, int* saveErrno) {
     // This function writes the data in the buffer to the file descriptor
     // so needs to get the size of the readable bytes
-    size_t readSize = ReadableBytes();
+    size_t readSize = readableBytes();
     ssize_t len = write(fd, Peek(), readSize);
     if (len < 0) {
         *saveErrno = errno;
@@ -129,13 +129,13 @@ const char* Buffer::BeginPtr_() const {
 }
 
 void Buffer::MakeSpace_(size_t len) {
-    if (WritableBytes() + PrependableBytes() < len) {
+    if (writableBytes() + prependableBytes() < len) {
         buffer_.resize(writePos_ + len + 1);
     } else {
-        size_t readable = ReadableBytes();
+        size_t readable = readableBytes();
         std::copy(BeginPtr_() + readPos_, BeginPtr_() + writePos_, BeginPtr_());
         readPos_ = 0;
         writePos_ = readPos_ + readable;
-        assert(readable == ReadableBytes());
+        assert(readable == readableBytes());
     }
 }

@@ -22,9 +22,9 @@ void HttpRequest::Init() {
 bool HttpRequest::parse(Buffer& buff) {
     const char END[] = "\r\n";
     // If the buffer is empty, return false
-    if (buff.ReadableBytes() == 0) {return false;};
+    if (buff.readableBytes() == 0) {return false;};
     // Start parsing the buffer
-    while (buff.ReadableBytes() && state_ != FINISH) {
+    while (buff.readableBytes() && state_ != FINISH) {
         const char* lineEnd = search(buff.Peek(), buff.BeginWriteConst(), END, END + 2);
         string line(buff.Peek(), lineEnd);
         switch (state_) {
@@ -35,7 +35,7 @@ bool HttpRequest::parse(Buffer& buff) {
             break;
         case HEADERS:
             ParseHeader_(line);
-            if (buff.ReadableBytes() <= 2) {state_ = FINISH;}
+            if (buff.readableBytes() <= 2) {state_ = FINISH;}
             break;
         case BODY:
             ParseBody_(line);

@@ -95,7 +95,7 @@ ssize_t HttpConn::write(int* saveErrno) {
 
 bool HttpConn::process() {
     request_.Init();
-    if (readBuff_.ReadableBytes() <= 0) {return false;}
+    if (readBuff_.readableBytes() <= 0) {return false;}
     else if (request_.parse(readBuff_)) {
         LOG_DEBUG("%s", request_.path().c_str());
         response_.Init(srcDir, request_.path(), request_.IsKeepAlive(), 200);
@@ -106,7 +106,7 @@ bool HttpConn::process() {
     response_.MakeResponse(writeBuff_);
     // Set the content of iov_[0] to the data in writeBuff_
     iov_[0].iov_base = const_cast<char*>(writeBuff_.Peek());
-    iov_[0].iov_len = writeBuff_.ReadableBytes();
+    iov_[0].iov_len = writeBuff_.readableBytes();
     iovCnt_ = 1;
 
     // If there exists a file to be sent, set the content of iov_[1] to the file

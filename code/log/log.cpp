@@ -125,7 +125,7 @@ void Log::write(int level, const char *format, ...) {
         AppendLogLevelTitle_(level);
 
         va_start(vaList, format);
-        int m = vsnprintf(buff_.BeginWrite(), buff_.WritableBytes(), format, vaList);
+        int m = vsnprintf(buff_.BeginWrite(), buff_.writableBytes(), format, vaList);
         va_end(vaList);
 
         buff_.HasWritten(m);

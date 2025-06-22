@@ -23,8 +23,8 @@ bool HttpRequest::parse(Buffer& buff) {
     const char END[] = "\r\n";
     // If the buffer is empty, return false
     if (buff.readableBytes() == 0) {return false;};
-    // Start parsing the buffer
     while (buff.readableBytes() && state_ != FINISH) {
+        // Reads a string ends with '\r\n' for each loop
         const char* lineEnd = search(buff.Peek(), buff.BeginWriteConst(), END, END + 2);
         string line(buff.Peek(), lineEnd);
         switch (state_) {
@@ -72,8 +72,9 @@ void HttpRequest::ParsePath_() {
     if (path_ == "/") {
         path_ = "/index.html";
     } else {
-        if (DEFAULT_HTML.find(path_) != DEFAULT_HTML.end())
+        if (DEFAULT_HTML.find(path_) != DEFAULT_HTML.end()) {
             path_ += ".html";
+        }
     }
 }
 
@@ -104,6 +105,7 @@ int HttpRequest::ConvertHex(char ch) {
     return ch;
 }
 
+// The POST request contains data of username and password
 void HttpRequest::ParsePost_() {
     if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded") {
         ParseFromUrlencoded_();

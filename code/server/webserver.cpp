@@ -177,8 +177,10 @@ void Webserver::onRead_(HttpConn* client) {
 // Resolve the requeest data
 void Webserver::onProcess_(HttpConn* client) {
     if (client->process()) {
+        // If the parsing succeeds, modify the event to EPOLLOUT(write)
         epoller_->modFd(client->getFd(), connEvent_ | EPOLLOUT);
     } else {
+        // If the parsing fails, modify the event to EPOLLIN(read)
         epoller_->modFd(client->getFd(), connEvent_ | EPOLLIN);
     }
 }

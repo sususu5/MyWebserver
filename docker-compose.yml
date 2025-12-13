@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    container_name: mywebserver
+    volumes:
+      - .:/app
+    ports:
+      - "1316:1316"
+    command: >
+      bash -c "
+      rm -rf build/release;
+      cmake --preset release &&
+      cmake --build build/release &&
+      ./build/release/code/server
+      "

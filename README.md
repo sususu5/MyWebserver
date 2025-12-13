@@ -1,79 +1,101 @@
-# MyWebserver
-A high-performance web server implemented in C++.
+# MyWebserver (Evolution to CLI IM)
 
-## Features
-1. Uses IO multiplexing technology (Epoll) and thread pool to implement a multi-threaded Reactor concurrency model.
-2. Parses HTTP request messages using regular expressions and a state machine, handling static resource requests.
-3. Implements an automatically expanding buffer by encapsulating `char` using standard library containers.
-4. Implements a timer based on a min-heap to close inactive connections that have timed out.
-5. Utilizes the Singleton pattern and a blocking queue to implement an asynchronous logging system, recording the server's runtime status.
-6. Implements a database connection pool using the RAII (Resource Acquisition Is Initialization) mechanism, reducing the overhead of establishing and closing database connections, while also supporting user registration and login functionality.
+## 📖 Introduction
+This project is evolving from a high-performance C++ WebServer into a **CLI Instant Messaging (IM) System**. 
+The goal is to build a robust, scalable backend using modern C++ standards (C++20) and industry-proven technologies.
 
-## Directory Tree
+## 🛠 Tech Stack
+- **Language**: C++20
+- **Network Model**: Linux Epoll (Reactor Pattern)
+- **Protocol**: Google Protobuf (Binary Protocol)
+- **Database**: MySQL
+- **Logging**: Spdlog (Structured, Asynchronous)
+- **Build System**: CMake + Vcpkg
+- **Containerization**: Docker & Docker Compose
+
+---
+
+## 🗺️ Development Roadmap
+
+### Phase 1: Protocol & Core Modernization (Current Focus)
+**Goal**: Replace legacy HTTP parsing with efficient binary protocols and modernize the codebase.
+
+- [ ] **1.1 C++20 Standard Migration**
+  - [ ] Verify `CMakePresets.json` is set to C++20.
+  - [ ] Refactor legacy C++98/11 patterns (use `std::span`, `std::format` if available, `auto`, `concepts`).
+  - [ ] Replace raw pointers with smart pointers (`std::unique_ptr`, `std::shared_ptr`) where applicable.
+
+- [ ] **1.2 Protobuf Protocol Implementation**
+  - [ ] Define `message.proto` schemas (Login, Chat, Ack, Heartbeat).
+  - [ ] Implement `Packet` codec (Length-Prefix framing) to handle TCP sticky/split packets.
+  - [ ] Replace `HttpRequest/Response` classes with a generic `MessageContext`.
+  - [ ] Implement a `ProtobufDispatcher` to route messages by `CommandID`.
+
+- [ ] **1.3 Connection Layer Refactoring**
+  - [ ] Rename `HttpConn` to `ImSession`.
+  - [ ] Remove all HTTP-specific state machine logic.
+  - [ ] Add session state management (Authenticated, Connected, Disconnected).
+
+### Phase 2: Observability & Performance
+**Goal**: Introduce enterprise-grade logging and profiling tools.
+
+- [ ] **2.1 Logging System Upgrade**
+  - [ ] Replace custom singleton logger with **spdlog**.
+  - [ ] Configure asynchronous logging pattern (non-blocking I/O).
+  - [ ] Implement structured logging (JSON support) for future ELK integration.
+  - [ ] Add distinct log levels (Trace, Debug, Info, Warn, Error).
+
+- [ ] **2.2 Performance Profiling & Optimization**
+  - [ ] Integrate **gprof** or **Linux perf** tools.
+  - [ ] Conduct baseline benchmark (QPS/Latency) using the new Protobuf protocol.
+  - [ ] Generate Flame Graphs to identify CPU hotspots.
+  - [ ] Optimize lock contention in `ThreadPool` and `SqlConnPool`.
+
+### Phase 3: Data Persistence & Architecture
+**Goal**: Switch to a more reliable database and decouple architecture.
+
+- [ ] **3.1 Database Migration (PostgreSQL)**
+  - [ ] Switch from MySQL to PostgreSQL (better JSONB support for message history).
+  - [ ] Integrate `libpqxx` (C++ client for PG).
+  - [ ] Design new schema: `Users` (UUID), `Messages` (Time-partitioned), `Contacts`.
+
+- [ ] **3.2 Architecture Layering**
+  - [ ] **Network Layer**: Pure `Epoll` loop, agnostic of business logic.
+  - [ ] **Service Layer**: Business logic (e.g., `UserService`, `ChatService`).
+  - [ ] **DAO Layer**: Database access objects.
+  - [ ] **CLI Client**: Develop a standalone C++ CLI client for end-to-end testing.
+
+### Phase 4: Production Features (IM Specific)
+- [ ] **4.1 Reliability**
+  - [ ] Message ACK mechanism (Ensure delivery).
+  - [ ] Offline message storage (Store & Forward).
+  - [ ] Heartbeat & Keep-alive detection.
+
+- [ ] **4.2 Security**
+  - [ ] TLS/SSL support (OpenSSL).
+  - [ ] Password hashing (Argon2 or BCrypt).
+
+---
+
+## 🚀 Quick Start (Docker)
+
+**Build & Run:**
+```bash
+docker-compose up --build
+```
+*Note: The server currently listens on port 1316.*
+
+## 📂 Directory Structure
 ```
 .
-├── code            Source code
-│   ├── buffer
-│   ├── http
-│   ├── log
-│   ├── timer
-│   ├── pool
-│   ├── server
+├── src
+│   ├── proto       # Protobuf definitions
+│   ├── server      # Epoll Reactor & Session management
+│   ├── service     # Business Logic (New)
+│   ├── dao         # Data Access Objects (New)
+│   ├── utils       # Logger (spdlog), Config
 │   └── main.cpp
-├── test            Tests for log and threadpool
-│   ├── Makefile
-│   └── test.cpp
-├── resources       Static resources
-│   ├── index.html
-│   ├── images
-│   ├── video
-│   ├── fonts
-│   ├── js
-│   └── css
-├── webbench-1.5    Stress test
-├── build          
-│   └── Makefile
-├── Makefile
-├──.gitignore
+├── tests           # Unit Tests & Benchmarks
+├── docker-compose.yml
 └── README.md
 ```
-
-## Project Initiation
-Download MySQL first, replace "yourdb" to the name of the databse you wnat to create.
-```
-// create a new database
-create database yourdb;
-
-// create the user table
-USE yourdb;
-CREATE TABLE user(
-    username char(50) NULL,
-    password char(50) NULL
-)ENGINE=InnoDB;
-
-// add data
-INSERT INTO user(username, password) VALUES('name', 'password');
-
-// compile the project
-make
-
-// run the project
-./bin/server
-```
-
-## Log and ThreadPool Testing
-```
-cd test
-make
-./test
-```
-
-## Stress Testing
-Start the server before running the following test.
-```
-cd webbench-1.5
-make
-./webbench -c [number of client] -t [number of seond] http://ip:1316/
-```
-This is my testing result for 8000 clients in 10 seconds.  
-![stress-testing-image](/resources/images/stress-testing.png)

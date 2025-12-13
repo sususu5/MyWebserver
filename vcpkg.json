@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "mywebserver",
+  "version": "1.0.0",
+  "description": "A high-performance C++ web server evolving into an enterprise-grade IM backend service",
+  "homepage": "https://github.com/sususu5/MyWebserver",
+  "license": "MIT",
+  "supports": "linux | osx",
+  "builtin-baseline": "84bab45d415d22042bd0b9081aea57f362da3f35",
+  "dependencies": [
+    {
+      "name": "protobuf",
+      "version>=": "3.21.12"
+    }
+  ]
+}

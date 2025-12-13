@@ -17,21 +17,33 @@ list(REMOVE_ITEM PROJECT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 add_library(mywebserver STATIC ${PROJECT_SRC})
 
 # Public include path so external targets can do #include "buffer/buffer.h" etc.
-target_include_directories(mywebserver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(mywebserver PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_BINARY_DIR}/generated
+)
 
 # ---------------------------------------------------------------------------
 # Third-party / system dependencies
 # ---------------------------------------------------------------------------
 find_package(Threads REQUIRED)
 
-# MySQL client library (libmysqlclient). If not found, stop configuration.
-find_library(MYSQL_CLIENT_LIB mysqlclient)
-if (NOT MYSQL_CLIENT_LIB)
-    message(FATAL_ERROR "libmysqlclient not found. Install libmysqlclient-dev (Debian/Ubuntu) or mysql-devel (RHEL/CentOS).")
-endif()
+# MySQL client library (System lib via apt-get)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MYSQL REQUIRED mysqlclient)
 
-# Link dependencies to the library so downstream executables inherit them.
-target_link_libraries(mywebserver PUBLIC Threads::Threads ${MYSQL_CLIENT_LIB})
+# ---------------------------------------------------------------------------
+# Link all dependencies
+# ---------------------------------------------------------------------------
+target_link_libraries(mywebserver PUBLIC 
+    Threads::Threads 
+    ${MYSQL_LIBRARIES}
+    protobuf::libprotobuf
+)
+target_include_directories(mywebserver PUBLIC ${MYSQL_INCLUDE_DIRS})
+
+if(TARGET proto_generated)
+    target_link_libraries(mywebserver PUBLIC proto_generated)
+endif()
 
 # ---------------------------------------------------------------------------
 # Server executable target

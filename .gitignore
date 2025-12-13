@@ -1,6 +1,28 @@
 .vscode/
+.idea/
+.cache/
+
+# Build
 build/
 bin/
+cmake-build-*/
+
+# vcpkg
+vcpkg_installed/
+
+# Generated files
+*.pb.h
+*.pb.cc
+generated/
+
+# Test artifacts
 webbench-1.5/webbench
 webbench-1.5/webbench.o
+
+# Logs
 log/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

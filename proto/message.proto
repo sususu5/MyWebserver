@@ -1,0 +1,25 @@
+syntax = "proto3";
+package im;
+option cc_enable_arenas = true;
+
+enum MessageType {
+    MSG_TYPE_UNKNOWN = 0;
+    MSG_TYPE_PRIVATE_TEXT = 100;
+}
+
+message Envelope {
+    uint64 seq = 1;
+    MessageType type = 2;
+    int64 timestamp = 3;
+
+    oneof payload {
+        ChatMessage chat_message = 100;
+    }
+}
+
+message ChatMessage {
+    int64 sender_id = 1;
+    int64 receiver_id = 2;
+    string content = 3;
+    int64 send_time = 4;
+}

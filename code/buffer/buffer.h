@@ -10,46 +10,46 @@
 #include <vector>
 
 class Buffer {
+    static constexpr size_t INIT_BUFFER_SIZE = 1024;
+
 public:
-    // The default size of buffer is 1024
-    Buffer(int initBuffSize = 1024);
+    Buffer(int initBuffSize = INIT_BUFFER_SIZE);
     ~Buffer() = default;
 
-    size_t writableBytes() const;
-    size_t readableBytes() const;
-    // Return the number of prependable bytes (the bytes before the readable bytes)
-    // These bytes has been read but not processes
-    size_t prependableBytes() const;
+    size_t readable_bytes() const;
+    size_t writable_bytes() const;
+    // The number of bytes that can be written to the buffer
+    size_t prependable_bytes() const;
 
     // Return a pointer to the begin of the readable bytes
-    const char* Peek() const;
+    const char* peek() const;
     // If the space is not enough, resize the buffer
-    void EnsureWritable(size_t len);
+    void ensure_writable(size_t len);
     // This function updates the writePos_ after writing len bytes
-    void HasWritten(size_t len);
+    void has_written(size_t len);
 
     // These functions are used to read data from the buffer
-    void Retrieve(size_t len);
-    void RetrieveUntil(const char* end);
-    void RetrieveAll();
-    std::string RetrieveAllToStr();
+    void retrieve(size_t len);
+    void retrieve_until(const char* end);
+    void retrieve_all();
+    std::string retrieve_all_to_str();
 
-    const char* BeginWriteConst() const;
-    char* BeginWrite();
+    const char* begin_write_const() const;
+    char* begin_write();
 
-    void Append(const std::string& str);
-    void Append(const char* str, size_t len);
-    void Append(const void* data, size_t len);
-    void Append(const Buffer& buff);
+    void append(const std::string& str);
+    void append(const char* str, size_t len);
+    void append(const void* data, size_t len);
+    void append(const Buffer& buff);
 
     // Read / write data from a file descriptor to the buffer
-    ssize_t ReadFd(int fd, int* Errno);
-    ssize_t WriteFd(int fd, int* Errno);
+    ssize_t read_fd(int fd, int* Errno);
+    ssize_t write_fd(int fd, int* Errno);
 
 private:
-    char* BeginPtr_();
-    const char* BeginPtr_() const;
-    void MakeSpace_(size_t len);
+    char* begin_ptr();
+    const char* begin_ptr() const;
+    void make_space(size_t len);
 
     std::vector<char> buffer_;
     // The index of the first readable and writable byte, use atomic to ensure thread safety

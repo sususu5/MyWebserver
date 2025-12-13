@@ -2,24 +2,51 @@ syntax = "proto3";
 package im;
 option cc_enable_arenas = true;
 
-enum MessageType {
-    MSG_TYPE_UNKNOWN = 0;
-    MSG_TYPE_PRIVATE_TEXT = 100;
+// CommandType determines which structure the Envelope's oneof unpacks into
+enum CommandType {
+    CMD_UNKNOWN       = 0;
+    
+    // System commands
+    CMD_HEARTBEAT     = 1;  // Reserved
+    CMD_AUTH_REQ      = 2;  // Reserved
+    CMD_AUTH_RES      = 3;  // Reserved
+
+    // Message commands
+    CMD_P2P_MSG_REQ   = 50; // P2P message request (Client -> Server)
+    CMD_P2P_MSG_PUSH  = 51; // P2P message push (Server -> Client)
+    CMD_MSG_ACK       = 52; // Generic message acknowledgment (Server -> Client)
 }
 
+// ContentType determines how to parse the content field
+enum ContentType {
+    CONTENT_TEXT    = 0;
+}
+
+// Envelope is the top-level message structure
 message Envelope {
-    uint64 seq = 1;
-    MessageType type = 2;
-    int64 timestamp = 3;
+    uint64 seq = 1;            // Sequence number for full-duplex link tracing
+    CommandType cmd = 2;       // CommandType enum
+    int64 timestamp = 3;       // Server timestamp
 
     oneof payload {
-        ChatMessage chat_message = 100;
+        P2PMessage p2p_msg = 100;    // P2P message
+        MessageAck msg_ack = 101;    // Generic message acknowledgment
     }
 }
 
-message ChatMessage {
-    int64 sender_id = 1;
-    int64 receiver_id = 2;
-    string content = 3;
-    int64 send_time = 4;
+// Message structure for P2P communication
+message P2PMessage {
+    string msg_id = 1;
+    int64 sender_id = 2;
+    int64 receiver_id = 3;
+    ContentType content_type = 4; 
+    bytes content = 5;         
+}
+
+// Message acknowledgment structure
+message MessageAck {
+    string msg_id = 1;
+    uint64 ref_seq = 2;
+    bool success = 3;
+    string error_msg = 4;
 }

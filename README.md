@@ -21,12 +21,12 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 **Goal**: Replace legacy HTTP parsing with efficient binary protocols and modernize the codebase.
 
 - [ ] **1.1 C++20 Standard Migration**
-  - [ ] Verify `CMakePresets.json` is set to C++20.
+  - [X] Verify `CMakePresets.json` is set to C++20.
   - [ ] Refactor legacy C++98/11 patterns (use `std::span`, `std::format` if available, `auto`, `concepts`).
   - [ ] Replace raw pointers with smart pointers (`std::unique_ptr`, `std::shared_ptr`) where applicable.
 
 - [ ] **1.2 Protobuf Protocol Implementation**
-  - [ ] Define `message.proto` schemas (Login, Chat, Ack, Heartbeat).
+  - [X] Define `message.proto` schemas (Login, Chat, Ack, Heartbeat).
   - [ ] Implement `Packet` codec (Length-Prefix framing) to handle TCP sticky/split packets.
   - [ ] Replace `HttpRequest/Response` classes with a generic `MessageContext`.
   - [ ] Implement a `ProtobufDispatcher` to route messages by `CommandID`.

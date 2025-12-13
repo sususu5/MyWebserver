@@ -19,8 +19,8 @@ void HttpConn::init(int sockFd, const sockaddr_in& addr) {
     userCount++;
     addr_ = addr;
     fd_ = sockFd;
-    writeBuff_.RetrieveAll();
-    readBuff_.RetrieveAll();
+    writeBuff_.retrieve_all();
+    readBuff_.retrieve_all();
     isClose_ = false;
     LOG_INFO("Client[%d](%s:%d) in, userCount:%d", fd_, getIP(), getPort(), (int)userCount);
 }
@@ -46,7 +46,7 @@ int HttpConn::getPort() const { return addr_.sin_port; }
 ssize_t HttpConn::read(int* saveErrno) {
     ssize_t len = -1;
     do {
-        len = readBuff_.ReadFd(fd_, saveErrno);
+        len = readBuff_.read_fd(fd_, saveErrno);
         if (len <= 0) {
             break;
         }
@@ -75,13 +75,13 @@ ssize_t HttpConn::write(int* saveErrno) {
             iov_[1].iov_len -= (len - iov_[0].iov_len);
             // Clear the data that has been sent from writeBuff_
             if (iov_[0].iov_len > 0) {
-                writeBuff_.RetrieveAll();
+                writeBuff_.retrieve_all();
                 iov_[0].iov_len = 0;
             }
         } else {
             iov_[0].iov_base = (uint8_t*)iov_[0].iov_base + len;
             iov_[0].iov_len -= len;
-            writeBuff_.Retrieve(len);
+            writeBuff_.retrieve(len);
         }
     } while (isET && toWriteBytes() > 10240);
     return len;
@@ -89,7 +89,7 @@ ssize_t HttpConn::write(int* saveErrno) {
 
 bool HttpConn::process() {
     request_.Init();
-    if (readBuff_.readableBytes() <= 0) {
+    if (readBuff_.readable_bytes() <= 0) {
         return false;
     } else if (request_.parse(readBuff_)) {
         LOG_DEBUG("%s", request_.path().c_str());
@@ -100,8 +100,8 @@ bool HttpConn::process() {
 
     response_.MakeResponse(writeBuff_);
     // Set the content of iov_[0] to the data in writeBuff_
-    iov_[0].iov_base = const_cast<char*>(writeBuff_.Peek());
-    iov_[0].iov_len = writeBuff_.readableBytes();
+    iov_[0].iov_base = const_cast<char*>(writeBuff_.peek());
+    iov_[0].iov_len = writeBuff_.readable_bytes();
     iovCnt_ = 1;
 
     // If there exists a file to be sent, set the content of iov_[1] to the file

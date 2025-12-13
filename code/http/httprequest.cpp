@@ -19,13 +19,13 @@ void HttpRequest::Init() {
 bool HttpRequest::parse(Buffer& buff) {
     const char END[] = "\r\n";
     // If the buffer is empty, return false
-    if (buff.readableBytes() == 0) {
+    if (buff.readable_bytes() == 0) {
         return false;
     };
-    while (buff.readableBytes() && state_ != FINISH) {
+    while (buff.readable_bytes() && state_ != FINISH) {
         // Reads a string ends with '\r\n' for each loop
-        const char* lineEnd = search(buff.Peek(), buff.BeginWriteConst(), END, END + 2);
-        string line(buff.Peek(), lineEnd);
+        const char* lineEnd = search(buff.peek(), buff.begin_write_const(), END, END + 2);
+        string line(buff.peek(), lineEnd);
         switch (state_) {
             case REQUEST_LINE:
                 // If the request line is not parsed successfully, return false
@@ -36,7 +36,7 @@ bool HttpRequest::parse(Buffer& buff) {
                 break;
             case HEADERS:
                 ParseHeader_(line);
-                if (buff.readableBytes() <= 2) {
+                if (buff.readable_bytes() <= 2) {
                     state_ = FINISH;
                 }
                 break;
@@ -46,12 +46,12 @@ bool HttpRequest::parse(Buffer& buff) {
             default:
                 break;
         }
-        if (lineEnd == buff.BeginWrite()) {
-            buff.RetrieveAll();
+        if (lineEnd == buff.begin_write()) {
+            buff.retrieve_all();
             break;
         }
         // Skip the '\r\n' characters
-        buff.RetrieveUntil(lineEnd + 2);
+        buff.retrieve_until(lineEnd + 2);
     }
     LOG_DEBUG("[%s], [%s], [%s]", method_.c_str(), path_.c_str(), version_.c_str());
     return true;

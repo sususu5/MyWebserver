@@ -1,6 +1,6 @@
+#include <features.h>
 #include "../code/log/log.h"
 #include "../code/pool/threadpool.h"
-#include <features.h>
 
 #if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
 #include <sys/syscall.h>
@@ -14,7 +14,7 @@ void TestLog() {
         Log::Instance()->SetLevel(level);
         for (int j = 0; j < 10000; j++) {
             for (int i = 0; i < 4; i++) {
-                LOG_BASE(i,"%s 111111111 %d ============= ", "Test", cnt++);
+                LOG_BASE(i, "%s 111111111 %d ============= ", "Test", cnt++);
             }
         }
     }
@@ -32,7 +32,7 @@ void TestLog() {
 
 void ThreadLogTask(int i, int cnt) {
     for (int j = 0; j < 10000; j++) {
-        LOG_BASE(i,"PID:[%04d]======= %05d ========= ", gettid(), cnt++);
+        LOG_BASE(i, "PID:[%04d]======= %05d ========= ", gettid(), cnt++);
     }
 }
 

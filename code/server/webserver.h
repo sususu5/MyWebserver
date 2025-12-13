@@ -1,29 +1,25 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
 
-#include <unordered_map>
-#include <fcntl.h>
-#include <unistd.h>
+#include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
-#include <sys/socket.h>
+#include <fcntl.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include "epoller.h"
-#include "../timer/heaptimer.h"
+#include <sys/socket.h>
+#include <unistd.h>
+#include <unordered_map>
+#include "../http/httpconn.h"
 #include "../log/log.h"
 #include "../pool/sqlconnpool.h"
 #include "../pool/threadpool.h"
-#include "../http/httpconn.h"
+#include "../timer/heaptimer.h"
+#include "epoller.h"
 
 class Webserver {
 public:
-    Webserver(
-        int port, int trigMode, int timeoutMS, int sqlPort,
-        const char* sqlUser, const char* sqlPwd, const char* dbName,
-        int connPoolNum, int threadNum, bool openLog, int logLevel,
-        int logQueSize
-    );
+    Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const char* sqlUser, const char* sqlPwd,
+              const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize);
     ~Webserver();
     void start();
 
@@ -62,5 +58,5 @@ private:
     std::unique_ptr<Epoller> epoller_;
     std::unordered_map<int, HttpConn> users_;
 };
-    
+
 #endif

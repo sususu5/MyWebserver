@@ -1,19 +1,19 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
-#include <queue>
-#include <mutex>
+#include <assert.h>
 #include <condition_variable>
 #include <functional>
+#include <mutex>
+#include <queue>
 #include <thread>
-#include <assert.h>
 
 class ThreadPool {
 public:
     ThreadPool() = default;
     ThreadPool(ThreadPool&&) = default;
     // Use make_shared instead of new to avoid memory fragmentation
-    explicit ThreadPool(size_t threadCount = 8): pool_(std::make_shared<Pool>()) {
+    explicit ThreadPool(size_t threadCount = 8) : pool_(std::make_shared<Pool>()) {
         assert(threadCount > 0);
         for (size_t i = 0; i < threadCount; i++) {
             // Use detach to avoid joining the threads
@@ -47,7 +47,7 @@ public:
         pool_->cond_.notify_all();
     }
 
-    template<typename T>
+    template <typename T>
     // Universal reference is used to accept both lvalue and rvalue
     void AddTask(T&& task) {
         std::unique_lock<std::mutex> locker(pool_->mtx_);
@@ -68,4 +68,4 @@ private:
     std::shared_ptr<Pool> pool_;
 };
 
-#endif 
+#endif

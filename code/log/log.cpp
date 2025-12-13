@@ -52,13 +52,13 @@ void Log::init(int level = 1, const char* path, const char* suffix, int maxQueue
 
     lineCount_ = 0;
     time_t timer = time(nullptr);
-    struct tm *sysTime = localtime(&timer);
+    struct tm* sysTime = localtime(&timer);
     struct tm t = *sysTime;
     path_ = path;
     suffix_ = suffix;
     char fileName[LOG_NAME_LEN] = {0};
-    snprintf(fileName, LOG_NAME_LEN - 1, "%s/%04d_%02d_%02d%s", 
-            path_, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_);
+    snprintf(fileName, LOG_NAME_LEN - 1, "%s/%04d_%02d_%02d%s", path_, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
+             suffix_);
     toDay_ = t.tm_mday;
 
     {
@@ -66,33 +66,33 @@ void Log::init(int level = 1, const char* path, const char* suffix, int maxQueue
         // Clear the buffer
         buff_.RetrieveAll();
         // If the file pointer is not null, close the file
-        if (fp_) { 
+        if (fp_) {
             flush();
-            fclose(fp_); 
+            fclose(fp_);
         }
 
         fp_ = fopen(fileName, "a");
         if (fp_ == nullptr) {
             mkdir(path_, 0777);
             fp_ = fopen(fileName, "a");
-        } 
+        }
         assert(fp_ != nullptr);
     }
 }
 
-void Log::write(int level, const char *format, ...) {
+void Log::write(int level, const char* format, ...) {
     struct timeval now = {0, 0};
     gettimeofday(&now, nullptr);
     time_t tSec = now.tv_sec;
-    struct tm *sysTime = localtime(&tSec);
+    struct tm* sysTime = localtime(&tSec);
     struct tm t = *sysTime;
     va_list vaList;
 
     // If the day changes or the number of lines reaches the maximum, create a new log file
-    if (toDay_ != t.tm_mday || (lineCount_ && (lineCount_  %  MAX_LINES == 0))) {
+    if (toDay_ != t.tm_mday || (lineCount_ && (lineCount_ % MAX_LINES == 0))) {
         unique_lock<mutex> locker(mtx_);
         locker.unlock();
-        
+
         // The following process is thread safe, so we can unlock the mutex,
         // but the conditional statement needs to be locked
         char newFile[LOG_NAME_LEN];
@@ -106,7 +106,7 @@ void Log::write(int level, const char *format, ...) {
         } else {
             snprintf(newFile, LOG_NAME_LEN - 72, "%s/%s-%d%s", path_, tail, (lineCount_ / MAX_LINES), suffix_);
         }
-        
+
         locker.lock();
         flush();
         fclose(fp_);
@@ -117,10 +117,9 @@ void Log::write(int level, const char *format, ...) {
     {
         unique_lock<mutex> locker(mtx_);
         lineCount_++;
-        int n = snprintf(buff_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
-                    t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
-                    t.tm_hour, t.tm_min, t.tm_sec, now.tv_usec);
-                    
+        int n = snprintf(buff_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ", t.tm_year + 1900, t.tm_mon + 1,
+                         t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, now.tv_usec);
+
         buff_.HasWritten(n);
         AppendLogLevelTitle_(level);
 
@@ -142,27 +141,27 @@ void Log::write(int level, const char *format, ...) {
 
 void Log::AppendLogLevelTitle_(int level) {
     switch (level) {
-    case 0:
-        buff_.Append("[debug]: ", 9);
-        break;
-    case 1:
-        buff_.Append("[info] : ", 9);
-        break;
-    case 2:
-        buff_.Append("[warn] : ", 9);
-        break;
-    case 3:
-        buff_.Append("[error]: ", 9);
-        break;
-    default:
-        buff_.Append("[info] : ", 9);
-        break;
+        case 0:
+            buff_.Append("[debug]: ", 9);
+            break;
+        case 1:
+            buff_.Append("[info] : ", 9);
+            break;
+        case 2:
+            buff_.Append("[warn] : ", 9);
+            break;
+        case 3:
+            buff_.Append("[error]: ", 9);
+            break;
+        default:
+            buff_.Append("[info] : ", 9);
+            break;
     }
 }
 
 void Log::flush() {
-    if (isAsync_) { 
-        deque_->flush(); 
+    if (isAsync_) {
+        deque_->flush();
     }
     fflush(fp_);
 }
@@ -180,6 +179,4 @@ Log* Log::Instance() {
     return &inst;
 }
 
-void Log::FlushLogThread() {
-    Log::Instance()->AsyncWrite_();
-}
+void Log::FlushLogThread() { Log::Instance()->AsyncWrite_(); }

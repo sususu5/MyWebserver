@@ -1,13 +1,12 @@
 #include "epoller.h"
 
-// The number "512" does nothing with the size of the actual limit of the epoll instance, but it needs to be greater than 0.
-Epoller::Epoller(int maxEvent): epollFd_(epoll_create(512)), events_(maxEvent) {
+// The number "512" does nothing with the size of the actual limit of the epoll instance, but it needs to be greater
+// than 0.
+Epoller::Epoller(int maxEvent) : epollFd_(epoll_create(512)), events_(maxEvent) {
     assert(epollFd_ >= 0 && events_.size() > 0);
 }
 
-Epoller::~Epoller() {
-    close(epollFd_);
-}
+Epoller::~Epoller() { close(epollFd_); }
 
 bool Epoller::addFd(int fd, uint32_t events) {
     if (fd < 0) return false;

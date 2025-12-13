@@ -2,14 +2,11 @@
 using namespace std;
 
 // Webpage path
-const unordered_set<string> HttpRequest::DEFAULT_HTML {
-    "/index", "/register", "/login", "/welcome", "/video", "/picture"
-};
+const unordered_set<string> HttpRequest::DEFAULT_HTML{"/index",   "/register", "/login",
+                                                      "/welcome", "/video",    "/picture"};
 
 // Login page and register page
-const unordered_map<string, int> HttpRequest::DEFAULT_HTML_TAG {
-    {"/login.html", 1}, {"/register.html", 0}
-};
+const unordered_map<string, int> HttpRequest::DEFAULT_HTML_TAG{{"/login.html", 1}, {"/register.html", 0}};
 
 void HttpRequest::Init() {
     state_ = REQUEST_LINE;
@@ -22,26 +19,32 @@ void HttpRequest::Init() {
 bool HttpRequest::parse(Buffer& buff) {
     const char END[] = "\r\n";
     // If the buffer is empty, return false
-    if (buff.readableBytes() == 0) {return false;};
+    if (buff.readableBytes() == 0) {
+        return false;
+    };
     while (buff.readableBytes() && state_ != FINISH) {
         // Reads a string ends with '\r\n' for each loop
         const char* lineEnd = search(buff.Peek(), buff.BeginWriteConst(), END, END + 2);
         string line(buff.Peek(), lineEnd);
         switch (state_) {
-        case REQUEST_LINE:
-            // If the request line is not parsed successfully, return false
-            if (!ParseRequestLine_(line)) {return false;}
-            ParsePath_();
-            break;
-        case HEADERS:
-            ParseHeader_(line);
-            if (buff.readableBytes() <= 2) {state_ = FINISH;}
-            break;
-        case BODY:
-            ParseBody_(line);
-            break;
-        default:
-            break;
+            case REQUEST_LINE:
+                // If the request line is not parsed successfully, return false
+                if (!ParseRequestLine_(line)) {
+                    return false;
+                }
+                ParsePath_();
+                break;
+            case HEADERS:
+                ParseHeader_(line);
+                if (buff.readableBytes() <= 2) {
+                    state_ = FINISH;
+                }
+                break;
+            case BODY:
+                ParseBody_(line);
+                break;
+            default:
+                break;
         }
         if (lineEnd == buff.BeginWrite()) {
             buff.RetrieveAll();
@@ -98,10 +101,8 @@ void HttpRequest::ParseBody_(const string& line) {
 }
 
 int HttpRequest::ConvertHex(char ch) {
-    if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 10;
-    if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 10;
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
     return ch;
 }
 
@@ -133,27 +134,27 @@ void HttpRequest::ParseFromUrlencoded_() {
     for (; i < n; i++) {
         char ch = body_[i];
         switch (ch) {
-        case '=':
-            key = body_.substr(j, i - j);
-            j = i + 1;
-            break;
-        case '+':
-            body_[i] = ' ';
-            break;
-        case '%':
-            num = ConvertHex(body_[i + 1]) * 16 + ConvertHex(body_[i + 2]);
-            body_[i + 2] = num % 10 + '0';
-            body_[i + 1] = num / 10 + '0';
-            i += 2;
-            break;
-        case '&':
-            value = body_.substr(j, i - j);
-            j = i + 1;
-            post_[key] = value;
-            LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
-            break;
-        default:
-            break;
+            case '=':
+                key = body_.substr(j, i - j);
+                j = i + 1;
+                break;
+            case '+':
+                body_[i] = ' ';
+                break;
+            case '%':
+                num = ConvertHex(body_[i + 1]) * 16 + ConvertHex(body_[i + 2]);
+                body_[i + 2] = num % 10 + '0';
+                body_[i + 1] = num / 10 + '0';
+                i += 2;
+                break;
+            case '&':
+                value = body_.substr(j, i - j);
+                j = i + 1;
+                post_[key] = value;
+                LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
+                break;
+            default:
+                break;
         }
     }
     assert(j <= i);
@@ -176,7 +177,9 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
     MYSQL_FIELD* fields = nullptr;
     MYSQL_RES* res = nullptr;
 
-    if (!isLogin) {flag = true;}
+    if (!isLogin) {
+        flag = true;
+    }
     // Search for the user and password in the database
     snprintf(order, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", name.c_str());
     LOG_DEBUG("%s", order);
@@ -194,8 +197,9 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
         string password(row[1]);
         // If the user exists and the password is correct, set the flag to true
         if (isLogin) {
-            if (pwd == password) {flag = true;}
-            else {
+            if (pwd == password) {
+                flag = true;
+            } else {
                 flag = false;
                 LOG_INFO("pwd error!");
             }
@@ -205,7 +209,7 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
         }
     }
     mysql_free_result(res);
-    
+
     if (!isLogin && flag == true) {
         LOG_DEBUG("register!");
         bzero(order, 256);
@@ -221,33 +225,23 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
     return flag;
 }
 
-string HttpRequest::path() const {
-    return path_;
-}
+string HttpRequest::path() const { return path_; }
 
-string& HttpRequest::path() {
-    return path_;
-}
+string& HttpRequest::path() { return path_; }
 
-string HttpRequest::method() const {
-    return method_;
-}
+string HttpRequest::method() const { return method_; }
 
-string HttpRequest::version() const {
-    return version_;
-}
+string HttpRequest::version() const { return version_; }
 
 string HttpRequest::GetPost(const string& key) const {
     assert(key != "");
-    if (post_.count(key) == 1)
-        return post_.find(key)->second;
+    if (post_.count(key) == 1) return post_.find(key)->second;
     return "";
 }
 
 string HttpRequest::GetPost(const char* key) const {
     assert(key != nullptr);
-    if (post_.count(key) == 1)
-        return post_.find(key)->second;
+    if (post_.count(key) == 1) return post_.find(key)->second;
     return "";
 }
 

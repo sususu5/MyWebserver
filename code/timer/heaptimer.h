@@ -1,14 +1,14 @@
 #ifndef HEAP_TIMER_H
 #define HEAP_TIMER_H
 
-#include <queue>
-#include <unordered_map>
+#include <arpa/inet.h>
+#include <assert.h>
 #include <time.h>
 #include <algorithm>
-#include <arpa/inet.h>
-#include <functional>
-#include <assert.h>
 #include <chrono>
+#include <functional>
+#include <queue>
+#include <unordered_map>
 #include "../log/log.h"
 
 typedef std::function<void()> TimeoutCallBack;
@@ -20,14 +20,14 @@ struct TimerNode {
     int id;
     TimeStamp expires;
     TimeoutCallBack cb;
-    bool operator<(const TimerNode& t) {return expires < t.expires;}
-    bool operator>(const TimerNode& t) {return expires > t.expires;}
+    bool operator<(const TimerNode& t) { return expires < t.expires; }
+    bool operator>(const TimerNode& t) { return expires > t.expires; }
 };
 
 class HeapTimer {
 public:
-    HeapTimer() {heap_.reserve(64);}
-    ~HeapTimer() {clear();}
+    HeapTimer() { heap_.reserve(64); }
+    ~HeapTimer() { clear(); }
 
     void adjust(int id, int newExpires);
     void add(int id, int timeOut, const TimeoutCallBack& cb);

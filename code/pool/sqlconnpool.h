@@ -2,10 +2,10 @@
 #define SQLCONNPOOL_H
 
 #include <mysql/mysql.h>
-#include <string>
-#include <queue>
-#include <mutex>
 #include <semaphore.h>
+#include <mutex>
+#include <queue>
+#include <string>
 #include <thread>
 #include "../log/log.h"
 
@@ -22,7 +22,7 @@ public:
 
 private:
     SqlConnPool() = default;
-    ~SqlConnPool() {ClosePool();}
+    ~SqlConnPool() { ClosePool(); }
 
     int MAX_CONN_;
 
@@ -31,7 +31,8 @@ private:
     sem_t semId_;
 };
 
-// The RAII principle: get the connection when the object is created and release the connection when the object is destroyed
+// The RAII principle: get the connection when the object is created and release the connection when the object is
+// destroyed
 class SqlConnRAII {
 public:
     SqlConnRAII(MYSQL** sql, SqlConnPool* connPool) {
@@ -42,12 +43,14 @@ public:
     }
 
     ~SqlConnRAII() {
-        if (sql_) {connPool_->FreeConn(sql_);}
+        if (sql_) {
+            connPool_->FreeConn(sql_);
+        }
     }
 
 private:
-    MYSQL* sql_;            // The pointer to a MySQL connection
-    SqlConnPool* connPool_; // The pointer to the connection pool
+    MYSQL* sql_;             // The pointer to a MySQL connection
+    SqlConnPool* connPool_;  // The pointer to the connection pool
 };
 
 #endif

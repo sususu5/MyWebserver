@@ -1,13 +1,13 @@
 #ifndef HTTP_CONN_H
 #define HTTP_CONN_H
 
+#include <arpa/inet.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <errno.h>
-#include "../log/log.h"
 #include "../buffer/buffer.h"
+#include "../log/log.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 
@@ -26,8 +26,8 @@ public:
     sockaddr_in getAddr() const;
     bool process();
 
-    int toWriteBytes() {return iov_[0].iov_len + iov_[1].iov_len;}
-    bool isKeepAlive() const {return request_.IsKeepAlive();}
+    int toWriteBytes() { return iov_[0].iov_len + iov_[1].iov_len; }
+    bool isKeepAlive() const { return request_.IsKeepAlive(); }
 
     static bool isET;
     static const char* srcDir;
@@ -39,7 +39,7 @@ private:
     bool isClose_;
     int iovCnt_;
     struct iovec iov_[2];
-    
+
     Buffer readBuff_;
     Buffer writeBuff_;
 

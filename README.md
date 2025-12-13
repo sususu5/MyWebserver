@@ -83,6 +83,12 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 ```bash
 docker-compose up --build
 ```
+
+**Code Formatting:**
+```bash
+find code test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
+```
+
 *Note: The server currently listens on port 1316.*
 
 ## 📂 Directory Structure

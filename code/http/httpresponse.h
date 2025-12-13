@@ -1,11 +1,11 @@
 #ifndef HTTP_RESPONSE_H
 #define HTTP_RESPONSE_H
 
-#include <unordered_map>
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <unordered_map>
 #include "../buffer/buffer.h"
 #include "../log/log.h"
 
@@ -20,7 +20,7 @@ public:
     char* File();
     size_t FileLen() const;
     void ErrorContent(Buffer& buff, std::string message);
-    int Code() const {return code_;}
+    int Code() const { return code_; }
 
 private:
     void AddStateLine_(Buffer& buff);

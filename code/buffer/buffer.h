@@ -1,13 +1,13 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <assert.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#include <atomic>
 #include <cstring>
 #include <iostream>
-#include <unistd.h>
-#include <sys/uio.h>
 #include <vector>
-#include <atomic>
-#include <assert.h>
 
 class Buffer {
 public:
@@ -16,7 +16,7 @@ public:
     ~Buffer() = default;
 
     size_t writableBytes() const;
-    size_t readableBytes() const ;
+    size_t readableBytes() const;
     // Return the number of prependable bytes (the bytes before the readable bytes)
     // These bytes has been read but not processes
     size_t prependableBytes() const;
@@ -31,7 +31,7 @@ public:
     // These functions are used to read data from the buffer
     void Retrieve(size_t len);
     void RetrieveUntil(const char* end);
-    void RetrieveAll() ;
+    void RetrieveAll();
     std::string RetrieveAllToStr();
 
     const char* BeginWriteConst() const;
@@ -57,4 +57,4 @@ private:
     std::atomic<std::size_t> writePos_;
 };
 
-#endif //BUFFER_H
+#endif  // BUFFER_H

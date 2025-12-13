@@ -1,21 +1,21 @@
 #ifndef HTTP_REQUEST_H
 #define HTTP_REQUEST_H
 
-#include <unordered_map>
-#include <unordered_set>
-#include <string>
-#include <regex>
 #include <errno.h>
 #include <mysql/mysql.h>
+#include <regex>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include "../buffer/buffer.h"
 #include "../log/log.h"
 #include "../pool/sqlconnpool.h"
 
 class HttpRequest {
 public:
-    enum PARSE_STATE {REQUEST_LINE, HEADERS, BODY, FINISH};
+    enum PARSE_STATE { REQUEST_LINE, HEADERS, BODY, FINISH };
 
-    HttpRequest() {Init();}
+    HttpRequest() { Init(); }
     ~HttpRequest() = default;
 
     void Init();
@@ -31,13 +31,13 @@ public:
     bool IsKeepAlive() const;
 
 private:
-    bool ParseRequestLine_(const std::string& line);    // handle the request line
-    void ParseHeader_(const std::string& line);         // handle the header
-    void ParseBody_(const std::string& line);           // handle the body
+    bool ParseRequestLine_(const std::string& line);  // handle the request line
+    void ParseHeader_(const std::string& line);       // handle the header
+    void ParseBody_(const std::string& line);         // handle the body
 
-    void ParsePath_();                                  // parse the path
-    void ParsePost_();                                  // parse the post content
-    void ParseFromUrlencoded_();                        // parse the form content
+    void ParsePath_();            // parse the path
+    void ParsePost_();            // parse the post content
+    void ParseFromUrlencoded_();  // parse the form content
 
     static bool UserVerify(const std::string& name, const std::string& pwd, bool isLogin);
 

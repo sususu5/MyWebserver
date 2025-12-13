@@ -12,9 +12,7 @@ HttpConn::HttpConn() {
     isClose_ = true;
 }
 
-HttpConn::~HttpConn() {
-    Close();
-}
+HttpConn::~HttpConn() { Close(); }
 
 void HttpConn::init(int sockFd, const sockaddr_in& addr) {
     assert(sockFd > 0);
@@ -37,27 +35,21 @@ void HttpConn::Close() {
     }
 }
 
-int HttpConn::getFd() const {
-    return fd_;
-}
+int HttpConn::getFd() const { return fd_; }
 
-struct sockaddr_in HttpConn::getAddr() const {
-    return addr_;
-}
+struct sockaddr_in HttpConn::getAddr() const { return addr_; }
 
-const char* HttpConn::getIP() const {
-    return inet_ntoa(addr_.sin_addr);
-}
+const char* HttpConn::getIP() const { return inet_ntoa(addr_.sin_addr); }
 
-int HttpConn::getPort() const {
-    return addr_.sin_port;
-}
+int HttpConn::getPort() const { return addr_.sin_port; }
 
 ssize_t HttpConn::read(int* saveErrno) {
     ssize_t len = -1;
     do {
         len = readBuff_.ReadFd(fd_, saveErrno);
-        if (len <= 0) {break;}
+        if (len <= 0) {
+            break;
+        }
     } while (isET);
     return len;
 }
@@ -73,7 +65,9 @@ ssize_t HttpConn::write(int* saveErrno) {
             break;
         }
         // If all the data in iov_ has been written, break the loop
-        if (iov_[0].iov_len + iov_[1].iov_len == 0) {break;}
+        if (iov_[0].iov_len + iov_[1].iov_len == 0) {
+            break;
+        }
         // If the data in iov_[0] has been sent completely and part of the data in iov_[1] has been sent,
         // adjust the data in iov_[1] and writeBuff_
         else if (static_cast<size_t>(len) > iov_[0].iov_len) {
@@ -95,8 +89,9 @@ ssize_t HttpConn::write(int* saveErrno) {
 
 bool HttpConn::process() {
     request_.Init();
-    if (readBuff_.readableBytes() <= 0) {return false;}
-    else if (request_.parse(readBuff_)) {
+    if (readBuff_.readableBytes() <= 0) {
+        return false;
+    } else if (request_.parse(readBuff_)) {
         LOG_DEBUG("%s", request_.path().c_str());
         response_.Init(srcDir, request_.path(), request_.IsKeepAlive(), 200);
     } else {
@@ -115,6 +110,6 @@ bool HttpConn::process() {
         iov_[1].iov_len = response_.FileLen();
         iovCnt_ = 2;
     }
-    LOG_DEBUG("filesize:%d, %d  to %d", response_.FileLen() , iovCnt_, toWriteBytes());
+    LOG_DEBUG("filesize:%d, %d  to %d", response_.FileLen(), iovCnt_, toWriteBytes());
     return true;
 }

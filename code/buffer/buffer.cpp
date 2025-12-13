@@ -1,33 +1,23 @@
 #include "buffer.h"
 
-Buffer::Buffer(int initBuffSize): buffer_(initBuffSize), readPos_(0), writePos_(0) {}
+Buffer::Buffer(int initBuffSize) : buffer_(initBuffSize), readPos_(0), writePos_(0) {}
 
-size_t Buffer::readableBytes() const {
-    return writePos_ - readPos_;
-}
+size_t Buffer::readableBytes() const { return writePos_ - readPos_; }
 
-size_t Buffer::writableBytes() const {
-    return buffer_.size() - writePos_;
-}
+size_t Buffer::writableBytes() const { return buffer_.size() - writePos_; }
 
-size_t Buffer::prependableBytes() const {
-    return readPos_;
-}
+size_t Buffer::prependableBytes() const { return readPos_; }
 
-const char* Buffer::Peek() const {
-    return BeginPtr_() + readPos_;
-}
+const char* Buffer::Peek() const { return BeginPtr_() + readPos_; }
 
 void Buffer::EnsureWritable(size_t len) {
-    if(writableBytes() < len) {
+    if (writableBytes() < len) {
         MakeSpace_(len);
     }
     assert(writableBytes() >= len);
 }
 
-void Buffer::HasWritten(size_t len) {
-    writePos_ += len;
-} 
+void Buffer::HasWritten(size_t len) { writePos_ += len; }
 
 void Buffer::Retrieve(size_t len) {
     assert(len <= readableBytes());
@@ -35,7 +25,7 @@ void Buffer::Retrieve(size_t len) {
 }
 
 void Buffer::RetrieveUntil(const char* end) {
-    assert(Peek() <= end );
+    assert(Peek() <= end);
     Retrieve(end - Peek());
 }
 
@@ -51,19 +41,13 @@ std::string Buffer::RetrieveAllToStr() {
     return str;
 }
 
-const char* Buffer::BeginWriteConst() const {
-    return BeginPtr_() + writePos_;
-}
+const char* Buffer::BeginWriteConst() const { return BeginPtr_() + writePos_; }
 
-char* Buffer::BeginWrite() {
-    return BeginPtr_() + writePos_;
-}
+char* Buffer::BeginWrite() { return BeginPtr_() + writePos_; }
 
 // .data() returns a pointer to the first element in the array
 //  used internally by the string to store its owned elements.
-void Buffer::Append(const std::string& str) {
-    Append(str.data(), str.length());
-}
+void Buffer::Append(const std::string& str) { Append(str.data(), str.length()); }
 
 void Buffer::Append(const char* str, size_t len) {
     assert(str);
@@ -77,9 +61,7 @@ void Buffer::Append(const void* data, size_t len) {
     Append(static_cast<const char*>(data), len);
 }
 
-void Buffer::Append(const Buffer& buff) {
-    Append(buff.Peek(), buff.readableBytes());
-}
+void Buffer::Append(const Buffer& buff) { Append(buff.Peek(), buff.readableBytes()); }
 
 ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
     // The buffer is used to store the data that cannot be read into the buffer
@@ -114,19 +96,15 @@ ssize_t Buffer::WriteFd(int fd, int* saveErrno) {
     if (len < 0) {
         *saveErrno = errno;
         return len;
-    } 
+    }
     readPos_ += len;
     return len;
 }
 
-char* Buffer::BeginPtr_() {
-    return &*buffer_.begin();
-}
+char* Buffer::BeginPtr_() { return &*buffer_.begin(); }
 
 // This function changes an iterator to a pointer
-const char* Buffer::BeginPtr_() const {
-    return &*buffer_.begin();
-}
+const char* Buffer::BeginPtr_() const { return &*buffer_.begin(); }
 
 void Buffer::MakeSpace_(size_t len) {
     if (writableBytes() + prependableBytes() < len) {

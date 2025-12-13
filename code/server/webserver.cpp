@@ -1,23 +1,19 @@
 #include "webserver.h"
 using namespace std;
 
-Webserver::Webserver(
-    int port, int trigMode, int timeoutMS, int sqlPort,
-    const char* sqlUser, const char* sqlPwd, const char* dbName,
-    int connPoolNum, int threadNum, bool openLog, int logLevel,
-    int logQueSize):
-    port_(port), timeoutMS_(timeoutMS), isClose_(false),
-    timer_(new HeapTimer()), threadPool_(new ThreadPool(threadNum)),
-    epoller_(new Epoller()) {
+Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const char* sqlUser, const char* sqlPwd,
+                     const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
+    : port_(port), timeoutMS_(timeoutMS), isClose_(false), timer_(new HeapTimer()),
+      threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
     // Whether open the log system
     if (openLog) {
         Log::Instance()->init(logLevel, "./log", ".log", logQueSize);
-        if (isClose_) {LOG_ERROR("========== Server init error!==========");}
-        else {
+        if (isClose_) {
+            LOG_ERROR("========== Server init error!==========");
+        } else {
             LOG_INFO("========== Server init ==========");
-            LOG_INFO("Listen Mode: %s, OpenConn Mode: %s",
-                    (listenEvent_ & EPOLLET ? "ET": "LT"),
-                    (connEvent_ & EPOLLET ? "ET": "LT"));
+            LOG_INFO("Listen Mode: %s, OpenConn Mode: %s", (listenEvent_ & EPOLLET ? "ET" : "LT"),
+                     (connEvent_ & EPOLLET ? "ET" : "LT"));
             LOG_INFO("LogSys level: %d", logLevel);
             LOG_INFO("srcDir: %s", HttpConn::srcDir);
             LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", connPoolNum, threadNum);
@@ -32,7 +28,9 @@ Webserver::Webserver(
 
     SqlConnPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);
-    if (!initSocket_()) {isClose_ = true;}
+    if (!initSocket_()) {
+        isClose_ = true;
+    }
 }
 
 Webserver::~Webserver() {
@@ -45,23 +43,23 @@ Webserver::~Webserver() {
 void Webserver::initEventMode_(int trigMode) {
     listenEvent_ = EPOLLRDHUP;
     connEvent_ = EPOLLONESHOT | EPOLLRDHUP;
-    switch (trigMode){
-    case 0:
-        break;
-    case 1:
-        connEvent_ |= EPOLLET;
-        break;
-    case 2:
-        listenEvent_ |= EPOLLET;
-        break;
-    case 3:
-        listenEvent_ |= EPOLLET;
-        connEvent_ |= EPOLLET;
-        break;
-    default:
-        listenEvent_ |= EPOLLET;
-        connEvent_ |= EPOLLET;
-        break;
+    switch (trigMode) {
+        case 0:
+            break;
+        case 1:
+            connEvent_ |= EPOLLET;
+            break;
+        case 2:
+            listenEvent_ |= EPOLLET;
+            break;
+        case 3:
+            listenEvent_ |= EPOLLET;
+            connEvent_ |= EPOLLET;
+            break;
+        default:
+            listenEvent_ |= EPOLLET;
+            connEvent_ |= EPOLLET;
+            break;
     }
     HttpConn::isET = (connEvent_ & EPOLLET);
 }
@@ -96,8 +94,7 @@ void Webserver::start() {
             else if (events & EPOLLOUT) {
                 assert(users_.count(fd) > 0);
                 dealWrite_(&users_[fd]);
-            }
-            else {
+            } else {
                 LOG_ERROR("Unexpected event");
             }
         }
@@ -107,7 +104,9 @@ void Webserver::start() {
 void Webserver::sendError_(int fd, const char* info) {
     assert(fd > 0);
     int ret = send(fd, info, strlen(info), 0);
-    if (ret < 0) {LOG_WARN("send error to client[%d] error!", fd);}
+    if (ret < 0) {
+        LOG_WARN("send error to client[%d] error!", fd);
+    }
     close(fd);
 }
 
@@ -121,7 +120,7 @@ void Webserver::closeConn_(HttpConn* client) {
 void Webserver::addClient_(int fd, sockaddr_in addr) {
     assert(fd > 0);
     users_[fd].init(fd, addr);
-    if(timeoutMS_ > 0) {
+    if (timeoutMS_ > 0) {
         timer_->add(fd, timeoutMS_, std::bind(&Webserver::closeConn_, this, &users_[fd]));
     }
     epoller_->addFd(fd, EPOLLIN | connEvent_);
@@ -135,8 +134,9 @@ void Webserver::dealListen_() {
     // In ET mode, the loop is used to accept all incoming connections
     do {
         int fd = accept(listenFd_, (struct sockaddr*)&addr, &len);
-        if (fd <= 0) {return;}
-        else if (HttpConn::userCount >= MAX_FD) {
+        if (fd <= 0) {
+            return;
+        } else if (HttpConn::userCount >= MAX_FD) {
             sendError_(fd, "Server busy!");
             LOG_WARN("Clients is full!");
             return;
@@ -159,7 +159,9 @@ void Webserver::dealWrite_(HttpConn* client) {
 
 void Webserver::extendTime_(HttpConn* client) {
     assert(client);
-    if (timeoutMS_ > 0) {timer_->adjust(client->getFd(), timeoutMS_);}
+    if (timeoutMS_ > 0) {
+        timer_->adjust(client->getFd(), timeoutMS_);
+    }
 }
 
 void Webserver::onRead_(HttpConn* client) {
@@ -254,7 +256,7 @@ bool Webserver::initSocket_() {
         return false;
     }
     setFdNonblock(listenFd_);
-    LOG_INFO("Server port:%d",port_);
+    LOG_INFO("Server port:%d", port_);
     return true;
 }
 

@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libmysqlclient-dev \
     gdb \
-    ninja-build \
-    ca-certificates \
+    clangd \
+    clang-format \
+    ninja-build \ 
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt
@@ -28,8 +29,6 @@ RUN ./vcpkg/bootstrap-vcpkg.sh
 ENV VCPKG_ROOT=/opt/vcpkg
 ENV PATH=$VCPKG_ROOT:$PATH
 
-WORKDIR /app
+WORKDIR /workspace
 
-COPY . .
-
-CMD ["/bin/bash"]
+CMD ["sleep", "infinity"]

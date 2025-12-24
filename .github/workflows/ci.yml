@@ -27,7 +27,7 @@ jobs:
           docker compose up --build -d
           
           echo "Waiting for container to initialize..."
-          sleep 10
+          sleep 300
           
           if [ $(docker inspect -f '{{.State.Running}}' mywebserver) != "true" ]; then
             echo "Container crashed immediately!"

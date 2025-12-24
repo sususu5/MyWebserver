@@ -4,8 +4,6 @@ services:
   server:
     build: .
     container_name: mywebserver
-    volumes:
-      - .:/app
     ports:
       - "1316:1316"
     command: >

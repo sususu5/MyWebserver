@@ -20,8 +20,7 @@ webbench-1.5/webbench
 webbench-1.5/webbench.o
 
 # Logs
-log/
-*.log
+/log
 
 # OS
 .DS_Store

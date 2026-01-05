@@ -19,7 +19,6 @@ add_library(mywebserver STATIC ${PROJECT_SRC})
 # Public include path so external targets can do #include "buffer/buffer.h" etc.
 target_include_directories(mywebserver PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_BINARY_DIR}/generated
 )
 
 # ---------------------------------------------------------------------------

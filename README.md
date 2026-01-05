@@ -17,76 +17,47 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ## 🗺️ Development Roadmap
 
-### Phase 1: Protocol & Core Modernization (Current Focus)
-**Goal**: Replace legacy HTTP parsing with efficient binary protocols and modernize the codebase.
-
-- [ ] **1.1 C++20 Standard Migration**
-  - [X] Verify `CMakePresets.json` is set to C++20.
-  - [ ] Refactor legacy C++98/11 patterns (use `std::span`, `std::format` if available, `auto`, `concepts`).
-  - [ ] Replace raw pointers with smart pointers (`std::unique_ptr`, `std::shared_ptr`) where applicable.
-
-- [ ] **1.2 Protobuf Protocol Implementation**
-  - [X] Define `message.proto` schemas (Login, Chat, Ack, Heartbeat).
-  - [ ] Implement `Packet` codec (Length-Prefix framing) to handle TCP sticky/split packets.
-  - [ ] Replace `HttpRequest/Response` classes with a generic `MessageContext`.
-  - [ ] Implement a `ProtobufDispatcher` to route messages by `CommandID`.
-
-- [ ] **1.3 Connection Layer Refactoring**
-  - [ ] Rename `HttpConn` to `ImSession`.
-  - [ ] Remove all HTTP-specific state machine logic.
-  - [ ] Add session state management (Authenticated, Connected, Disconnected).
-
-### Phase 2: Observability & Performance
-**Goal**: Introduce enterprise-grade logging and profiling tools.
-
-- [ ] **2.1 Logging System Upgrade**
-  - [ ] Replace custom singleton logger with **spdlog**.
-  - [ ] Configure asynchronous logging pattern (non-blocking I/O).
-  - [ ] Implement structured logging (JSON support) for future ELK integration.
-  - [ ] Add distinct log levels (Trace, Debug, Info, Warn, Error).
-
-- [ ] **2.2 Performance Profiling & Optimization**
-  - [ ] Integrate **gprof** or **Linux perf** tools.
-  - [ ] Conduct baseline benchmark (QPS/Latency) using the new Protobuf protocol.
-  - [ ] Generate Flame Graphs to identify CPU hotspots.
-  - [ ] Optimize lock contention in `ThreadPool` and `SqlConnPool`.
-
-### Phase 3: Data Persistence & Architecture
-**Goal**: Switch to a more reliable database and decouple architecture.
-
-- [ ] **3.1 Database Migration (PostgreSQL)**
-  - [ ] Switch from MySQL to PostgreSQL (better JSONB support for message history).
-  - [ ] Integrate `libpqxx` (C++ client for PG).
-  - [ ] Design new schema: `Users` (UUID), `Messages` (Time-partitioned), `Contacts`.
-
-- [ ] **3.2 Architecture Layering**
-  - [ ] **Network Layer**: Pure `Epoll` loop, agnostic of business logic.
-  - [ ] **Service Layer**: Business logic (e.g., `UserService`, `ChatService`).
-  - [ ] **DAO Layer**: Database access objects.
-  - [ ] **CLI Client**: Develop a standalone C++ CLI client for end-to-end testing.
-
-### Phase 4: Production Features (IM Specific)
-- [ ] **4.1 Reliability**
-  - [ ] Message ACK mechanism (Ensure delivery).
-  - [ ] Offline message storage (Store & Forward).
-  - [ ] Heartbeat & Keep-alive detection.
-
-- [ ] **4.2 Security**
-  - [ ] TLS/SSL support (OpenSSL).
-  - [ ] Password hashing (Argon2 or BCrypt).
+1. Implementing user registration and login
+2. Implementing user adding friend and removing friend
+3. Implementing user sending message to friend
 
 ---
 
-## 🚀 Quick Start (Docker)
+## 💻 Development Environment (Recommended)
 
-**Build & Run:**
+This project is configured with a **DevContainer**. This is the preferred way to develop, as it provides a pre-configured environment with all dependencies (C++20, CMake, Vcpkg, MySQL, etc.).
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop).
+2. Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+3. Open this folder in VS Code.
+4. Click **"Reopen in Container"** when prompted (or use the command palette: `Dev Containers: Reopen in Container`).
+
+### Build & Run (Inside DevContainer)
+
+**Build:**
+```bash
+cmake --preset release
+cmake --build build/release
+```
+
+**Run:**
+```bash
+./build/release/server/src/server
+```
+
+---
+
+## 🚀 Quick Start (Docker Compose)
+
+If you just want to run the server without setting up a development environment:
+
 ```bash
 docker-compose up --build
 ```
 
 **Code Formatting:**
 ```bash
-find code test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
+find server/src test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
 ```
 
 *Note: The server currently listens on port 1316.*
@@ -94,14 +65,13 @@ find code test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
 ## 📂 Directory Structure
 ```
 .
-├── src
-│   ├── proto       # Protobuf definitions
-│   ├── server      # Epoll Reactor & Session management
-│   ├── service     # Business Logic (New)
-│   ├── dao         # Data Access Objects (New)
-│   ├── utils       # Logger (spdlog), Config
-│   └── main.cpp
-├── tests           # Unit Tests & Benchmarks
+├── proto           # Protobuf definitions
+├── server
+│   ├── src         # Server source code (main, http, log, pool, etc.)
+│   └── log         # Runtime logs
+├── resources       # Static resources (HTML, CSS, JS, etc.)
+├── test            # Unit Tests
+├── .devcontainer   # DevContainer configuration
 ├── docker-compose.yml
 └── README.md
 ```

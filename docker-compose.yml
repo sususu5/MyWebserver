@@ -11,5 +11,5 @@ services:
       rm -rf build/release;
       cmake --preset release &&
       cmake --build build/release &&
-      ./build/release/code/server
+      ./build/release/server/src/server
       "

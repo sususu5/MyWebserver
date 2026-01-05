@@ -1,0 +1,11 @@
+syntax = "proto3";
+package im;
+option cc_enable_arenas = true;
+
+message User {
+    string user_id = 1;
+    string username = 2;
+    int32 status = 3;
+}
+
+message Empty {}

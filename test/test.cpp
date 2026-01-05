@@ -1,6 +1,6 @@
 #include <features.h>
-#include "../code/log/log.h"
-#include "../code/pool/threadpool.h"
+#include "../server/src/log/log.h"
+#include "../server/src/pool/threadpool.h"
 
 #if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
 #include <sys/syscall.h>

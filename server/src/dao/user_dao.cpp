@@ -1,7 +1,7 @@
 #include "user_dao.h"
 #include <sqlpp11/mysql/connection.h>
 #include <sqlpp11/sqlpp11.h>
-#include "schema.h"
+#include "model/schema.h"
 
 using namespace model;
 

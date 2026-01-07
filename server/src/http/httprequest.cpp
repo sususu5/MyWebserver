@@ -1,4 +1,5 @@
 #include "httprequest.h"
+#include "../dao/user_dao.h"
 using namespace std;
 
 // Webpage path
@@ -165,64 +166,35 @@ void HttpRequest::ParseFromUrlencoded_() {
 }
 
 bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin) {
-    if (name == "" || pwd == "") return false;
-    LOG_INFO("Verify name: %s pwd: %s", name.c_str(), pwd.c_str());
-    MYSQL* sql;
-    SqlConnRAII(&sql, SqlConnPool::Instance());
-    assert(sql);
-
-    bool flag = false;
-    unsigned int j = 0;
-    char order[256] = {0};
-    MYSQL_FIELD* fields = nullptr;
-    MYSQL_RES* res = nullptr;
-
-    if (!isLogin) {
-        flag = true;
-    }
-    // Search for the user and password in the database
-    snprintf(order, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", name.c_str());
-    LOG_DEBUG("%s", order);
-
-    if (mysql_query(sql, order)) {
-        mysql_free_result(res);
+    if (name == "" || pwd == "") {
+        LOG_ERROR("Username or password is empty!");
         return false;
     }
-    res = mysql_store_result(sql);
-    j = mysql_num_fields(res);
-    fields = mysql_fetch_fields(res);
+    LOG_INFO("Verify name: %s pwd: %s", name.c_str(), pwd.c_str());
 
-    while (MYSQL_ROW row = mysql_fetch_row(res)) {
-        LOG_DEBUG("MYSQL ROW: %s %s", row[0], row[1]);
-        string password(row[1]);
-        // If the user exists and the password is correct, set the flag to true
-        if (isLogin) {
-            if (pwd == password) {
-                flag = true;
-            } else {
-                flag = false;
-                LOG_INFO("pwd error!");
-            }
+    UserDao dao;
+    if (isLogin) {
+        if (dao.VerifyUser(name, pwd)) {
+            LOG_DEBUG("UserVerify success!");
+            return true;
         } else {
-            flag = false;
+            LOG_INFO("pwd error or user not found!");
+            return false;
+        }
+    } else {
+        // Register
+        if (dao.QueryExist(name)) {
             LOG_INFO("user used!");
+            return false;
         }
-    }
-    mysql_free_result(res);
-
-    if (!isLogin && flag == true) {
-        LOG_DEBUG("register!");
-        bzero(order, 256);
-        snprintf(order, 256, "INSERT INTO user(username, password) VALUES('%s', '%s')", name.c_str(), pwd.c_str());
-        LOG_DEBUG("%s", order);
-        if (mysql_query(sql, order)) {
+        if (dao.Insert(name, pwd)) {
+            LOG_DEBUG("register!");
+            return true;
+        } else {
             LOG_DEBUG("Insert error!");
-            flag = false;
+            return false;
         }
-        flag = true;
     }
-    LOG_DEBUG("UserVerify success!");
-    return flag;
 }
 
 string HttpRequest::path() const { return path_; }

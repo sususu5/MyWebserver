@@ -7,11 +7,40 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 ## 🛠 Tech Stack
 - **Language**: C++20
 - **Network Model**: Linux Epoll (Reactor Pattern)
-- **Protocol**: Google Protobuf (Binary Protocol)
-- **Database**: MySQL
-- **Logging**: Spdlog (Structured, Asynchronous)
-- **Build System**: CMake + Vcpkg
-- **Containerization**: Docker & Docker Compose
+- **Protocol**: Google Protobuf (Binary Serialization)
+- **Database Layer**: sqlpp11 (Modern C++ EDSL for SQL - *In Transition*)
+- **Concurrency**: Thread Pool & MySQL Connection Pool
+- **Logging**: Custom Asynchronous Logging (support for Spdlog format)
+- **Build System**: CMake (Presets) + Vcpkg
+- **Toolchain**: clangd + compile_commands.json
+
+---
+
+## 📂 Directory Structure
+
+```text
+/
+├── proto/               # Protocol definitions (.proto files)
+├── server/
+│   └── src/             # Core Backend Logic
+│       ├── main.cpp     # Entry point
+│       ├── buffer/      # Custom I/O buffer management
+│       ├── dao/         # Data Access Objects (Database logic)
+│       ├── service/     # Business logic layer (Auth, Chat, etc.)
+│       ├── server/      # Webserver & Epoller (Reactor core)
+│       ├── pool/        # ThreadPool & SqlConnPool
+│       ├── http/        # HTTP protocol handling (legacy)
+│       ├── log/         # Async logging system
+│       ├── timer/       # Heap-based timer for timeouts
+│       └── CMakeLists.txt
+├── resources/           # Static assets (HTML, JS, CSS)
+├── test/                # Unit tests & Benchmarking
+├── build/               # Build artifacts (generated pb files)
+├── .devcontainer/       # VS Code DevContainer config
+├── vcpkg.json           # Dependency management
+├── CMakePresets.json    # Build presets configuration
+└── docker-compose.yml   # Multi-container orchestration
+```
 
 ---
 
@@ -40,6 +69,15 @@ cmake --preset release
 cmake --build build/release
 ```
 
+```bash
+cmake --preset debug
+cmake --build build/debug
+```
+
+```bash
+python3 tools/ddl2cpp sql/schema.sql server/src/dao/schema model
+```
+
 **Run:**
 ```bash
 ./build/release/server/src/server
@@ -61,17 +99,3 @@ find server/src test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
 ```
 
 *Note: The server currently listens on port 1316.*
-
-## 📂 Directory Structure
-```
-.
-├── proto           # Protobuf definitions
-├── server
-│   ├── src         # Server source code (main, http, log, pool, etc.)
-│   └── log         # Runtime logs
-├── resources       # Static resources (HTML, CSS, JS, etc.)
-├── test            # Unit Tests
-├── .devcontainer   # DevContainer configuration
-├── docker-compose.yml
-└── README.md
-```

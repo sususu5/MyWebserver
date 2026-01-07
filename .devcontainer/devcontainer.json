@@ -1,5 +1,6 @@
 {
     "name": "MyWebserver Dev",
+    "image": "mywebserver-dev:latest",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".."
@@ -35,7 +36,8 @@
                 },
                 
                 "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-                "C_Cpp.default.cppStandard": "c++20"
+                "C_Cpp.default.cppStandard": "c++20",
+                "terminal.integrated.defaultProfile.linux": "bash"
             }
         }
     },

@@ -16,11 +16,13 @@ RUN apt-get update && apt-get install -y \
     clangd \
     clang-format \
     ninja-build \ 
+    python3 \
+    python3-pyparsing \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt
 
-RUN git clone https://github.com/microsoft/vcpkg.git
+RUN git clone --filter=tree:0 https://github.com/microsoft/vcpkg.git
 
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 

@@ -1,8 +1,8 @@
-#ifndef SQLCONNPOOL_H
-#define SQLCONNPOOL_H
+#pragma once
 
-#include <mysql/mysql.h>
 #include <semaphore.h>
+#include <sqlpp11/mysql/connection.h>
+#include <sqlpp11/sqlpp11.h>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -13,8 +13,8 @@ class SqlConnPool {
 public:
     static SqlConnPool* Instance();
 
-    MYSQL* GetConn();
-    void FreeConn(MYSQL* conn);
+    sqlpp::mysql::connection* GetConn();
+    void FreeConn(sqlpp::mysql::connection* conn);
     int GetFreeConnCount();
 
     void Init(const char* host, uint16_t port, const char* user, const char* pwd, const char* dbName, int connSize);
@@ -26,31 +26,28 @@ private:
 
     int MAX_CONN_;
 
-    std::queue<MYSQL*> connQue_;
+    std::queue<sqlpp::mysql::connection*> connQue_;
     std::mutex mtx_;
     sem_t semId_;
 };
 
-// The RAII principle: get the connection when the object is created and release the connection when the object is
-// destroyed
+// An RAII wrapper for a MySQL connection
 class SqlConnRAII {
 public:
-    SqlConnRAII(MYSQL** sql, SqlConnPool* connPool) {
-        assert(connPool);
-        *sql = connPool->GetConn();
+    SqlConnRAII(sqlpp::mysql::connection** sql, SqlConnPool* conn_pool) {
+        assert(conn_pool);
+        *sql = conn_pool->GetConn();
         sql_ = *sql;
-        connPool_ = connPool;
+        conn_pool_ = conn_pool;
     }
 
     ~SqlConnRAII() {
-        if (sql_) {
-            connPool_->FreeConn(sql_);
+        if (sql_ != nullptr) {
+            conn_pool_->FreeConn(sql_);
         }
     }
 
 private:
-    MYSQL* sql_;             // The pointer to a MySQL connection
-    SqlConnPool* connPool_;  // The pointer to the connection pool
+    sqlpp::mysql::connection* sql_;
+    SqlConnPool* conn_pool_;
 };
-
-#endif

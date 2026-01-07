@@ -37,7 +37,9 @@ void HttpConn::Close() {
 
 int HttpConn::getFd() const { return fd_; }
 
-struct sockaddr_in HttpConn::getAddr() const { return addr_; }
+struct sockaddr_in HttpConn::getAddr() const {
+    return addr_;
+}
 
 const char* HttpConn::getIP() const { return inet_ntoa(addr_.sin_addr); }
 

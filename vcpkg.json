@@ -6,11 +6,13 @@
   "homepage": "https://github.com/sususu5/MyWebserver",
   "license": "MIT",
   "supports": "linux | osx",
-  "builtin-baseline": "84bab45d415d22042bd0b9081aea57f362da3f35",
+  "builtin-baseline": "2cf2bcc60add50f79b2c418487d9cd1b6c7c1fec",
   "dependencies": [
     {
       "name": "protobuf",
       "version>=": "3.21.12"
-    }
+    },
+    "sqlpp11",
+    "sqlpp11-connector-mysql"
   ]
 }

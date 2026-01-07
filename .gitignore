@@ -25,3 +25,5 @@ webbench-1.5/webbench.o
 # OS
 .DS_Store
 Thumbs.db
+
+compile_commands.json

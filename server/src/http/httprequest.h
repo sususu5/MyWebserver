@@ -1,15 +1,12 @@
-#ifndef HTTP_REQUEST_H
-#define HTTP_REQUEST_H
+#pragma once
 
 #include <errno.h>
-#include <mysql/mysql.h>
 #include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include "../buffer/buffer.h"
 #include "../log/log.h"
-#include "../pool/sqlconnpool.h"
 
 class HttpRequest {
 public:
@@ -50,5 +47,3 @@ private:
     static const std::unordered_map<std::string, int> DEFAULT_HTML_TAG;
     static int ConvertHex(char ch);  // convert hex to decimal
 };
-
-#endif

@@ -11,10 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     tar \
     pkg-config \
-    libmysqlclient-dev \
     gdb \
     ninja-build \
     ca-certificates \
+    python3 \
+    python3-pyparsing \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt

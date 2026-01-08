@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     tar \
     pkg-config \
-    libmysqlclient-dev \
     gdb \
     clangd \
     clang-format \

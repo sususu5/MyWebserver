@@ -14,6 +14,8 @@ auto SqlConnPool::Init(const char* host, uint16_t port, const char* user, const 
     config->user = user;
     config->password = pwd;
     config->database = dbName;
+    config->ssl = true;
+    config->ssl_ca = "/etc/mysql/certs/ca.pem";
 
     for (int i = 0; i < connSize; i++) {
         try {
@@ -25,6 +27,8 @@ auto SqlConnPool::Init(const char* host, uint16_t port, const char* user, const 
     }
     MAX_CONN_ = connSize;
     sem_init(&semId_, 0, MAX_CONN_);
+
+    LOG_INFO("MYSQL connection pool initialized successfully!");
 }
 
 auto SqlConnPool::GetConn() -> sqlpp::mysql::connection* {

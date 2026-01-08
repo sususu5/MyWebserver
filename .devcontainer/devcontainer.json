@@ -1,10 +1,7 @@
 {
     "name": "MyWebserver Dev",
-    "image": "mywebserver-dev:latest",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".."
-    },
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -42,7 +39,6 @@
         }
     },
     "workspaceFolder": "/workspace",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     
     "postCreateCommand": "cmake -B build/release -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake",
     "remoteUser": "root",

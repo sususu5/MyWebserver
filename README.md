@@ -74,10 +74,6 @@ cmake --preset debug
 cmake --build build/debug
 ```
 
-```bash
-python3 tools/ddl2cpp sql/schema.sql server/src/dao/schema model
-```
-
 **Run:**
 ```bash
 ./build/release/server/src/server

@@ -5,7 +5,8 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
                      const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
     : port_(port), timeoutMS_(timeoutMS), isClose_(false), timer_(new HeapTimer()),
       threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
-    // Whether open the log system
+    const char* sql_env_host = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "localhost";
+
     if (openLog) {
         Log::Instance()->init(logLevel, "./log", ".log", logQueSize);
         if (isClose_) {
@@ -16,6 +17,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
                      (connEvent_ & EPOLLET ? "ET" : "LT"));
             LOG_INFO("LogSys level: %d", logLevel);
             LOG_INFO("srcDir: %s", HttpConn::srcDir);
+            LOG_INFO("MySQL Host: %s", sql_env_host);
             LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", connPoolNum, threadNum);
         }
     }
@@ -26,7 +28,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     HttpConn::userCount = 0;
     HttpConn::srcDir = srcDir_;
 
-    SqlConnPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
+    SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);
     if (!initSocket_()) {
         isClose_ = true;

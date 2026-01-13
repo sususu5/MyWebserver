@@ -8,6 +8,7 @@
 std::atomic<int> TcpConnection::user_count{0};
 bool TcpConnection::is_et = false;
 const char* TcpConnection::src_dir = "";
+AuthService* TcpConnection::auth_service = nullptr;
 
 TcpConnection::~TcpConnection() { close_conn(); }
 
@@ -55,7 +56,7 @@ bool TcpConnection::process() {
             conn_type_ = ConnType::HTTP;
             LOG_INFO("Protocol determined: HTTP");
         } else {
-            handler_ = std::make_unique<ProtobufHandler>();
+            handler_ = std::make_unique<ProtobufHandler>(auth_service);
             conn_type_ = ConnType::PROTOBUF;
             LOG_INFO("Protocol determined: Protobuf");
         }

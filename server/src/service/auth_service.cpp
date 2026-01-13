@@ -5,7 +5,7 @@ AuthService::AuthService() {}
 
 AuthService::~AuthService() {}
 
-auto AuthService::Register(const im::RegisterReq& req, im::RegisterResp* resp) -> void {
+auto AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* resp) -> void {
     const auto& username = req.username();
     const auto& password = req.password();
 

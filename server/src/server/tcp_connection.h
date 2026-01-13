@@ -6,8 +6,9 @@
 #include "../buffer/buffer.h"
 #include "../log/log.h"
 
-// Forward declaration
+// Forward declarations
 class HttpHandler;
+class AuthService;
 
 // ProtocolHandler is a pure virtual class that defines the interface for processing protocol data
 class ProtocolHandler {
@@ -56,6 +57,8 @@ public:
     // Store the source directory of the server
     static const char* src_dir;
     static std::atomic<int> user_count;
+    // Service dependencies (injected by Webserver)
+    static AuthService* auth_service;
 
 protected:
     int fd_{-1};

@@ -27,6 +27,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     strcat(srcDir_, "/resources/");
     TcpConnection::user_count = 0;
     TcpConnection::src_dir = srcDir_;
+    TcpConnection::auth_service = authService_.get();
 
     SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);

@@ -9,7 +9,7 @@ public:
     ~AuthService();
 
     // Register a new user
-    auto Register(const im::RegisterReq& req, im::RegisterResp* resp) -> void;
+    auto user_register(const im::RegisterReq& req, im::RegisterResp* resp) -> void;
 
 private:
     UserDao user_dao_;

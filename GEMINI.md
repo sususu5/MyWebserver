@@ -1,52 +1,63 @@
-# MyWebserver (CLI IM Evolution)
+# MyWebserver Project Context
 
 ## Project Overview
-This project is a high-performance C++ WebServer currently being refactored into a **CLI Instant Messaging (IM) System**. Built with Modern C++ (C++20), it leverages the **Reactor Pattern** using **Linux Epoll** for efficient non-blocking I/O. 
+This project is a high-performance C++ server evolving from a standard web server into a **CLI Instant Messaging (IM) System**. It uses a **Reactor Pattern** with **Linux Epoll** for non-blocking I/O and **Protocol Buffers** for efficient binary communication.
 
-**Key Architectural Components:**
-*   **Networking:** Epoll-based event loop (`Epoller`, `Webserver`) handling concurrent connections.
-*   **Concurrency:** Custom `ThreadPool` for processing tasks (reading, writing, logic) off the main event loop.
-*   **Protocol:** **Google Protobuf** for binary message serialization (definitions in `proto/`).
-*   **Database:** **MySQL/MariaDB** accessed via **sqlpp11** (Type-safe Embedded Domain Specific Language).
-*   **Connection Pool:** `SqlConnPool` managing `sqlpp::mysql::connection` objects.
-*   **Logging:** Structured, asynchronous logging system (`Log`).
-*   **Build System:** CMake with Vcpkg for dependency management.
+**Key Technologies:**
+*   **Language:** C++20
+*   **Networking:** Linux Epoll (Edge Triggered/Level Triggered), custom Reactor implementation.
+*   **Serialization:** Google Protocol Buffers (v3).
+*   **Database:** MySQL/MariaDB, accessed via **sqlpp11** (Type-safe Embedded Domain Specific Language).
+*   **Concurrency:** Custom `ThreadPool` and `SqlConnPool`.
+*   **Build System:** CMake (>3.21) with Vcpkg for dependencies.
+
+## Architecture
+The system is built around a central `Webserver` class that manages the event loop:
+
+1.  **Event Loop:** `Epoller` monitors file descriptors (sockets).
+2.  **Connection Handling:** `Webserver` accepts new connections and wraps them in `TcpConnection` objects.
+3.  **I/O:** Raw bytes are read into `Buffer` objects.
+4.  **Protocol Processing:** `TcpConnection` (or a handler) deserializes Protobuf messages (`Envelope`).
+5.  **Business Logic:** Requests are routed to services (e.g., `AuthService`) or handled directly.
+6.  **Data Access:** Services use DAOs (e.g., `UserDao`) which claim connections from `SqlConnPool` to execute type-safe queries using `sqlpp11`.
 
 ## Building and Running
 
 ### Prerequisites
-*   **DevContainer (Recommended):** The project is configured for VS Code DevContainers, providing a pre-configured environment with C++20, CMake, Ninja, Vcpkg, and Python3 (for code generation).
-*   **Manual Setup:** Requires C++20 compliant compiler, CMake (>3.21), Ninja, Python3, and Vcpkg.
+*   **DevContainer (Highly Recommended):** The project is configured for VS Code DevContainers, providing a consistent environment with all dependencies (C++20, CMake, Ninja, Vcpkg, Python3, MariaDB).
+*   **Manual Setup:** Requires C++20 compiler, CMake, Ninja, Python3 (for `ddl2cpp`), Vcpkg, and development headers for MySQL/MariaDB.
 
-### Commands
+### Build Commands (CMake Presets)
+The project uses CMake presets for simplified configuration.
 
-**1. Build (Release):**
+**1. Configure:**
 ```bash
 cmake --preset release
-cmake --build build/release
+# OR
+cmake --preset debug
 ```
 
-**2. Build (Debug):**
+**2. Build:**
 ```bash
-cmake --preset debug
+cmake --build build/release
+# OR
 cmake --build build/debug
 ```
 *Note: The build process automatically runs `scripts/ddl2cpp` to generate C++ database models from `sql/schema.sql` into `server/src/model/`.*
 
-**3. Run Server:**
+### Running the Server
 ```bash
 ./build/release/server/src/server
-# or
-./build/debug/server/src/server
 ```
+The server listens on **port 1316** by default.
 
-**4. Run with Docker Compose:**
-Useful for quick deployment or running outside the DevContainer.
+### Running with Docker Compose
+For a quick startup without a dev environment:
 ```bash
 docker-compose up --build
 ```
 
-**5. Run Tests:**
+### Running Tests
 ```bash
 cmake --build build/release --target test_runner
 ./build/release/test/test_runner
@@ -54,29 +65,26 @@ cmake --build build/release --target test_runner
 
 ## Directory Structure
 
-*   **`proto/`**: Contains `.proto` files defining the communication protocol (e.g., `message.proto`).
-*   **`server/src/`**: The core source code.
-    *   `main.cpp`: Entry point. Initializes and starts the `Webserver`.
-    *   `server/`: Contains the `Webserver` class (manages the reactor loop) and `Epoller` wrapper.
-    *   `model/`: **Auto-generated** C++ structs representing database tables (do not edit manually).
-    *   `dao/`: Data Access Objects (e.g., `UserDao`) utilizing `sqlpp11` and `model/`.
-    *   `pool/`: Thread pool and MySQL connection pool implementations.
-    *   `log/`: Logging system implementation.
-    *   `timer/`: Heap-based timer for managing connection timeouts.
-    *   `buffer/`: Custom buffer implementation for I/O.
-*   **`scripts/`**: Utility scripts, including `ddl2cpp` for generating C++ models from SQL.
-*   **`sql/`**: Database schema definitions (`schema.sql`).
-*   **`.devcontainer/`**: Configuration for the VS Code development container.
+*   **`proto/`**: Protocol Buffer definitions (`.proto`).
+    *   `message.proto`: Main envelope and messaging structures.
+    *   `auth_service.proto`: Authentication RPC definitions.
+*   **`server/src/`**: Source code.
+    *   `main.cpp`: Entry point.
+    *   `server/`: Core networking (`Webserver`, `Epoller`, `TcpConnection`).
+    *   `model/`: **Auto-generated** C++ structs for DB tables (do not edit).
+    *   `dao/`: Data Access Objects (`UserDao`).
+    *   `pool/`: `ThreadPool` and `SqlConnPool`.
+    *   `service/`: Business logic (`AuthService`).
+    *   `log/`: Asynchronous logging.
+*   **`sql/`**: Database schema (`schema.sql`).
+*   **`scripts/`**: Utility scripts (`ddl2cpp` for model generation).
+*   **`CMakeLists.txt`**: Main build configuration.
+*   **`vcpkg.json`**: Dependency manifest.
 
 ## Development Conventions
 
-*   **Language Standard:** C++20.
-*   **Build System:** CMake is the source of truth.
-*   **Dependencies:** Managed via `vcpkg`.
-*   **Database Access:** 
-    *   Always use `SqlConnPool::Instance()` to get a `sqlpp::mysql::connection`.
-    *   Use `UserDao` or create new DAOs for database interactions.
-    *   **Do not** use raw SQL strings; utilize `sqlpp11`'s type-safe query builder.
-    *   If you modify `sql/schema.sql`, rebuild the project to update the generated C++ models.
-*   **Coding Style:** Google C++ Style Guide (enforced via `.clang-format`).
-*   **Logging:** Use `LOG_*` macros (e.g., `LOG_INFO`, `LOG_ERROR`).
+*   **Database Models:** Do not manually edit files in `server/src/model/`. Modify `sql/schema.sql` instead and rebuild. The build system will regenerate the C++ code.
+*   **Database Access:** Always use `SqlConnPool` to get a connection. Use `sqlpp11` for queries (no raw SQL strings).
+*   **Logging:** Use the asynchronous `LOG_*` macros (e.g., `LOG_INFO`, `LOG_ERROR`).
+*   **Style:** Follow the Google C++ Style Guide (enforced by `.clang-format`).
+*   **Protocol:** All client-server communication should be defined in `proto/` and wrapped in the `Envelope` message type.

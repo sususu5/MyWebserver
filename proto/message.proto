@@ -2,24 +2,20 @@ syntax = "proto3";
 package im;
 option cc_enable_arenas = true;
 
+import "auth_service.proto";
+
 // CommandType determines which structure the Envelope's oneof unpacks into
 enum CommandType {
     CMD_UNKNOWN       = 0;
-    
-    // System commands
-    CMD_HEARTBEAT     = 1;  // Reserved
-    CMD_AUTH_REQ      = 2;  // Reserved
-    CMD_AUTH_RES      = 3;  // Reserved
+
+    // Auth commands
+    CMD_REGISTER_REQ  = 1;
+    CMD_REGISTER_RES  = 2;
 
     // Message commands
     CMD_P2P_MSG_REQ   = 50; // P2P message request (Client -> Server)
     CMD_P2P_MSG_PUSH  = 51; // P2P message push (Server -> Client)
     CMD_MSG_ACK       = 52; // Generic message acknowledgment (Server -> Client)
-}
-
-// ContentType determines how to parse the content field
-enum ContentType {
-    CONTENT_TEXT    = 0;
 }
 
 // Envelope is the top-level message structure
@@ -29,9 +25,16 @@ message Envelope {
     int64 timestamp = 3;       // Server timestamp
 
     oneof payload {
-        P2PMessage p2p_msg = 100;    // P2P message
-        MessageAck msg_ack = 101;    // Generic message acknowledgment
+        RegisterReq register_req = 100;
+        RegisterResp register_res = 101;
+        P2PMessage p2p_msg = 102;
+        MessageAck msg_ack = 103;
     }
+}
+
+// ContentType determines how to parse the content field
+enum ContentType {
+    CONTENT_TEXT    = 0;
 }
 
 // Message structure for P2P communication

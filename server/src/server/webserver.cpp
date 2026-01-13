@@ -4,7 +4,7 @@ using namespace std;
 Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const char* sqlUser, const char* sqlPwd,
                      const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
     : port_(port), timeoutMS_(timeoutMS), isClose_(false), timer_(new HeapTimer()),
-      threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
+      threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()), authService_(new AuthService()) {
     const char* sql_env_host = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "localhost";
 
     if (openLog) {
@@ -16,7 +16,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
             LOG_INFO("Listen Mode: %s, OpenConn Mode: %s", (listenEvent_ & EPOLLET ? "ET" : "LT"),
                      (connEvent_ & EPOLLET ? "ET" : "LT"));
             LOG_INFO("LogSys level: %d", logLevel);
-            LOG_INFO("srcDir: %s", HttpConn::srcDir);
+            LOG_INFO("srcDir: %s", TcpConnection::src_dir);
             LOG_INFO("MySQL Host: %s", sql_env_host);
             LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", connPoolNum, threadNum);
         }
@@ -25,8 +25,8 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
     strcat(srcDir_, "/resources/");
-    HttpConn::userCount = 0;
-    HttpConn::srcDir = srcDir_;
+    TcpConnection::user_count = 0;
+    TcpConnection::src_dir = srcDir_;
 
     SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);
@@ -63,7 +63,7 @@ void Webserver::initEventMode_(int trigMode) {
             connEvent_ |= EPOLLET;
             break;
     }
-    HttpConn::isET = (connEvent_ & EPOLLET);
+    TcpConnection::is_et = (connEvent_ & EPOLLET);
 }
 
 void Webserver::start() {
@@ -85,17 +85,17 @@ void Webserver::start() {
             }
             // If the file descriptor is an error, close the connection
             else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
-                closeConn_(&users_.at(fd));
+                closeConn_(connections_.at(fd).get());
             }
             // If the file descriptor is readable, deal with the read event
             else if (events & EPOLLIN) {
-                assert(users_.count(fd) > 0);
-                dealRead_(&users_[fd]);
+                assert(connections_.count(fd) > 0);
+                dealRead_(connections_[fd].get());
             }
             // If the file descriptor is writable, deal with the write event
             else if (events & EPOLLOUT) {
-                assert(users_.count(fd) > 0);
-                dealWrite_(&users_[fd]);
+                assert(connections_.count(fd) > 0);
+                dealWrite_(connections_[fd].get());
             } else {
                 LOG_ERROR("Unexpected event");
             }
@@ -112,22 +112,25 @@ void Webserver::sendError_(int fd, const char* info) {
     close(fd);
 }
 
-void Webserver::closeConn_(HttpConn* client) {
+void Webserver::closeConn_(TcpConnection* client) {
     assert(client);
-    LOG_INFO("Client[%d] quit!", client->getFd());
-    epoller_->delFd(client->getFd());
-    client->Close();
+    LOG_INFO("Client[%d] quit!", client->get_fd());
+    epoller_->delFd(client->get_fd());
+    client->close_conn();
 }
 
 void Webserver::addClient_(int fd, sockaddr_in addr) {
     assert(fd > 0);
-    users_[fd].init(fd, addr);
+    auto conn = std::make_unique<TcpConnection>();
+    conn->init(fd, addr);
+    TcpConnection* conn_ptr = conn.get();
+    connections_[fd] = std::move(conn);
     if (timeoutMS_ > 0) {
-        timer_->add(fd, timeoutMS_, std::bind(&Webserver::closeConn_, this, &users_[fd]));
+        timer_->add(fd, timeoutMS_, std::bind(&Webserver::closeConn_, this, conn_ptr));
     }
     epoller_->addFd(fd, EPOLLIN | connEvent_);
     setFdNonblock(fd);
-    LOG_INFO("Client[%d] in!", users_[fd].getFd());
+    LOG_INFO("Client[%d] in!", conn_ptr->get_fd());
 }
 
 void Webserver::dealListen_() {
@@ -138,7 +141,7 @@ void Webserver::dealListen_() {
         int fd = accept(listenFd_, (struct sockaddr*)&addr, &len);
         if (fd <= 0) {
             return;
-        } else if (HttpConn::userCount >= MAX_FD) {
+        } else if (TcpConnection::user_count >= MAX_FD) {
             sendError_(fd, "Server busy!");
             LOG_WARN("Clients is full!");
             return;
@@ -147,26 +150,26 @@ void Webserver::dealListen_() {
     } while (listenEvent_ & EPOLLET);
 }
 
-void Webserver::dealRead_(HttpConn* client) {
+void Webserver::dealRead_(TcpConnection* client) {
     assert(client);
     extendTime_(client);
     threadPool_->AddTask(std::bind(&Webserver::onRead_, this, client));
 }
 
-void Webserver::dealWrite_(HttpConn* client) {
+void Webserver::dealWrite_(TcpConnection* client) {
     assert(client);
     extendTime_(client);
     threadPool_->AddTask(std::bind(&Webserver::onWrite_, this, client));
 }
 
-void Webserver::extendTime_(HttpConn* client) {
+void Webserver::extendTime_(TcpConnection* client) {
     assert(client);
     if (timeoutMS_ > 0) {
-        timer_->adjust(client->getFd(), timeoutMS_);
+        timer_->adjust(client->get_fd(), timeoutMS_);
     }
 }
 
-void Webserver::onRead_(HttpConn* client) {
+void Webserver::onRead_(TcpConnection* client) {
     assert(client);
     int ret = -1;
     int readErrno = 0;
@@ -178,33 +181,33 @@ void Webserver::onRead_(HttpConn* client) {
     onProcess_(client);
 }
 
-// Resolve the requeest data
-void Webserver::onProcess_(HttpConn* client) {
+// Resolve the request data
+void Webserver::onProcess_(TcpConnection* client) {
     if (client->process()) {
         // If the parsing succeeds, modify the event to EPOLLOUT(write)
-        epoller_->modFd(client->getFd(), connEvent_ | EPOLLOUT);
+        epoller_->modFd(client->get_fd(), connEvent_ | EPOLLOUT);
     } else {
         // If the parsing fails, modify the event to EPOLLIN(read)
-        epoller_->modFd(client->getFd(), connEvent_ | EPOLLIN);
+        epoller_->modFd(client->get_fd(), connEvent_ | EPOLLIN);
     }
 }
 
-void Webserver::onWrite_(HttpConn* client) {
+void Webserver::onWrite_(TcpConnection* client) {
     assert(client);
     int ret = -1;
     int writeErrno = 0;
     ret = client->write(&writeErrno);
-    if (client->toWriteBytes() == 0) {
+    if (client->to_write_bytes() == 0) {
         // Write completely
-        if (client->isKeepAlive()) {
+        if (client->is_keep_alive()) {
             // If the connection is persistent, modify the event to EPOLLIN
-            epoller_->modFd(client->getFd(), connEvent_ | EPOLLIN);
+            epoller_->modFd(client->get_fd(), connEvent_ | EPOLLIN);
             return;
         }
     } else if (ret < 0) {
         // The buffer is full
         if (writeErrno == EAGAIN) {
-            epoller_->modFd(client->getFd(), connEvent_ | EPOLLOUT);
+            epoller_->modFd(client->get_fd(), connEvent_ | EPOLLOUT);
             return;
         }
     }

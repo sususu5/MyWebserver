@@ -74,6 +74,8 @@ cmake --preset debug
 cmake --build build/debug
 ```
 
+Every time the sql files are changed, the project needs to be re-compiled to generate the C++ models.
+
 **Run:**
 ```bash
 ./build/release/server/src/server

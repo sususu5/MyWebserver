@@ -1,5 +1,4 @@
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#pragma once
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -9,12 +8,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <unordered_map>
-#include "../http/httpconn.h"
 #include "../log/log.h"
 #include "../pool/sqlconnpool.h"
 #include "../pool/threadpool.h"
+#include "../service/auth_service.h"
 #include "../timer/heaptimer.h"
 #include "epoller.h"
+#include "tcp_connection.h"
 
 class Webserver {
 public:
@@ -29,16 +29,16 @@ private:
     void addClient_(int fd, sockaddr_in addr);
 
     void dealListen_();
-    void dealWrite_(HttpConn* client);
-    void dealRead_(HttpConn* client);
+    void dealWrite_(TcpConnection* client);
+    void dealRead_(TcpConnection* client);
 
     void sendError_(int fd, const char* info);
-    void extendTime_(HttpConn* client);
-    void closeConn_(HttpConn* client);
+    void extendTime_(TcpConnection* client);
+    void closeConn_(TcpConnection* client);
 
-    void onRead_(HttpConn* client);
-    void onWrite_(HttpConn* client);
-    void onProcess_(HttpConn* client);
+    void onRead_(TcpConnection* client);
+    void onWrite_(TcpConnection* client);
+    void onProcess_(TcpConnection* client);
 
     static const int MAX_FD = 65536;
     static int setFdNonblock(int fd);
@@ -56,7 +56,7 @@ private:
     std::unique_ptr<HeapTimer> timer_;
     std::unique_ptr<ThreadPool> threadPool_;
     std::unique_ptr<Epoller> epoller_;
-    std::unordered_map<int, HttpConn> users_;
+    std::unique_ptr<AuthService> authService_;
+    // Store connections by fd, using unique_ptr since TcpConnection is not copyable
+    std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;
 };
-
-#endif

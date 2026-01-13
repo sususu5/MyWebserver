@@ -1,5 +1,4 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#pragma once
 
 #include <assert.h>
 #include <sys/uio.h>
@@ -56,5 +55,3 @@ private:
     std::atomic<std::size_t> readPos_;
     std::atomic<std::size_t> writePos_;
 };
-
-#endif  // BUFFER_H

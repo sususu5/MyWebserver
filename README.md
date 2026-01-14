@@ -76,10 +76,12 @@ cmake --build build/debug
 
 Every time the sql files are changed, the project needs to be re-compiled to generate the C++ models.
 
-**Run:**
+**Run Server & Test:**
 ```bash
-./build/release/server/src/server
 ./build/debug/server/src/server
+./build/release/server/src/server
+
+python3 test/test_register.py [username] [password]
 ```
 
 ---

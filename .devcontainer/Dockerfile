@@ -16,8 +16,12 @@ RUN apt-get update && apt-get install -y \
     clang-format \
     ninja-build \ 
     python3 \
+    python3-pip \
+    protobuf-compiler \
     python3-pyparsing \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir protobuf
 
 WORKDIR /opt
 

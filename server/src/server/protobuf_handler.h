@@ -44,3 +44,11 @@ private:
     static constexpr size_t kHeaderSize = 4;            // Length prefix size
     static constexpr size_t kMaxMessageSize = 1 << 20;  // 1MB max message size
 };
+
+// Specialization for std::format to handle im::CommandType directly
+template <>
+struct std::formatter<im::CommandType> : std::formatter<int> {
+    auto format(im::CommandType cmd, format_context& ctx) const {
+        return formatter<int>::format(static_cast<int>(cmd), ctx);
+    }
+};

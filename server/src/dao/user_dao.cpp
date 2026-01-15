@@ -22,7 +22,7 @@ auto UserDao::QueryExist(const std::string& username) -> bool {
         auto result = (*sql)(select(user.username).from(user).where(user.username == username));
         return !result.empty();
     } catch (const std::exception& e) {
-        LOG_ERROR("QueryExist error: %s", e.what());
+        LOG_ERROR("QueryExist error: {}", e.what());
         return false;
     }
 }
@@ -40,7 +40,7 @@ auto UserDao::Insert(const std::string& username, const std::string& password) -
         (*sql)(insert_into(user).set(user.username = username, user.password = password));
         return true;
     } catch (const std::exception& e) {
-        LOG_ERROR("Insert error: %s", e.what());
+        LOG_ERROR("Insert error: {}", e.what());
         return false;
     }
 }
@@ -60,7 +60,7 @@ auto UserDao::VerifyUser(const std::string& username, const std::string& passwor
         const auto& row = result.front();
         return row.password == password;
     } catch (const std::exception& e) {
-        LOG_ERROR("VerifyUser error: %s", e.what());
+        LOG_ERROR("VerifyUser error: {}", e.what());
         return false;
     }
 }

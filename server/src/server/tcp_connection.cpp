@@ -23,7 +23,7 @@ void TcpConnection::init(int socket_fd, const sockaddr_in& addr) {
     protocol_determined_ = false;
     handler_.reset();
     iov_cnt_ = 0;
-    LOG_INFO("Client[%d](%s:%d) in, user_count:%d", fd_, get_ip(), get_port(), (int)user_count);
+    LOG_INFO("Client[{}]({}:{}) in, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
 }
 
 void TcpConnection::close_conn() {
@@ -31,7 +31,7 @@ void TcpConnection::close_conn() {
         is_close_ = true;
         user_count--;
         close(fd_);
-        LOG_INFO("Client[%d](%s:%d) quit, user_count:%d", fd_, get_ip(), get_port(), (int)user_count);
+        LOG_INFO("Client[{}]({}:{}) quit, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
     }
 }
 

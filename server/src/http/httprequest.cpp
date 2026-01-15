@@ -54,7 +54,7 @@ bool HttpRequest::parse(Buffer& buff) {
         // Skip the '\r\n' characters
         buff.retrieve_until(lineEnd + 2);
     }
-    LOG_DEBUG("[%s], [%s], [%s]", method_.c_str(), path_.c_str(), version_.c_str());
+    LOG_DEBUG("[{}], [{}], [{}]", method_.c_str(), path_.c_str(), version_.c_str());
     return true;
 }
 
@@ -98,7 +98,7 @@ void HttpRequest::ParseBody_(const string& line) {
     ParsePost_();
     // The state is set to FINISH, which means the parsing is complete
     state_ = FINISH;
-    LOG_DEBUG("Body: %s, len: %d", line.c_str(), line.size());
+    LOG_DEBUG("Body: {}, len: {}", line, line.size());
 }
 
 int HttpRequest::ConvertHex(char ch) {
@@ -113,7 +113,7 @@ void HttpRequest::ParsePost_() {
         ParseFromUrlencoded_();
         if (DEFAULT_HTML_TAG.count(path_)) {
             int tag = DEFAULT_HTML_TAG.find(path_)->second;
-            LOG_DEBUG("Tag: %d", tag);
+            LOG_DEBUG("Tag: {}", tag);
             if (tag == 0 || tag == 1) {
                 bool isLogin = (tag == 1);
                 if (UserVerify(post_["username"], post_["password"], isLogin)) {
@@ -152,7 +152,7 @@ void HttpRequest::ParseFromUrlencoded_() {
                 value = body_.substr(j, i - j);
                 j = i + 1;
                 post_[key] = value;
-                LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
+                LOG_DEBUG("{} = {}", key, value);
                 break;
             default:
                 break;
@@ -170,7 +170,7 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
         LOG_ERROR("Username or password is empty!");
         return false;
     }
-    LOG_INFO("Verify name: %s pwd: %s", name.c_str(), pwd.c_str());
+    LOG_INFO("Verify name: {} pwd: {}", name, pwd);
 
     UserDao dao;
     if (isLogin) {

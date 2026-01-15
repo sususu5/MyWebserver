@@ -10,7 +10,7 @@ bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
         return false;
     }
 
-    LOG_DEBUG("Received message: cmd=%d, seq=%lu", request.cmd(), request.seq());
+    LOG_DEBUG("Received message: cmd={}, seq={}", request.cmd(), request.seq());
 
     im::Envelope response;
     response.set_seq(request.seq());
@@ -18,7 +18,7 @@ bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
     dispatch(request, response);
     encode_message(response, write_buff);
 
-    LOG_DEBUG("Sent response: cmd=%d, seq=%lu", response.cmd(), response.seq());
+    LOG_DEBUG("Sent response: cmd={}, seq={}", response.cmd(), response.seq());
     return true;
 }
 
@@ -32,7 +32,7 @@ bool ProtobufHandler::try_decode_message(Buffer& read_buff, im::Envelope& envelo
     msg_len = ntohl(msg_len);
 
     if (msg_len > kMaxMessageSize) {
-        LOG_ERROR("Message too large: %u bytes (max: %zu)", msg_len, kMaxMessageSize);
+        LOG_ERROR("Message too large: {} bytes (max: {})", msg_len, kMaxMessageSize);
         read_buff.retrieve(kHeaderSize);
         return false;
     }
@@ -88,7 +88,7 @@ void ProtobufHandler::handle_register(const im::Envelope& request, im::Envelope&
     }
 
     const auto& req = request.register_req();
-    LOG_INFO("Register request: username=%s", req.username().c_str());
+    LOG_INFO("Register request: username={}", req.username());
 
     im::RegisterResp register_resp;
     auth_service_->user_register(req, &register_resp);
@@ -97,6 +97,6 @@ void ProtobufHandler::handle_register(const im::Envelope& request, im::Envelope&
 }
 
 void ProtobufHandler::handle_unknown(const im::Envelope& request, im::Envelope& response) {
-    LOG_WARN("Unknown command received: %d", request.cmd());
+    LOG_WARN("Unknown command received: {}", request.cmd());
     response.set_cmd(im::CMD_UNKNOWN);
 }

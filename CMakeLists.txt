@@ -30,7 +30,7 @@ message(STATUS "Found Protobuf: ${protobuf_VERSION}")
 # ---------------------------------------------------------------------------
 add_subdirectory(proto)
 add_subdirectory(server/src)
-add_subdirectory(test)
+add_subdirectory(tests)
 
 # ---------------------------------------------------------------------------
 # Packaging / installation rules (optional)

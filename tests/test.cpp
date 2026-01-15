@@ -9,22 +9,22 @@
 
 void TestLog() {
     int cnt = 0, level = 0;
-    Log::Instance()->init(level, "./testlog1", ".log", 0);
+    Log::instance()->init(level, "./testlog1", ".log", 0);
     for (level = 3; level >= 0; level--) {
-        Log::Instance()->SetLevel(level);
+        Log::instance()->set_level(level);
         for (int j = 0; j < 10000; j++) {
             for (int i = 0; i < 4; i++) {
-                LOG_BASE(i, "%s 111111111 %d ============= ", "Test", cnt++);
+                LOG_BASE(i, "{} 111111111 {} ============= ", "Test", cnt++);
             }
         }
     }
     cnt = 0;
-    Log::Instance()->init(level, "./testlog2", ".log", 5000);
+    Log::instance()->init(level, "./testlog2", ".log", 5000);
     for (level = 0; level < 4; level++) {
-        Log::Instance()->SetLevel(level);
+        Log::instance()->set_level(level);
         for (int j = 0; j < 10000; j++) {
             for (int i = 0; i < 4; i++) {
-                LOG_BASE(i, "%s 222222222 %d ============= ", "Test", cnt++);
+                LOG_BASE(i, "{} 222222222 {} ============= ", "Test", cnt++);
             }
         }
     }
@@ -32,12 +32,12 @@ void TestLog() {
 
 void ThreadLogTask(int i, int cnt) {
     for (int j = 0; j < 10000; j++) {
-        LOG_BASE(i, "PID:[%04d]======= %05d ========= ", gettid(), cnt++);
+        LOG_BASE(i, "PID:[{:04d}]======= {:05d} ========= ", gettid(), cnt++);
     }
 }
 
 void TestThreadPool() {
-    Log::Instance()->init(0, "./testThreadpool", ".log", 5000);
+    Log::instance()->init(0, "./testThreadpool", ".log", 5000);
     ThreadPool threadpool(6);
     for (int i = 0; i < 18; i++) {
         threadpool.AddTask(std::bind(ThreadLogTask, i % 4, i * 10000));

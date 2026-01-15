@@ -8,17 +8,17 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     const char* sql_env_host = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "localhost";
 
     if (openLog) {
-        Log::Instance()->init(logLevel, "./log", ".log", logQueSize);
+        Log::instance()->init(logLevel, "./log", ".log", logQueSize);
         if (isClose_) {
             LOG_ERROR("========== Server init error!==========");
         } else {
             LOG_INFO("========== Server init ==========");
-            LOG_INFO("Listen Mode: %s, OpenConn Mode: %s", (listenEvent_ & EPOLLET ? "ET" : "LT"),
+            LOG_INFO("Listen Mode: {}, OpenConn Mode: {}", (listenEvent_ & EPOLLET ? "ET" : "LT"),
                      (connEvent_ & EPOLLET ? "ET" : "LT"));
-            LOG_INFO("LogSys level: %d", logLevel);
-            LOG_INFO("srcDir: %s", TcpConnection::src_dir);
-            LOG_INFO("MySQL Host: %s", sql_env_host);
-            LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", connPoolNum, threadNum);
+            LOG_INFO("LogSys level: {}", logLevel);
+            LOG_INFO("srcDir: {}", TcpConnection::src_dir);
+            LOG_INFO("MySQL Host: {}", sql_env_host);
+            LOG_INFO("SqlConnPool num: {}, ThreadPool num: {}", connPoolNum, threadNum);
         }
     }
 
@@ -108,14 +108,14 @@ void Webserver::sendError_(int fd, const char* info) {
     assert(fd > 0);
     int ret = send(fd, info, strlen(info), 0);
     if (ret < 0) {
-        LOG_WARN("send error to client[%d] error!", fd);
+        LOG_WARN("send error to client[{}] error!", fd);
     }
     close(fd);
 }
 
 void Webserver::closeConn_(TcpConnection* client) {
     assert(client);
-    LOG_INFO("Client[%d] quit!", client->get_fd());
+    LOG_INFO("Client[{}] quit!", client->get_fd());
     epoller_->delFd(client->get_fd());
     client->close_conn();
 }
@@ -131,7 +131,7 @@ void Webserver::addClient_(int fd, sockaddr_in addr) {
     }
     epoller_->addFd(fd, EPOLLIN | connEvent_);
     setFdNonblock(fd);
-    LOG_INFO("Client[%d] in!", conn_ptr->get_fd());
+    LOG_INFO("Client[{}] in!", conn_ptr->get_fd());
 }
 
 void Webserver::dealListen_() {
@@ -225,7 +225,7 @@ bool Webserver::initSocket_() {
     // Create a socket
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd_ < 0) {
-        LOG_ERROR("Create socket error!", port_);
+        LOG_ERROR("Create socket error! port:{}", port_);
         return false;
     }
 
@@ -241,7 +241,7 @@ bool Webserver::initSocket_() {
     // Bind the socket to the address
     ret = bind(listenFd_, (struct sockaddr*)&addr, sizeof(addr));
     if (ret < 0) {
-        LOG_ERROR("Bind Port:%d error!", port_);
+        LOG_ERROR("Bind Port:{} error!", port_);
         close(listenFd_);
         return false;
     }
@@ -249,7 +249,7 @@ bool Webserver::initSocket_() {
     // Start listening
     ret = listen(listenFd_, 8);
     if (ret < 0) {
-        LOG_ERROR("Listen port:%d error!", port_);
+        LOG_ERROR("Listen port:{} error!", port_);
         close(listenFd_);
         return false;
     }
@@ -262,7 +262,7 @@ bool Webserver::initSocket_() {
         return false;
     }
     setFdNonblock(listenFd_);
-    LOG_INFO("Server port:%d", port_);
+    LOG_INFO("Server port:{}", port_);
     return true;
 }
 

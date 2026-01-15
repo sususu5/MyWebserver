@@ -25,10 +25,10 @@ auto AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* re
         resp->set_success(true);
         // TODO: Generate user ID
         resp->set_user_id(username);
-        LOG_INFO("Register success: %s", username.c_str());
+        LOG_INFO("Register success: {}", username.c_str());
     } else {
         resp->set_success(false);
         resp->set_error_msg("Database internal error");
-        LOG_ERROR("Register failed for user: %s", username.c_str());
+        LOG_ERROR("Register failed for user: {}", username.c_str());
     }
 }

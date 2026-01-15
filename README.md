@@ -81,7 +81,7 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 ./build/debug/server/src/server
 ./build/release/server/src/server
 
-python3 test/test_register.py [username] [password]
+python3 tests/test_register.py [username] [password]
 ```
 
 ---
@@ -95,6 +95,8 @@ docker-compose up --build
 ```
 
 **Code Formatting:**
+Using snake_case for variable names and function names, and CamelCase for class names.
+
 ```bash
 find server/src test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
 ```

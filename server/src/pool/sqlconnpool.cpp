@@ -22,7 +22,7 @@ auto SqlConnPool::Init(const char* host, uint16_t port, const char* user, const 
             auto conn = new sqlpp::mysql::connection(config);
             connQue_.emplace(conn);
         } catch (const std::exception& e) {
-            LOG_ERROR("MYSQL init error: %s", e.what());
+            LOG_ERROR("MYSQL init error: {}", e.what());
         }
     }
     MAX_CONN_ = connSize;

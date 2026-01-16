@@ -18,9 +18,10 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     protobuf-compiler \
-    python3-protobuf \
     python3-pyparsing \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --break-system-packages protobuf==5.29.5
 
 WORKDIR /opt
 

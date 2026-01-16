@@ -1,66 +1,41 @@
 #include "user_dao.h"
 #include <sqlpp11/mysql/connection.h>
 #include <sqlpp11/sqlpp11.h>
-#include "model/schema.h"
 
-using namespace model;
+UserDao::UserDao() = default;
 
-UserDao::UserDao() {}
-
-UserDao::~UserDao() {}
+UserDao::~UserDao() = default;
 
 auto UserDao::QueryExist(const std::string& username) -> bool {
-    sqlpp::mysql::connection* sql = nullptr;
-    SqlConnRAII conn(&sql, SqlConnPool::Instance());
-    if (!sql) {
-        LOG_ERROR("Get Database Connection failed!");
-        return false;
-    }
-
-    try {
-        const auto& user = User{};
-        auto result = (*sql)(select(user.username).from(user).where(user.username == username));
-        return !result.empty();
-    } catch (const std::exception& e) {
-        LOG_ERROR("QueryExist error: {}", e.what());
-        return false;
-    }
+    return exists("QueryExist", table_.username == username);
 }
 
 auto UserDao::Insert(const std::string& username, const std::string& password) -> bool {
-    sqlpp::mysql::connection* sql = nullptr;
-    SqlConnRAII conn(&sql, SqlConnPool::Instance());
-    if (!sql) {
-        LOG_ERROR("Get Database Connection failed!");
-        return false;
-    }
-
-    try {
-        const auto& user = User{};
-        (*sql)(insert_into(user).set(user.username = username, user.password = password));
-        return true;
-    } catch (const std::exception& e) {
-        LOG_ERROR("Insert error: {}", e.what());
-        return false;
-    }
+    return insert("Insert", table_.username = username, table_.password = password);
 }
 
 auto UserDao::VerifyUser(const std::string& username, const std::string& password) -> bool {
-    sqlpp::mysql::connection* sql = nullptr;
-    SqlConnRAII conn(&sql, SqlConnPool::Instance());
-    if (!sql) {
-        LOG_ERROR("Get Database Connection failed!");
-        return false;
-    }
+    return execute_bool(
+        [&](auto& conn) {
+            auto result = conn(sqlpp::select(table_.password).from(table_).where(table_.username == username));
+            if (result.empty()) return false;
+            return result.front().password == password;
+        },
+        "VerifyUser");
+}
 
-    try {
-        const auto& user = User{};
-        auto result = (*sql)(select(user.password).from(user).where(user.username == username));
-        if (result.empty()) return false;
-        const auto& row = result.front();
-        return row.password == password;
-    } catch (const std::exception& e) {
-        LOG_ERROR("VerifyUser error: {}", e.what());
-        return false;
-    }
+im::User UserDao::FindByUsername(const std::string& username) {
+    return execute(
+        [&](auto& conn) -> im::User {
+            auto result =
+                conn(sqlpp::select(table_.id, table_.username).from(table_).where(table_.username == username));
+            im::User user;
+            if (!result.empty()) {
+                const auto& row = result.front();
+                user.set_user_id(std::to_string(row.id));
+                user.set_username(row.username);
+            }
+            return user;
+        },
+        "FindByUsername", im::User{});
 }

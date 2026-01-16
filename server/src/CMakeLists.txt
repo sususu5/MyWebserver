@@ -35,10 +35,11 @@ add_custom_target(generate_sql_models DEPENDS ${GENERATED_SCHEMA_HEADER})
 # ---------------------------------------------------------------------------
 file(GLOB_RECURSE PROJECT_SRC CONFIGURE_DEPENDS
      "${CMAKE_CURRENT_SOURCE_DIR}/buffer/*.cpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/handler/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/http/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/log/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/pool/*.cpp"
-     "${CMAKE_CURRENT_SOURCE_DIR}/server/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/timer/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/dao/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/service/*.cpp"

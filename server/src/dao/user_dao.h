@@ -1,14 +1,21 @@
 #pragma once
 
 #include <string>
-#include "../pool/sqlconnpool.h"
+#include "base_dao.h"
+#include "common.pb.h"
+#include "model/schema.h"
 
-class UserDao {
+class UserDao : public BaseDao<model::ImUser, std::string> {
 public:
     UserDao();
     ~UserDao();
 
-    auto QueryExist(const std::string& username) -> bool;
-    auto Insert(const std::string& username, const std::string& password) -> bool;
-    auto VerifyUser(const std::string& username, const std::string& password) -> bool;
+    // Check if user exists
+    bool QueryExist(const std::string& username);
+    // Insert a new user
+    bool Insert(const std::string& username, const std::string& password);
+    // Verify user credentials
+    bool VerifyUser(const std::string& username, const std::string& password);
+    // Find user by username
+    im::User FindByUsername(const std::string& username);
 };

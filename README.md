@@ -46,6 +46,8 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ## 🗺️ Development Roadmap
 
+After updating the proto files, the project needs to be re-compiled to generate the C++ models.
+
 1. Implementing user registration and login
 2. Implementing user adding friend and removing friend
 3. Implementing user sending message to friend

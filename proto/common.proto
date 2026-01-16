@@ -1,11 +1,18 @@
 syntax = "proto3";
 package im;
+
 option cc_enable_arenas = true;
+
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0; 
+  USER_STATUS_OFFLINE = 1;
+  USER_STATUS_ONLINE  = 2;
+}
 
 message User {
     string user_id = 1;
     string username = 2;
-    int32 status = 3;
+    UserStatus status = 3;
 }
 
 message Empty {}

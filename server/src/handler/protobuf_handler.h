@@ -3,8 +3,8 @@
 #include <functional>
 #include <unordered_map>
 #include "../service/auth_service.h"
+#include "core/tcp_connection.h"
 #include "message.pb.h"
-#include "tcp_connection.h"
 
 /**
  * ProtobufHandler - Handles binary protobuf protocol over TCP

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../dao/user_dao.h"
+#include "../utils/uuid_generator.h"
 #include "auth_service.pb.h"
 
 class AuthService {
@@ -15,4 +16,5 @@ public:
 
 private:
     UserDao user_dao_;
+    UuidGenerator uuid_generator_;
 };

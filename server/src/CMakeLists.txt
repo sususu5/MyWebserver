@@ -43,6 +43,7 @@ file(GLOB_RECURSE PROJECT_SRC CONFIGURE_DEPENDS
      "${CMAKE_CURRENT_SOURCE_DIR}/timer/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/dao/*.cpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/service/*.cpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cpp"
 )
 
 # Remove main.cpp from the library source list

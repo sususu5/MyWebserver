@@ -1,5 +1,6 @@
 syntax = "proto3";
 package im;
+
 option cc_enable_arenas = true;
 
 import "common.proto";

@@ -1,5 +1,6 @@
 #include "auth_service.h"
 #include "../log/log.h"
+#include "../utils/uuid_generator.h"
 
 AuthService::AuthService() {}
 
@@ -21,11 +22,11 @@ void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* re
         return;
     }
 
-    if (user_dao_.Insert(username, password)) {
+    const auto& user_id = uuid_generator_.generate();
+    if (user_dao_.Insert(user_id, username, password)) {
         resp->set_success(true);
-        // TODO: Generate user ID
-        resp->set_user_id(username);
-        LOG_INFO("Register success: {}", username);
+        resp->set_user_id(user_id);
+        LOG_INFO("Register success: {} (ID: {})", username, user_id);
     } else {
         resp->set_success(false);
         resp->set_error_msg("Database internal error");
@@ -51,7 +52,6 @@ void AuthService::user_login(const im::LoginReq& req, im::LoginResp* resp) {
 
     if (user_dao_.VerifyUser(username, password)) {
         resp->set_success(true);
-        // TODO: Generate user ID
         *resp->mutable_user_info() = user_dao_.FindByUsername(username);
         LOG_INFO("Login success: {}", username);
     } else {

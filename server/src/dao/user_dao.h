@@ -13,7 +13,7 @@ public:
     // Check if user exists
     bool QueryExist(const std::string& username);
     // Insert a new user
-    bool Insert(const std::string& username, const std::string& password);
+    bool Insert(const std::string& user_id, const std::string& username, const std::string& password);
     // Verify user credentials
     bool VerifyUser(const std::string& username, const std::string& password);
     // Find user by username

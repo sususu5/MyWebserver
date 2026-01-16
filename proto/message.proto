@@ -1,5 +1,6 @@
 syntax = "proto3";
 package im;
+
 option cc_enable_arenas = true;
 
 import "auth_service.proto";
@@ -27,8 +28,8 @@ message Envelope {
     oneof payload {
         RegisterReq register_req = 100;
         RegisterResp register_res = 101;
-        P2PMessage p2p_msg = 102;
-        MessageAck msg_ack = 103;
+        LoginReq login_req = 102;
+        LoginResp login_res = 103;
     }
 }
 

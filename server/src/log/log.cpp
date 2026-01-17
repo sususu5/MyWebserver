@@ -46,7 +46,7 @@ void Log::init(int level = 1, const char* path, const char* suffix, int maxQueue
     line_count_ = 0;
     path_ = path;
     suffix_ = suffix;
-    
+
     // Create log directory if it doesn't exist
     struct stat st;
     if (stat(path_, &st) != 0) {
@@ -56,7 +56,7 @@ void Log::init(int level = 1, const char* path, const char* suffix, int maxQueue
     auto now = std::chrono::system_clock::now();
     auto now_days = std::chrono::floor<std::chrono::days>(now);
     auto ymd = std::chrono::year_month_day{now_days};
-    
+
     std::string tail = std::format("{:%Y_%m_%d}", ymd);
     std::string file_name = std::format("{}/{}{}", path_, tail, suffix_);
 
@@ -71,7 +71,7 @@ void Log::init(int level = 1, const char* path, const char* suffix, int maxQueue
         }
 
         fp_ = fopen(file_name.c_str(), "a");
-        
+
         // Retry if failed (though directory check above should handle it)
         if (fp_ == nullptr) {
             mkdir(path_, 0777);

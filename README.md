@@ -100,7 +100,7 @@ docker-compose up --build
 Using snake_case for variable names and function names, and CamelCase for class names.
 
 ```bash
-find server/src test -name "*.h" -o -name "*.cpp" | xargs clang-format -i
+find server/src tests -name "*.h" -o -name "*.cpp" | xargs clang-format -i
 ```
 
 *Note: The server currently listens on port 1316.*

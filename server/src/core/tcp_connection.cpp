@@ -1,4 +1,4 @@
-#include "core/tcp_connection.h"
+#include "tcp_connection.h"
 #include <errno.h>
 #include <unistd.h>
 #include <unordered_set>
@@ -89,7 +89,7 @@ void TcpConnection::setup_iov_for_http() {
         iov_cnt_ = 2;
     }
 
-    LOG_DEBUG("HTTP iov setup: header=%zu, file=%zu", iov_[0].iov_len, iov_cnt_ > 1 ? iov_[1].iov_len : 0);
+    LOG_DEBUG("HTTP iov setup: header={}, file={}", iov_[0].iov_len, iov_cnt_ > 1 ? iov_[1].iov_len : 0);
 }
 
 size_t TcpConnection::to_write_bytes() {

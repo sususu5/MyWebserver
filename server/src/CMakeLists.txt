@@ -7,6 +7,9 @@ find_package(Sqlpp11 CONFIG REQUIRED COMPONENTS MariaDB)
 
 find_package(Protobuf REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(jwt-cpp CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # ---------------------------------------------------------------------------
 # Code Generation (DDL -> C++)
@@ -68,6 +71,10 @@ target_link_libraries(mywebserver PUBLIC
     protobuf::libprotobuf
     sqlpp11::sqlpp11
     sqlpp11::mariadb
+    jwt-cpp::jwt-cpp
+    nlohmann_json::nlohmann_json
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 
 if(TARGET proto_generated)

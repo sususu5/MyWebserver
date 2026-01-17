@@ -12,6 +12,8 @@ enum CommandType {
     // Auth commands
     CMD_REGISTER_REQ  = 1;
     CMD_REGISTER_RES  = 2;
+    CMD_LOGIN_REQ     = 3;
+    CMD_LOGIN_RES     = 4;
 
     // Message commands
     CMD_P2P_MSG_REQ   = 50; // P2P message request (Client -> Server)

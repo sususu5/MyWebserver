@@ -71,6 +71,9 @@ void ProtobufHandler::dispatch(const im::Envelope& request, im::Envelope& respon
         case im::CMD_REGISTER_REQ:
             handle_register(request, response);
             break;
+        case im::CMD_LOGIN_REQ:
+            handle_login(request, response);
+            break;
         default:
             handle_unknown(request, response);
             break;
@@ -94,6 +97,25 @@ void ProtobufHandler::handle_register(const im::Envelope& request, im::Envelope&
     auth_service_->user_register(req, &register_resp);
     response.set_cmd(im::CMD_REGISTER_RES);
     response.mutable_register_res()->CopyFrom(register_resp);
+}
+
+void ProtobufHandler::handle_login(const im::Envelope& request, im::Envelope& response) {
+    if (!request.has_login_req()) {
+        LOG_ERROR("CMD_LOGIN_REQ received but payload is missing");
+        response.set_cmd(im::CMD_LOGIN_RES);
+        auto* resp = response.mutable_login_res();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing login payload");
+        return;
+    }
+
+    const auto& req = request.login_req();
+    LOG_INFO("Login request: username={}", req.username());
+
+    im::LoginResp login_resp;
+    auth_service_->user_login(req, &login_resp);
+    response.set_cmd(im::CMD_LOGIN_RES);
+    response.mutable_login_res()->CopyFrom(login_resp);
 }
 
 void ProtobufHandler::handle_unknown(const im::Envelope& request, im::Envelope& response) {

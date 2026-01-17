@@ -1,6 +1,7 @@
 #include "auth_service.h"
 #include "../log/log.h"
 #include "../utils/uuid_generator.h"
+#include "../utils/token_util.h"
 
 AuthService::AuthService() {}
 
@@ -52,7 +53,11 @@ void AuthService::user_login(const im::LoginReq& req, im::LoginResp* resp) {
 
     if (user_dao_.VerifyUser(username, password)) {
         resp->set_success(true);
-        *resp->mutable_user_info() = user_dao_.FindByUsername(username);
+        auto user = user_dao_.FindByUsername(username);
+        *resp->mutable_user_info() = user;
+        std::string token = TokenUtil::create_token(user.user_id(), user.username());
+        resp->set_token(token);
+        
         LOG_INFO("Login success: {}", username);
     } else {
         resp->set_success(false);

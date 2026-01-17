@@ -35,6 +35,7 @@ private:
 
     // Command handlers
     void handle_register(const im::Envelope& request, im::Envelope& response);
+    void handle_login(const im::Envelope& request, im::Envelope& response);
     void handle_unknown(const im::Envelope& request, im::Envelope& response);
 
     // Services (injected dependencies)

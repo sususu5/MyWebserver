@@ -13,6 +13,8 @@
       "version>=": "3.21.12"
     },
     "sqlpp11",
-    "sqlpp11-connector-mysql"
+    "sqlpp11-connector-mysql",
+    "jwt-cpp",
+    "nlohmann-json"
   ]
 }

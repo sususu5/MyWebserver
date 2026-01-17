@@ -46,10 +46,57 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ## 🗺️ Development Roadmap
 
-After updating the proto files, the project needs to be re-compiled to generate the C++ models.
+> After updating the proto files, the project needs to be re-compiled to generate the C++ models.
 
-1. Implementing user adding friend and removing friend
-2. Implementing user sending message to friend
+### Phase 1: Security & Foundation 🔐
+
+- [ ] **Password Encryption**: Replace plaintext storage with bcrypt/Argon2 + salt
+- [ ] **JWT Secret Management**: Move hardcoded secret to environment variable
+- [ ] **Heartbeat Mechanism**: Implement client-server keepalive (PING/PONG)
+- [ ] **Message ID Generator**: Implement Snowflake algorithm for distributed unique IDs
+- [ ] **User Online Status**: In-memory status map with Redis sync
+
+### Phase 2: Core Messaging 💬
+
+- [ ] **P2P Message Send/Receive**: Implement `CMD_P2P_MSG_REQ` / `CMD_P2P_MSG_PUSH`
+- [ ] **Message Persistence**: Store messages in MySQL/MongoDB
+- [ ] **Message ACK Confirmation**: Implement `MessageAck` logic for delivery guarantee
+- [ ] **Offline Message Storage**: Create offline message table and pull mechanism
+- [ ] **Message Retry**: Exponential backoff retry for failed deliveries
+
+### Phase 3: Social Features 👥
+
+- [ ] **Friend Management**: Add friend / Remove friend / Friend list
+- [ ] **Friend Request Flow**: Request → Accept/Reject → Notification
+- [ ] **User Profile**: Avatar, nickname, status message
+- [ ] **Block User**: Implement user blocking functionality
+
+### Phase 4: Architecture Evolution 🏗️
+
+- [ ] **Master-Slave Reactor**: Evolve from single Reactor to multi-Reactor pattern
+- [ ] **Redis Integration**: Session management, user routing, online status
+- [ ] **Message Queue**: Integrate Kafka/RabbitMQ for async processing
+- [ ] **Multi-Node Deployment**: Stateless server + message routing layer
+- [ ] **Load Balancing**: Consistent hashing for user-server mapping
+
+### Phase 5: Production Readiness 🚀
+
+- [ ] **Rate Limiting**: Token bucket / Sliding window algorithm
+- [ ] **Circuit Breaker**: Graceful degradation under high load
+- [ ] **Monitoring**: Prometheus metrics + Grafana dashboards
+- [ ] **Distributed Tracing**: Jaeger/Zipkin integration
+- [ ] **Stress Testing**: Benchmark with webbench / wrk / custom tools
+- [ ] **Configuration Center**: etcd/consul for dynamic config
+
+### Completed ✅
+
+- [x] User Registration (Protobuf)
+- [x] User Login with JWT Token
+- [x] Protocol auto-detection (HTTP/Protobuf)
+- [x] MySQL Connection Pool
+- [x] Thread Pool
+- [x] Async Logging System
+- [x] Heap-based Timer for Connection Timeout
 
 ---
 

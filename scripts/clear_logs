@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+LOG_DIR="$PROJECT_ROOT/log"
+
+if [ -d "$LOG_DIR" ]; then
+    echo "Clearing logs in $LOG_DIR..."
+    rm -rf "$LOG_DIR"/*
+    echo "Logs cleared."
+else
+    echo "Log directory $LOG_DIR does not exist."
+fi

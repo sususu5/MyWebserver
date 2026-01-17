@@ -48,9 +48,8 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 After updating the proto files, the project needs to be re-compiled to generate the C++ models.
 
-1. Implementing user registration and login
-2. Implementing user adding friend and removing friend
-3. Implementing user sending message to friend
+1. Implementing user adding friend and removing friend
+2. Implementing user sending message to friend
 
 ---
 
@@ -83,7 +82,7 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 ./build/debug/server/src/server
 ./build/release/server/src/server
 
-python3 tests/test_register.py [username] [password]
+python3 tests/test_auth.py [username] [password]
 ```
 
 ---

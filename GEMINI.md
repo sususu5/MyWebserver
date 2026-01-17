@@ -1,90 +1,85 @@
 # MyWebserver Project Context
 
 ## Project Overview
-This project is a high-performance C++ server evolving from a standard web server into a **CLI Instant Messaging (IM) System**. It uses a **Reactor Pattern** with **Linux Epoll** for non-blocking I/O and **Protocol Buffers** for efficient binary communication.
+This project is a high-performance C++ server designed as a **CLI Instant Messaging (IM) System Backend**, evolving from a standard web server. It utilizes a **Reactor Pattern** with **Linux Epoll** for non-blocking I/O and **Protocol Buffers** for efficient binary communication.
 
-**Key Technologies:**
+**Key Features:**
+*   **Dual Protocol Support:** Handles both HTTP (static resources) and custom Protobuf-based IM protocol on the same port.
+*   **High Concurrency:** Implements a Reactor model with Epoll (ET/LT modes) and a custom `ThreadPool`.
+*   **Database Integration:** Uses **MySQL/MariaDB** accessed via **sqlpp11** (Type-safe Embedded Domain Specific Language) and a custom connection pool (`SqlConnPool`).
+*   **Authentication:** **JWT (JSON Web Token)** based authentication for the IM protocol.
+
+## Tech Stack
 *   **Language:** C++20
-*   **Networking:** Linux Epoll (Edge Triggered/Level Triggered), custom Reactor implementation.
+*   **Build System:** CMake (>3.21) with Vcpkg for dependency management.
+*   **Networking:** Linux Epoll, non-blocking I/O.
 *   **Serialization:** Google Protocol Buffers (v3).
-*   **Database:** MySQL/MariaDB, accessed via **sqlpp11** (Type-safe Embedded Domain Specific Language).
-*   **Concurrency:** Custom `ThreadPool` and `SqlConnPool`.
-*   **Build System:** CMake (>3.21) with Vcpkg for dependencies.
+*   **Security:** `jwt-cpp` (with `nlohmann-json`) for token generation/validation; OpenSSL.
+*   **Database:** MySQL/MariaDB, `sqlpp11`.
 
 ## Architecture
+
 The system is built around a central `Webserver` class that manages the event loop:
 
-1.  **Event Loop:** `Epoller` monitors file descriptors (sockets).
-2.  **Connection Handling:** `Webserver` accepts new connections and wraps them in `TcpConnection` objects.
-3.  **I/O:** Raw bytes are read into `Buffer` objects.
-4.  **Protocol Processing:** `TcpConnection` (or a handler) deserializes Protobuf messages (`Envelope`).
-5.  **Business Logic:** Requests are routed to services (e.g., `AuthService`) or handled directly.
-6.  **Data Access:** Services use DAOs (e.g., `UserDao`) which claim connections from `SqlConnPool` to execute type-safe queries using `sqlpp11`.
+1.  **Event Loop:** `Epoller` monitors file descriptors.
+2.  **Connection:** `TcpConnection` wraps client sockets.
+3.  **Protocol Dispatch:**
+    *   **HTTP:** Handled by `HttpHandler` (serves static files from `resources/` and simple POST logic).
+    *   **Protobuf:** Handled by `ProtobufHandler`. Dispatches commands (`CMD_REGISTER_REQ`, `CMD_LOGIN_REQ`, etc.) to `AuthService`.
+4.  **Service Layer:** `AuthService` manages business logic (Registration, Login).
+5.  **Data Access:** `UserDao` performs DB operations using connections from `SqlConnPool`.
 
-## Building and Running
+## Build and Run
 
 ### Prerequisites
-*   **DevContainer (Highly Recommended):** The project is configured for VS Code DevContainers, providing a consistent environment with all dependencies (C++20, CMake, Ninja, Vcpkg, Python3, MariaDB).
-*   **Manual Setup:** Requires C++20 compiler, CMake, Ninja, Python3 (for `ddl2cpp`), Vcpkg, and development headers for MySQL/MariaDB.
+*   **Environment:** Linux/macOS (DevContainer recommended).
+*   **Tools:** CMake, Ninja/Make, Python3 (for `ddl2cpp`), Vcpkg.
 
-### Build Commands (CMake Presets)
-The project uses CMake presets for simplified configuration.
+### Build Commands
+The project uses CMake Presets.
 
 **1. Configure:**
 ```bash
-cmake --preset release
-# OR
 cmake --preset debug
+# OR
+cmake --preset release
 ```
 
 **2. Build:**
 ```bash
-cmake --build build/release
+cmake --build build/debug --target server
 # OR
-cmake --build build/debug
+cmake --build build/release --target server
 ```
-*Note: The build process automatically runs `scripts/ddl2cpp` to generate C++ database models from `sql/schema.sql` into `server/src/model/`.*
+*Note: The build process automatically generates C++ DB models from `sql/schema.sql`.*
 
 ### Running the Server
 ```bash
-./build/release/server/src/server
+./build/debug/server/src/server
 ```
-The server listens on **port 1316** by default.
-
-### Running with Docker Compose
-For a quick startup without a dev environment:
-```bash
-docker-compose up --build
-```
+*   **Port:** 1316 (default)
+*   **DB:** Connects to `mysql` host (defined in `docker-compose.yml` or env).
 
 ### Running Tests
+The project includes Python-based integration tests.
 ```bash
-cmake --build build/release --target test_runner
-./build/release/test/test_runner
+# Verify Auth (Register/Login)
+python3 tests/test_auth.py
 ```
 
 ## Directory Structure
-
-*   **`proto/`**: Protocol Buffer definitions (`.proto`).
-    *   `message.proto`: Main envelope and messaging structures.
-    *   `auth_service.proto`: Authentication RPC definitions.
-*   **`server/src/`**: Source code.
-    *   `main.cpp`: Entry point.
-    *   `server/`: Core networking (`Webserver`, `Epoller`, `TcpConnection`).
-    *   `model/`: **Auto-generated** C++ structs for DB tables (do not edit).
-    *   `dao/`: Data Access Objects (`UserDao`).
-    *   `pool/`: `ThreadPool` and `SqlConnPool`.
-    *   `service/`: Business logic (`AuthService`).
-    *   `log/`: Asynchronous logging.
+*   **`proto/`**: Protobuf definitions (`message.proto`, `auth_service.proto`).
+*   **`server/src/`**: Core source code.
+    *   **`core/`**: `Webserver`, `Epoller`, `TcpConnection`.
+    *   **`handler/`**: `ProtobufHandler`, `HttpHandler`.
+    *   **`service/`**: Business logic (`AuthService`).
+    *   **`dao/`**: Data Access Objects (`UserDao`).
+    *   **`utils/`**: Utilities like `TokenUtil` (JWT) and `UuidGenerator`.
+    *   **`model/`**: **Auto-generated** SQLPP11 models.
 *   **`sql/`**: Database schema (`schema.sql`).
-*   **`scripts/`**: Utility scripts (`ddl2cpp` for model generation).
-*   **`CMakeLists.txt`**: Main build configuration.
-*   **`vcpkg.json`**: Dependency manifest.
+*   **`tests/`**: Integration test scripts.
 
-## Development Conventions
-
-*   **Database Models:** Do not manually edit files in `server/src/model/`. Modify `sql/schema.sql` instead and rebuild. The build system will regenerate the C++ code.
-*   **Database Access:** Always use `SqlConnPool` to get a connection. Use `sqlpp11` for queries (no raw SQL strings).
-*   **Logging:** Use the asynchronous `LOG_*` macros (e.g., `LOG_INFO`, `LOG_ERROR`).
-*   **Style:** Follow the Google C++ Style Guide (enforced by `.clang-format`).
-*   **Protocol:** All client-server communication should be defined in `proto/` and wrapped in the `Envelope` message type.
+## Conventions
+*   **Database Models:** Do NOT edit `server/src/model/`. Edit `sql/schema.sql` and rebuild.
+*   **JWT Secrets:** Hardcoded in `TokenUtil` (for now) or loaded from env.
+*   **Protocol:** Add new commands to `proto/message.proto` and handle them in `ProtobufHandler`.

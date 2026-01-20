@@ -66,9 +66,9 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ### Phase 3: Social Features 👥
 
-- [ ] **Friend Management**: Add friend / Remove friend / Friend list
+- [ ] **Friend Management**: Remove friend
 - [ ] **Friend Request Flow**: Request → Accept/Reject → Notification
-- [ ] **User Profile**: Avatar, nickname, status message
+- [ ] **User Profile**: Status message
 - [ ] **Block User**: Implement user blocking functionality
 
 ### Phase 4: Architecture Evolution 🏗️
@@ -130,6 +130,7 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 ./build/release/server/src/server
 
 python3 tests/test_auth.py [username] [password]
+python3 tests/test_friend.py
 ```
 
 ---

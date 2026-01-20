@@ -7,19 +7,17 @@ import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..'))
 
-# Potential paths for generated protobuf files
 proto_paths = [
-    os.path.join(project_root, 'proto'),                    # Source dir (legacy/manual)
-    os.path.join(project_root, 'build', 'proto'),           # Simple build dir
-    os.path.join(project_root, 'build', 'debug', 'proto'),  # Debug build dir
-    os.path.join(project_root, 'build', 'release', 'proto') # Release build dir
+    os.path.join(project_root, 'proto'),
+    os.path.join(project_root, 'build', 'proto'),
+    os.path.join(project_root, 'build', 'debug', 'proto'),
+    os.path.join(project_root, 'build', 'release', 'proto')
 ]
 
 for p in proto_paths:
     if os.path.isdir(p):
         sys.path.append(p)
 
-# Global import after path setup
 try:
     import message_pb2
     import auth_service_pb2

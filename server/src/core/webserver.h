@@ -20,6 +20,7 @@ public:
               const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize);
     ~Webserver();
     void start();
+    void stop() { isClose_ = true; }
 
 private:
     bool initSocket_();

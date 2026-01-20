@@ -1,5 +1,5 @@
 #include "webserver.h"
-using namespace std;
+#include "../log/log.h"
 
 Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const char* sqlUser, const char* sqlPwd,
                      const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
@@ -39,10 +39,13 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
 }
 
 Webserver::~Webserver() {
+    LOG_INFO("========== Server shutting down ==========");
     close(listenFd_);
     isClose_ = true;
     free(srcDir_);
     SqlConnPool::Instance()->ClosePool();
+    LOG_INFO("========== Server stopped ==========");
+    Log::instance()->flush();
 }
 
 void Webserver::initEventMode_(int trigMode) {

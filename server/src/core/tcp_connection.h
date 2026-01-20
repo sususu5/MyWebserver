@@ -4,11 +4,11 @@
 #include <atomic>
 #include <memory>
 #include "../buffer/buffer.h"
-#include "../log/log.h"
 
 // Forward declarations
 class HttpHandler;
 class AuthService;
+class FriendService;
 
 // ProtocolHandler is a pure virtual class that defines the interface for processing protocol data
 class ProtocolHandler {
@@ -52,13 +52,19 @@ public:
 
     size_t to_write_bytes();
 
+    void set_user_id(const std::string& user_id) { user_id_ = user_id; }
+    const std::string& get_user_id() const { return user_id_; }
+    bool is_logged_in() const { return !user_id_.empty(); }
+
     // Represent whether the server is using ET mode
     static bool is_et;
     // Store the source directory of the server
     static const char* src_dir;
     static std::atomic<int> user_count;
+
     // Service dependencies (injected by Webserver)
     static AuthService* auth_service;
+    static FriendService* friend_service;
 
 protected:
     int fd_{-1};
@@ -79,4 +85,6 @@ protected:
 
 private:
     void setup_iov_for_http();
+
+    std::string user_id_;
 };

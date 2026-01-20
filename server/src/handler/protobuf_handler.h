@@ -1,8 +1,7 @@
 #pragma once
 
-#include <functional>
-#include <unordered_map>
 #include "../service/auth_service.h"
+#include "../service/friend_service.h"
 #include "core/tcp_connection.h"
 #include "message.pb.h"
 
@@ -19,7 +18,7 @@
  */
 class ProtobufHandler : public ProtocolHandler {
 public:
-    explicit ProtobufHandler(AuthService* auth_service);
+    explicit ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service);
     ~ProtobufHandler() override = default;
 
     bool process(Buffer& read_buff, Buffer& write_buff) override;
@@ -33,13 +32,26 @@ private:
     // Command dispatcher
     void dispatch(const im::Envelope& request, im::Envelope& response);
 
-    // Command handlers
+    // Auth command handlers
     void handle_register(const im::Envelope& request, im::Envelope& response);
     void handle_login(const im::Envelope& request, im::Envelope& response);
+
+    // Friend command handlers (require authentication)
+    void handle_add_friend(const im::Envelope& request, im::Envelope& response);
+    void handle_handle_friend(const im::Envelope& request, im::Envelope& response);
+    void handle_get_friend_list(const im::Envelope& request, im::Envelope& response);
     void handle_unknown(const im::Envelope& request, im::Envelope& response);
+
+    // Helper to check authentication and get user_id
+    bool require_auth(im::Envelope& response, im::CommandType resp_cmd);
+    const std::string& current_user_id() const;
+
+    // Connection (for session state)
+    TcpConnection* conn_;
 
     // Services (injected dependencies)
     AuthService* auth_service_;
+    FriendService* friend_service_;
 
     // Constants
     static constexpr size_t kHeaderSize = 4;            // Length prefix size

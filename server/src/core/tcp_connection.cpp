@@ -9,6 +9,7 @@ std::atomic<int> TcpConnection::user_count{0};
 bool TcpConnection::is_et = false;
 const char* TcpConnection::src_dir = "";
 AuthService* TcpConnection::auth_service = nullptr;
+FriendService* TcpConnection::friend_service = nullptr;
 
 TcpConnection::~TcpConnection() { close_conn(); }
 
@@ -23,6 +24,7 @@ void TcpConnection::init(int socket_fd, const sockaddr_in& addr) {
     protocol_determined_ = false;
     handler_.reset();
     iov_cnt_ = 0;
+    user_id_.clear();
     LOG_INFO("Client[{}]({}:{}) in, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
 }
 
@@ -56,7 +58,7 @@ bool TcpConnection::process() {
             conn_type_ = ConnType::HTTP;
             LOG_INFO("Protocol determined: HTTP");
         } else {
-            handler_ = std::make_unique<ProtobufHandler>(auth_service);
+            handler_ = std::make_unique<ProtobufHandler>(this, auth_service, friend_service);
             conn_type_ = ConnType::PROTOBUF;
             LOG_INFO("Protocol determined: Protobuf");
         }

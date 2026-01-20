@@ -2,16 +2,14 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <unordered_map>
-#include "../log/log.h"
-#include "../pool/sqlconnpool.h"
 #include "../pool/threadpool.h"
 #include "../service/auth_service.h"
+#include "../service/friend_service.h"
 #include "../timer/heaptimer.h"
 #include "epoller.h"
 #include "tcp_connection.h"
@@ -57,6 +55,7 @@ private:
     std::unique_ptr<ThreadPool> threadPool_;
     std::unique_ptr<Epoller> epoller_;
     std::unique_ptr<AuthService> authService_;
+    std::unique_ptr<FriendService> friendService_;
     // Store connections by fd, using unique_ptr since TcpConnection is not copyable
     std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;
 };

@@ -4,7 +4,8 @@ using namespace std;
 Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const char* sqlUser, const char* sqlPwd,
                      const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
     : port_(port), timeoutMS_(timeoutMS), isClose_(false), timer_(new HeapTimer()),
-      threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()), authService_(new AuthService()) {
+      threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()), authService_(new AuthService()),
+      friendService_(new FriendService()) {
     const char* sql_env_host = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "localhost";
 
     if (openLog) {
@@ -28,6 +29,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     TcpConnection::user_count = 0;
     TcpConnection::src_dir = srcDir_;
     TcpConnection::auth_service = authService_.get();
+    TcpConnection::friend_service = friendService_.get();
 
     SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);

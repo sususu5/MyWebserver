@@ -1,0 +1,64 @@
+syntax = "proto3";
+package im;
+
+option cc_enable_arenas = true;
+
+import "common.proto";
+
+service FriendService {
+    rpc AddFriend (AddFriendReq) returns (AddFriendResp);
+    rpc PushFriendReq (FriendReqPush) returns (FriendReqPush);
+    rpc HandleFriend (HandleFriendReq) returns (HandleFriendResp);
+    rpc PushFriendStatus (FriendStatusPush) returns (FriendStatusPush);
+    rpc GetFriendList (GetFriendListReq) returns (GetFriendListResp);
+}
+
+message AddFriendReq {
+    string receiver_id = 1;
+    string verify_msg = 2;
+}
+
+message AddFriendResp {
+    bool success = 1;
+    string error_msg = 2;
+}
+
+message FriendReqPush {
+    string req_id = 1;
+    string sender_id = 2;
+    string sender_name = 3;
+    string verify_msg = 4;
+    int64 timestamp = 5;
+}
+
+enum FriendAction {
+    ACTION_REJECT = 0;
+    ACTION_ACCEPT = 1;
+}
+
+message HandleFriendReq {
+    string req_id = 1;
+    string sender_id = 2;
+    FriendAction action = 3;
+}
+
+message HandleFriendResp {
+    bool success = 1;
+    string error_msg = 2;
+    string sender_id = 3;
+}
+
+message FriendStatusPush {
+    string receiver_id = 1;
+    string receiver_name = 2;
+    FriendAction status = 3;
+}
+
+message GetFriendListReq {
+}
+
+message GetFriendListResp {
+    bool success = 1;
+    string error_msg = 2;
+    repeated User friend_list = 3;
+}

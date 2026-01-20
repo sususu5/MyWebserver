@@ -1,7 +1,8 @@
 #include "protobuf_handler.h"
 #include <arpa/inet.h>
 
-ProtobufHandler::ProtobufHandler(AuthService* auth_service) : auth_service_(auth_service) {}
+ProtobufHandler::ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service)
+    : conn_(conn), auth_service_(auth_service), friend_service_(friend_service) {}
 
 bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
     im::Envelope request;
@@ -74,6 +75,15 @@ void ProtobufHandler::dispatch(const im::Envelope& request, im::Envelope& respon
         case im::CMD_LOGIN_REQ:
             handle_login(request, response);
             break;
+        case im::CMD_ADD_FRIEND_REQ:
+            handle_add_friend(request, response);
+            break;
+        case im::CMD_HANDLE_FRIEND_REQ:
+            handle_handle_friend(request, response);
+            break;
+        case im::CMD_GET_FRIEND_LIST_REQ:
+            handle_get_friend_list(request, response);
+            break;
         default:
             handle_unknown(request, response);
             break;
@@ -113,12 +123,89 @@ void ProtobufHandler::handle_login(const im::Envelope& request, im::Envelope& re
     LOG_INFO("Login request: username={}", req.username());
 
     im::LoginResp login_resp;
-    auth_service_->user_login(req, &login_resp);
+    auth_service_->user_login(conn_, req, &login_resp);
     response.set_cmd(im::CMD_LOGIN_RES);
     response.mutable_login_res()->CopyFrom(login_resp);
+}
+
+void ProtobufHandler::handle_add_friend(const im::Envelope& request, im::Envelope& response) {
+    if (require_auth(response, im::CMD_ADD_FRIEND_RES)) return;
+
+    if (!request.has_add_friend_req()) {
+        LOG_ERROR("CMD_ADD_FRIEND_REQ received but payload is missing");
+        response.set_cmd(im::CMD_ADD_FRIEND_RES);
+        auto* resp = response.mutable_add_friend_res();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing add friend payload");
+        return;
+    }
+
+    const auto& req = request.add_friend_req();
+    LOG_INFO("Add friend request: sender={}, receiver_id={}", current_user_id(), req.receiver_id());
+
+    im::AddFriendResp add_friend_resp;
+    friend_service_->add_friend(current_user_id(), req, &add_friend_resp);
+    response.set_cmd(im::CMD_ADD_FRIEND_RES);
+    response.mutable_add_friend_res()->CopyFrom(add_friend_resp);
+}
+
+void ProtobufHandler::handle_handle_friend(const im::Envelope& request, im::Envelope& response) {
+    if (require_auth(response, im::CMD_HANDLE_FRIEND_RES)) return;
+
+    if (!request.has_handle_friend_req()) {
+        LOG_ERROR("CMD_HANDLE_FRIEND_REQ received but payload is missing");
+        response.set_cmd(im::CMD_HANDLE_FRIEND_RES);
+        auto* resp = response.mutable_handle_friend_res();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing handle friend payload");
+        return;
+    }
+
+    const auto& req = request.handle_friend_req();
+    LOG_INFO("Handle friend request: receiver={}, req_id={}, sender_id={}", current_user_id(), req.req_id(),
+             req.sender_id());
+
+    im::HandleFriendResp handle_friend_resp;
+    friend_service_->handle_friend(current_user_id(), req, &handle_friend_resp);
+    response.set_cmd(im::CMD_HANDLE_FRIEND_RES);
+    response.mutable_handle_friend_res()->CopyFrom(handle_friend_resp);
+}
+
+void ProtobufHandler::handle_get_friend_list(const im::Envelope& request, im::Envelope& response) {
+    if (require_auth(response, im::CMD_GET_FRIEND_LIST_RES)) return;
+
+    if (!request.has_get_friend_list_req()) {
+        LOG_ERROR("CMD_GET_FRIEND_LIST_REQ received but payload is missing");
+        response.set_cmd(im::CMD_GET_FRIEND_LIST_RES);
+        auto* resp = response.mutable_get_friend_list_res();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing get friend list payload");
+        return;
+    }
+
+    LOG_INFO("Get friend list request: user={}", current_user_id());
+
+    im::GetFriendListResp get_friend_list_resp;
+    friend_service_->get_friend_list(current_user_id(), &get_friend_list_resp);
+    response.set_cmd(im::CMD_GET_FRIEND_LIST_RES);
+    response.mutable_get_friend_list_res()->CopyFrom(get_friend_list_resp);
 }
 
 void ProtobufHandler::handle_unknown(const im::Envelope& request, im::Envelope& response) {
     LOG_WARN("Unknown command received: {}", request.cmd());
     response.set_cmd(im::CMD_UNKNOWN);
+}
+
+bool ProtobufHandler::require_auth(im::Envelope& response, im::CommandType resp_cmd) {
+    if (!conn_ || !conn_->is_logged_in()) {
+        LOG_WARN("Unauthorized request: user not logged in");
+        response.set_cmd(resp_cmd);
+        return true;
+    }
+    return false;
+}
+
+const std::string& ProtobufHandler::current_user_id() const {
+    static const std::string empty;
+    return conn_ ? conn_->get_user_id() : empty;
 }

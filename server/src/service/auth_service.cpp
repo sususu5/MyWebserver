@@ -1,11 +1,7 @@
 #include "auth_service.h"
 #include "../log/log.h"
-#include "../utils/uuid_generator.h"
 #include "../utils/token_util.h"
-
-AuthService::AuthService() {}
-
-AuthService::~AuthService() {}
+#include "../utils/uuid_generator.h"
 
 void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* resp) {
     const auto& username = req.username();
@@ -35,7 +31,7 @@ void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* re
     }
 }
 
-void AuthService::user_login(const im::LoginReq& req, im::LoginResp* resp) {
+void AuthService::user_login(TcpConnection* conn, const im::LoginReq& req, im::LoginResp* resp) {
     const auto& username = req.username();
     const auto& password = req.password();
 
@@ -57,7 +53,8 @@ void AuthService::user_login(const im::LoginReq& req, im::LoginResp* resp) {
         *resp->mutable_user_info() = user;
         std::string token = TokenUtil::create_token(user.user_id(), user.username());
         resp->set_token(token);
-        
+
+        if (conn) conn->set_user_id(user.user_id());
         LOG_INFO("Login success: {}", username);
     } else {
         resp->set_success(false);

@@ -40,3 +40,21 @@ im::User UserDao::FindByUsername(const std::string& username) {
         },
         "FindByUsername", im::User{});
 }
+
+im::User UserDao::FindById(const std::string& user_id) {
+    return execute(
+        [&](auto& conn) -> im::User {
+            auto result =
+                conn(sqlpp::select(table_.userId, table_.username).from(table_).where(table_.userId == user_id));
+            im::User user;
+            if (!result.empty()) {
+                const auto& row = result.front();
+                user.set_user_id(row.userId);
+                user.set_username(row.username);
+                // TODO: User status remains to be done using Redis and user_id -> connection mapping
+                user.set_status(im::UserStatus::USER_STATUS_OFFLINE);
+            }
+            return user;
+        },
+        "FindById", im::User{});
+}

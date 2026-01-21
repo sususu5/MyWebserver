@@ -10,6 +10,7 @@
 #include "../pool/threadpool.h"
 #include "../service/auth_service.h"
 #include "../service/friend_service.h"
+#include "../service/push_service.h"
 #include "../timer/heaptimer.h"
 #include "epoller.h"
 #include "tcp_connection.h"
@@ -55,6 +56,7 @@ private:
     std::unique_ptr<HeapTimer> timer_;
     std::unique_ptr<ThreadPool> threadPool_;
     std::unique_ptr<Epoller> epoller_;
+    std::unique_ptr<PushService> pushService_;
     std::unique_ptr<AuthService> authService_;
     std::unique_ptr<FriendService> friendService_;
     // Store connections by fd, using unique_ptr since TcpConnection is not copyable

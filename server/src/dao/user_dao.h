@@ -18,4 +18,6 @@ public:
     bool VerifyUser(const std::string& username, const std::string& password);
     // Find user by username
     im::User FindByUsername(const std::string& username);
+    // Find user by user_id
+    im::User FindById(const std::string& user_id);
 };

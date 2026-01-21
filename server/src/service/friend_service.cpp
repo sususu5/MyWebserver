@@ -1,12 +1,21 @@
 #include "friend_service.h"
+#include "push_service.h"
+
+FriendService::FriendService(PushService* push_service) : push_service_(push_service) {}
 
 void FriendService::add_friend(const std::string& sender_id, const im::AddFriendReq& req, im::AddFriendResp* resp) {
     auto result = friend_dao_.add_friend(sender_id, req.receiver_id());
 
     switch (result) {
-        case AddFriendResult::SUCCESS:
+        case AddFriendResult::SUCCESS: {
             resp->set_success(true);
+
+            if (push_service_) {
+                auto sender = user_dao_.FindById(sender_id);
+                push_service_->push_friend_req(sender_id, sender.username(), req.receiver_id(), req.verify_msg());
+            }
             break;
+        }
         case AddFriendResult::ALREADY_EXISTS:
             resp->set_success(false);
             resp->set_error_msg("Friend request already sent or exists");

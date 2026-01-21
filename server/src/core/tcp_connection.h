@@ -3,12 +3,14 @@
 #include <sys/uio.h>
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include "../buffer/buffer.h"
 
 // Forward declarations
 class HttpHandler;
 class AuthService;
 class FriendService;
+class PushService;
 
 // ProtocolHandler is a pure virtual class that defines the interface for processing protocol data
 class ProtocolHandler {
@@ -50,9 +52,11 @@ public:
     Buffer& get_read_buffer() { return read_buff_; }
     Buffer& get_write_buffer() { return write_buff_; }
 
+    void send_data(const std::string& data);
+
     size_t to_write_bytes();
 
-    void set_user_id(const std::string& user_id) { user_id_ = user_id; }
+    void set_user_id(const std::string& user_id);
     const std::string& get_user_id() const { return user_id_; }
     bool is_logged_in() const { return !user_id_.empty(); }
 
@@ -65,6 +69,7 @@ public:
     // Service dependencies (injected by Webserver)
     static AuthService* auth_service;
     static FriendService* friend_service;
+    static PushService* push_service;
 
 protected:
     int fd_{-1};
@@ -72,6 +77,7 @@ protected:
     struct sockaddr_in addr_ {};
     bool is_close_{true};
 
+    std::mutex conn_mutex_;
     Buffer read_buff_;
     Buffer write_buff_;
     std::unique_ptr<ProtocolHandler> handler_;

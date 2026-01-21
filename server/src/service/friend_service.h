@@ -1,11 +1,14 @@
 #pragma once
 
 #include "../dao/friend_dao.h"
+#include "../dao/user_dao.h"
 #include "friend_service.pb.h"
+
+class PushService;
 
 class FriendService {
 public:
-    FriendService() = default;
+    explicit FriendService(PushService* push_service);
     ~FriendService() = default;
 
     // Add a friend
@@ -17,4 +20,6 @@ public:
 
 private:
     FriendDao friend_dao_;
+    UserDao user_dao_;
+    PushService* push_service_;
 };

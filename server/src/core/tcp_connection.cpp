@@ -4,12 +4,14 @@
 #include <unordered_set>
 #include "handler/http_handler.h"
 #include "handler/protobuf_handler.h"
+#include "../service/push_service.h"
 
 std::atomic<int> TcpConnection::user_count{0};
 bool TcpConnection::is_et = false;
 const char* TcpConnection::src_dir = "";
 AuthService* TcpConnection::auth_service = nullptr;
 FriendService* TcpConnection::friend_service = nullptr;
+PushService* TcpConnection::push_service = nullptr;
 
 TcpConnection::~TcpConnection() { close_conn(); }
 
@@ -18,8 +20,11 @@ void TcpConnection::init(int socket_fd, const sockaddr_in& addr) {
     user_count++;
     addr_ = addr;
     fd_ = socket_fd;
-    write_buff_.retrieve_all();
-    read_buff_.retrieve_all();
+    {
+        std::lock_guard<std::mutex> lock(conn_mutex_);
+        write_buff_.retrieve_all();
+        read_buff_.retrieve_all();
+    }
     is_close_ = false;
     protocol_determined_ = false;
     handler_.reset();
@@ -32,9 +37,26 @@ void TcpConnection::close_conn() {
     if (!is_close_) {
         is_close_ = true;
         user_count--;
+        
+        if (!user_id_.empty() && push_service) {
+            push_service->remove_client(user_id_);
+        }
+        
         close(fd_);
         LOG_INFO("Client[{}]({}:{}) quit, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
     }
+}
+
+void TcpConnection::set_user_id(const std::string& user_id) {
+    user_id_ = user_id;
+    if (push_service) {
+        push_service->add_client(user_id, this);
+    }
+}
+
+void TcpConnection::send_data(const std::string& data) {
+    std::lock_guard<std::mutex> lock(conn_mutex_);
+    write_buff_.append(data);
 }
 
 static bool is_http_request(const char* data, size_t len) {
@@ -46,6 +68,7 @@ static bool is_http_request(const char* data, size_t len) {
 }
 
 bool TcpConnection::process() {
+    std::lock_guard<std::mutex> lock(conn_mutex_);
     if (!protocol_determined_) {
         if (read_buff_.readable_bytes() == 0) {
             return false;
@@ -95,6 +118,7 @@ void TcpConnection::setup_iov_for_http() {
 }
 
 size_t TcpConnection::to_write_bytes() {
+    std::lock_guard<std::mutex> lock(conn_mutex_);
     if (conn_type_ == ConnType::HTTP && iov_cnt_ > 0) {
         return iov_[0].iov_len + (iov_cnt_ > 1 ? iov_[1].iov_len : 0);
     }
@@ -111,6 +135,7 @@ bool TcpConnection::is_keep_alive() const {
 ConnType TcpConnection::get_type() const { return conn_type_; }
 
 ssize_t TcpConnection::read(int* error_code) {
+    std::lock_guard<std::mutex> lock(conn_mutex_);
     ssize_t len = -1;
     do {
         len = read_buff_.read_fd(fd_, error_code);
@@ -122,6 +147,7 @@ ssize_t TcpConnection::read(int* error_code) {
 }
 
 ssize_t TcpConnection::write(int* error_code) {
+    std::lock_guard<std::mutex> lock(conn_mutex_);
     ssize_t len = -1;
 
     // Use writev for HTTP to support zero-copy file sending

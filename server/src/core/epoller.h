@@ -1,8 +1,6 @@
-#ifndef EPOLLER_H
-#define EPOLLER_H
+#pragma once
 
 #include <assert.h>
-#include <errno.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <vector>
@@ -24,5 +22,3 @@ private:
     int epollFd_;
     std::vector<struct epoll_event> events_;
 };
-
-#endif

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <arpa/inet.h>
 #include <sys/uio.h>
 #include <atomic>
@@ -11,6 +12,7 @@ class HttpHandler;
 class AuthService;
 class FriendService;
 class PushService;
+class Epoller;
 
 // ProtocolHandler is a pure virtual class that defines the interface for processing protocol data
 class ProtocolHandler {
@@ -70,6 +72,7 @@ public:
     static AuthService* auth_service;
     static FriendService* friend_service;
     static PushService* push_service;
+    static Epoller* epoller_;
 
 protected:
     int fd_{-1};

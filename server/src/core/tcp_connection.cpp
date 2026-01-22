@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include "../service/push_service.h"
+#include "epoller.h"
 #include "handler/http_handler.h"
 #include "handler/protobuf_handler.h"
 
@@ -12,6 +13,7 @@ const char* TcpConnection::src_dir = "";
 AuthService* TcpConnection::auth_service = nullptr;
 FriendService* TcpConnection::friend_service = nullptr;
 PushService* TcpConnection::push_service = nullptr;
+Epoller* TcpConnection::epoller_ = nullptr;
 
 TcpConnection::~TcpConnection() { close_conn(); }
 
@@ -56,7 +58,14 @@ void TcpConnection::set_user_id(const std::string& user_id) {
 
 void TcpConnection::send_data(const std::string& data) {
     std::lock_guard<std::mutex> lock(conn_mutex_);
+    uint32_t msg_len = htonl(static_cast<uint32_t>(data.size()));
+    write_buff_.append(&msg_len, sizeof(msg_len));
     write_buff_.append(data);
+    if (epoller_) {
+        uint32_t events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLONESHOT;
+        if (is_et) events |= EPOLLET;
+        epoller_->modFd(fd_, events);
+    }
 }
 
 static bool is_http_request(const char* data, size_t len) {

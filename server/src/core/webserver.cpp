@@ -31,6 +31,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     TcpConnection::auth_service = authService_.get();
     TcpConnection::friend_service = friendService_.get();
     TcpConnection::push_service = pushService_.get();
+    TcpConnection::epoller_ = epoller_.get();
 
     SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
     initEventMode_(trigMode);

@@ -43,6 +43,7 @@ class Client:
     def connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(5.0)
             self.sock.connect((self.host, self.port))
             return True
         except ConnectionRefusedError:
@@ -255,6 +256,19 @@ def test_friend_workflow():
         client_b.close()
         return False
     
+    # --- User B receives push notification ---
+    print(f"\n[3.1] User B waiting for Friend Request Push")
+    push_msg = client_b.recv_msg()
+    if push_msg and push_msg.cmd == message_pb2.CMD_FRIEND_REQ_PUSH:
+        req_push = push_msg.friend_req_push
+        print(f"    ✅ User B received Push Notification from {req_push.sender_name}")
+        if req_push.sender_id != client_a.user_id:
+            print(f"    ❌ Sender ID mismatch: expected {client_a.user_id}, got {req_push.sender_id}")
+            return False
+    else:
+        print(f"    ❌ User B did not receive expected Push Notification (Got: {push_msg.cmd if push_msg else 'None'})")
+        return False
+
     # --- Test duplicate friend request ---
     print(f"\n[4] User A sends duplicate friend request (should fail)")
     res = client_a.add_friend(client_b.user_id)
@@ -274,6 +288,19 @@ def test_friend_workflow():
         client_b.close()
         return False
     
+    # --- User A receives status push notification ---
+    print(f"\n[5.1] User A waiting for Friend Status Push")
+    push_msg = client_a.recv_msg()
+    if push_msg and push_msg.cmd == message_pb2.CMD_FRIEND_STATUS_PUSH:
+        status_push = push_msg.friend_status_push
+        print(f"    ✅ User A received Status Push: {status_push.receiver_name} {status_push.action}")
+        if status_push.receiver_id != client_b.user_id:
+            print(f"    ❌ Handler ID mismatch: expected {client_b.user_id}, got {status_push.receiver_id}")
+            return False
+    else:
+        print(f"    ❌ User A did not receive expected Status Push (Got: {push_msg.cmd if push_msg else 'None'})")
+        return False
+
     # --- User A gets friend list ---
     print(f"\n[6] User A gets friend list")
     res = client_a.get_friend_list()

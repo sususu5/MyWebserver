@@ -1,6 +1,6 @@
 #include "httprequest.h"
 #include "../dao/user_dao.h"
-#include "../utils/uuid_generator.h"
+#include "../util/uuid_generator.h"
 using namespace std;
 
 // Webpage path

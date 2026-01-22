@@ -2,9 +2,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <unordered_set>
+#include "../service/push_service.h"
 #include "handler/http_handler.h"
 #include "handler/protobuf_handler.h"
-#include "../service/push_service.h"
 
 std::atomic<int> TcpConnection::user_count{0};
 bool TcpConnection::is_et = false;
@@ -37,11 +37,11 @@ void TcpConnection::close_conn() {
     if (!is_close_) {
         is_close_ = true;
         user_count--;
-        
+
         if (!user_id_.empty() && push_service) {
             push_service->remove_client(user_id_);
         }
-        
+
         close(fd_);
         LOG_INFO("Client[{}]({}:{}) quit, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
     }

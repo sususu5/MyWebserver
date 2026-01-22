@@ -37,12 +37,12 @@ void PushService::push_friend_req(const std::string& sender_id, const std::strin
     send_envelope(receiver_id, envelope);
 }
 
-void PushService::send_envelope(const std::string& receiver_id, const im::Envelope& envelope) {
+void PushService::send_envelope(const std::string& target_id, const im::Envelope& envelope) {
     TcpConnection* conn = nullptr;
     {
         std::lock_guard<std::mutex> lock(mtx_);
-        if (online_connections_.contains(receiver_id)) {
-            conn = online_connections_.at(receiver_id);
+        if (online_connections_.contains(target_id)) {
+            conn = online_connections_.at(target_id);
         }
     }
 
@@ -54,6 +54,21 @@ void PushService::send_envelope(const std::string& receiver_id, const im::Envelo
         }
     } else {
         // TODO: Store offline message?
-        LOG_WARN("User[{}] not online, push failed", receiver_id);
+        LOG_WARN("User[{}] not online, push failed", target_id);
     }
+}
+
+void PushService::push_friend_status(const std::string& sender_id, const std::string& receiver_id,
+                                     const std::string& receiver_name, const im::FriendAction& action) {
+    im::Envelope envelope;
+    envelope.set_seq(0);
+    envelope.set_cmd(im::CMD_FRIEND_STATUS_PUSH);
+    envelope.set_timestamp(time(nullptr));
+
+    auto* push = envelope.mutable_friend_status_push();
+    push->set_receiver_id(receiver_id);
+    push->set_receiver_name(receiver_name);
+    push->set_action(action);
+
+    send_envelope(sender_id, envelope);
 }

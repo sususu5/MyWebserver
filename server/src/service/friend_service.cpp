@@ -35,6 +35,11 @@ void FriendService::handle_friend(const std::string& receiver_id, const im::Hand
     if (result.has_value()) {
         resp->set_success(true);
         resp->set_sender_id(result.value());
+
+        if (push_service_) {
+            auto receiver = user_dao_.FindById(receiver_id);
+            push_service_->push_friend_status(req.sender_id(), receiver_id, receiver.username(), req.action());
+        }
     } else {
         resp->set_success(false);
         resp->set_error_msg("Transaction Failed");

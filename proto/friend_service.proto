@@ -51,7 +51,7 @@ message HandleFriendResp {
 message FriendStatusPush {
     string receiver_id = 1;
     string receiver_name = 2;
-    FriendAction status = 3;
+    FriendAction action = 3;
 }
 
 message GetFriendListReq {

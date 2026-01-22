@@ -19,6 +19,8 @@ public:
     // Push Logic
     void push_friend_req(const std::string& sender_id, const std::string& sender_name, const std::string& receiver_id,
                          const std::string& verify_msg);
+    void push_friend_status(const std::string& sender_id, const std::string& receiver_id,
+                            const std::string& receiver_name, const im::FriendAction& action);
 
 private:
     std::mutex mtx_;

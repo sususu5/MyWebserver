@@ -47,11 +47,10 @@ void PushService::send_envelope(const std::string& target_id, const im::Envelope
     }
 
     if (conn) {
-        // TODO: Implement a thread-safe way to send the envelope to the connection (task queue)
         std::string serialized;
         if (envelope.SerializeToString(&serialized)) {
-            conn->send_data(serialized);
-            LOG_INFO("Push sent to User[{}], cmd={}", target_id, static_cast<int>(envelope.cmd()));
+            conn->enqueue_message(std::move(serialized));
+            LOG_INFO("Push enqueued for User[{}], cmd={}", target_id, static_cast<int>(envelope.cmd()));
         }
     } else {
         // TODO: Store offline message?

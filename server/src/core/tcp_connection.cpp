@@ -56,18 +56,6 @@ void TcpConnection::set_user_id(const std::string& user_id) {
     }
 }
 
-void TcpConnection::send_data(const std::string& data) {
-    std::lock_guard<std::mutex> lock(conn_mutex_);
-    uint32_t msg_len = htonl(static_cast<uint32_t>(data.size()));
-    write_buff_.append(&msg_len, sizeof(msg_len));
-    write_buff_.append(data);
-    if (epoller_) {
-        uint32_t events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLONESHOT;
-        if (is_et) events |= EPOLLET;
-        epoller_->modFd(fd_, events);
-    }
-}
-
 static bool is_http_request(const char* data, size_t len) {
     if (len < 4) {
         return false;
@@ -159,6 +147,9 @@ ssize_t TcpConnection::write(int* error_code) {
     std::lock_guard<std::mutex> lock(conn_mutex_);
     ssize_t len = -1;
 
+    // Flush queued push messages into write buffer before sending
+    flush_pending_to_buffer();
+
     // Use writev for HTTP to support zero-copy file sending
     if (conn_type_ == ConnType::HTTP && iov_cnt_ > 0) {
         do {
@@ -198,4 +189,32 @@ ssize_t TcpConnection::write(int* error_code) {
         } while (is_et);
     }
     return len;
+}
+
+void TcpConnection::enqueue_message(std::string data) {
+    std::string framed;
+    uint32_t msg_len = htonl(static_cast<uint32_t>(data.size()));
+    framed.append(reinterpret_cast<char*>(&msg_len), 4);
+    framed.append(data);
+
+    outgoing_queue_.enqueue(std::move(framed));
+    notify_writable();
+}
+
+bool TcpConnection::flush_pending_to_buffer() {
+    bool has_data = false;
+
+    std::optional<std::string> msg;
+    while ((msg = outgoing_queue_.dequeue()).has_value()) {
+        write_buff_.append(msg.value());
+        has_data = true;
+    }
+    return has_data;
+}
+
+void TcpConnection::notify_writable() {
+    if (!epoller_) return;
+    uint32_t events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLONESHOT;
+    if (is_et) events |= EPOLLET;
+    epoller_->modFd(fd_, events);
 }

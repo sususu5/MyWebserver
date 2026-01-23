@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include "../buffer/buffer.h"
+#include "mpsc_queue.h"
 
 // Forward declarations
 class HttpHandler;
@@ -54,13 +55,16 @@ public:
     Buffer& get_read_buffer() { return read_buff_; }
     Buffer& get_write_buffer() { return write_buff_; }
 
-    void send_data(const std::string& data);
-
     size_t to_write_bytes();
 
     void set_user_id(const std::string& user_id);
     const std::string& get_user_id() const { return user_id_; }
     bool is_logged_in() const { return !user_id_.empty(); }
+
+    // Message queue for push service
+    void enqueue_message(std::string data);
+    bool flush_pending_to_buffer();
+    bool has_pending_messages() const { return !outgoing_queue_.empty(); }
 
     // Represent whether the server is using ET mode
     static bool is_et;
@@ -92,8 +96,11 @@ protected:
     bool protocol_determined_{false};
     ConnType conn_type_{ConnType::HTTP};
 
+    MPSCQueue<std::string> outgoing_queue_;
+
 private:
     void setup_iov_for_http();
+    void notify_writable();
 
     std::string user_id_;
 };

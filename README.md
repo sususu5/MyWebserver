@@ -26,12 +26,13 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 │       ├── main.cpp     # Entry point
 │       ├── buffer/      # Custom I/O buffer management
 │       ├── dao/         # Data Access Objects (Database logic)
-│       ├── service/     # Business logic layer (Auth, Chat, etc.)
-│       ├── server/      # Webserver & Epoller (Reactor core)
+│       ├── service/     # Business logic layer (Auth, Chat, Friend, Push, etc.)
+│       ├── core/        # Webserver & Epoller (Reactor core)
 │       ├── pool/        # ThreadPool & SqlConnPool
 │       ├── http/        # HTTP protocol handling (legacy)
 │       ├── log/         # Async logging system
 │       ├── timer/       # Heap-based timer for timeouts
+│       ├── util/        # Utilities (UUID, Token, etc.)
 │       └── CMakeLists.txt
 ├── resources/           # Static assets (HTML, JS, CSS)
 ├── test/                # Unit tests & Benchmarking
@@ -54,7 +55,7 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 - [ ] **JWT Secret Management**: Move hardcoded secret to environment variable
 - [ ] **Heartbeat Mechanism**: Implement client-server keepalive (PING/PONG)
 - [ ] **Message ID Generator**: Implement Snowflake algorithm for distributed unique IDs
-- [ ] **User Online Status**: In-memory status map with Redis sync
+- [x] **User Online Status**: In-memory status map (Partially implemented via `PushService`)
 
 ### Phase 2: Core Messaging 💬
 
@@ -66,8 +67,9 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ### Phase 3: Social Features 👥
 
+- [x] **Friend Request Flow**: Request → Accept/Reject → Notification
+- [x] **Friend List**: Retrieve friend list
 - [ ] **Friend Management**: Remove friend
-- [ ] **Friend Request Flow**: Request → Accept/Reject → Notification
 - [ ] **User Profile**: Status message
 - [ ] **Block User**: Implement user blocking functionality
 
@@ -97,6 +99,8 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 - [x] Thread Pool
 - [x] Async Logging System
 - [x] Heap-based Timer for Connection Timeout
+- [x] Real-time Push Notifications (PushService)
+- [x] Friend System (Req/Resp/Push)
 
 ---
 
@@ -129,7 +133,9 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 ./build/debug/server/src/server
 ./build/release/server/src/server
 
+# Test Auth
 python3 tests/test_auth.py [username] [password]
+# Test Friend System (including Push)
 python3 tests/test_friend.py
 ```
 

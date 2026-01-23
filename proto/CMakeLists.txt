@@ -3,8 +3,14 @@ find_package(protobuf CONFIG REQUIRED)
 # Define output directory for generated files
 set(PROTO_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-# Find all .proto files
-file(GLOB PROTO_FILES "*.proto")
+# Explicit proto list to avoid stale deleted files
+set(PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/common.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/auth_service.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/friend_service.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/message_service.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/protocol.proto
+)
 
 set(PROTO_SRCS)
 set(PROTO_HDRS)

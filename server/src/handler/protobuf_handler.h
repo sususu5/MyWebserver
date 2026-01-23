@@ -3,7 +3,7 @@
 #include "../service/auth_service.h"
 #include "../service/friend_service.h"
 #include "core/tcp_connection.h"
-#include "message.pb.h"
+#include "protocol.pb.h"
 
 /**
  * ProtobufHandler - Handles binary protobuf protocol over TCP

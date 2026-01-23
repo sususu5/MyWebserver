@@ -19,7 +19,7 @@ for p in proto_paths:
         sys.path.append(p)
 
 try:
-    import message_pb2
+    import protocol_pb2
     import auth_service_pb2
     import friend_service_pb2
 except ImportError:
@@ -81,7 +81,7 @@ class Client:
                     break
                 resp_data += packet
             
-            envelope = message_pb2.Envelope()
+            envelope = protocol_pb2.Envelope()
             envelope.ParseFromString(resp_data)
             return envelope
         except Exception as e:
@@ -90,9 +90,9 @@ class Client:
     
     def register(self, username, password):
         """Register a new user."""
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.seq = self.next_seq()
-        envelope.cmd = message_pb2.CMD_REGISTER_REQ
+        envelope.cmd = protocol_pb2.CMD_REGISTER_REQ
         envelope.timestamp = int(time.time())
         
         req = envelope.register_req
@@ -102,7 +102,7 @@ class Client:
         self.send_msg(envelope)
         resp = self.recv_msg()
         
-        if resp and resp.cmd == message_pb2.CMD_REGISTER_RES:
+        if resp and resp.cmd == protocol_pb2.CMD_REGISTER_RES:
             res = resp.register_res
             if res.success:
                 self.user_id = res.user_id
@@ -112,9 +112,9 @@ class Client:
     
     def login(self, username, password):
         """Login an existing user."""
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.seq = self.next_seq()
-        envelope.cmd = message_pb2.CMD_LOGIN_REQ
+        envelope.cmd = protocol_pb2.CMD_LOGIN_REQ
         envelope.timestamp = int(time.time())
         
         req = envelope.login_req
@@ -124,7 +124,7 @@ class Client:
         self.send_msg(envelope)
         resp = self.recv_msg()
         
-        if resp and resp.cmd == message_pb2.CMD_LOGIN_RES:
+        if resp and resp.cmd == protocol_pb2.CMD_LOGIN_RES:
             res = resp.login_res
             if res.success:
                 self.user_id = res.user_info.user_id
@@ -134,9 +134,9 @@ class Client:
     
     def add_friend(self, receiver_id, verify_msg="Hello, let's be friends!"):
         """Send a friend request."""
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.seq = self.next_seq()
-        envelope.cmd = message_pb2.CMD_ADD_FRIEND_REQ
+        envelope.cmd = protocol_pb2.CMD_ADD_FRIEND_REQ
         envelope.timestamp = int(time.time())
         
         req = envelope.add_friend_req
@@ -146,15 +146,15 @@ class Client:
         self.send_msg(envelope)
         resp = self.recv_msg()
         
-        if resp and resp.cmd == message_pb2.CMD_ADD_FRIEND_RES:
+        if resp and resp.cmd == protocol_pb2.CMD_ADD_FRIEND_RES:
             return resp.add_friend_res
         return None
     
     def handle_friend(self, sender_id, accept=True):
         """Accept or reject a friend request."""
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.seq = self.next_seq()
-        envelope.cmd = message_pb2.CMD_HANDLE_FRIEND_REQ
+        envelope.cmd = protocol_pb2.CMD_HANDLE_FRIEND_REQ
         envelope.timestamp = int(time.time())
         
         req = envelope.handle_friend_req
@@ -164,15 +164,15 @@ class Client:
         self.send_msg(envelope)
         resp = self.recv_msg()
         
-        if resp and resp.cmd == message_pb2.CMD_HANDLE_FRIEND_RES:
+        if resp and resp.cmd == protocol_pb2.CMD_HANDLE_FRIEND_RES:
             return resp.handle_friend_res
         return None
     
     def get_friend_list(self):
         """Get the friend list."""
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.seq = self.next_seq()
-        envelope.cmd = message_pb2.CMD_GET_FRIEND_LIST_REQ
+        envelope.cmd = protocol_pb2.CMD_GET_FRIEND_LIST_REQ
         envelope.timestamp = int(time.time())
         
         # GetFriendListReq has no fields, just set the oneof
@@ -181,7 +181,7 @@ class Client:
         self.send_msg(envelope)
         resp = self.recv_msg()
         
-        if resp and resp.cmd == message_pb2.CMD_GET_FRIEND_LIST_RES:
+        if resp and resp.cmd == protocol_pb2.CMD_GET_FRIEND_LIST_RES:
             return resp.get_friend_list_res
         return None
 
@@ -259,7 +259,7 @@ def test_friend_workflow():
     # --- User B receives push notification ---
     print(f"\n[3.1] User B waiting for Friend Request Push")
     push_msg = client_b.recv_msg()
-    if push_msg and push_msg.cmd == message_pb2.CMD_FRIEND_REQ_PUSH:
+    if push_msg and push_msg.cmd == protocol_pb2.CMD_FRIEND_REQ_PUSH:
         req_push = push_msg.friend_req_push
         print(f"    ✅ User B received Push Notification from {req_push.sender_name}")
         if req_push.sender_id != client_a.user_id:
@@ -291,7 +291,7 @@ def test_friend_workflow():
     # --- User A receives status push notification ---
     print(f"\n[5.1] User A waiting for Friend Status Push")
     push_msg = client_a.recv_msg()
-    if push_msg and push_msg.cmd == message_pb2.CMD_FRIEND_STATUS_PUSH:
+    if push_msg and push_msg.cmd == protocol_pb2.CMD_FRIEND_STATUS_PUSH:
         status_push = push_msg.friend_status_push
         print(f"    ✅ User A received Status Push: {status_push.receiver_name} {status_push.action}")
         if status_push.receiver_id != client_b.user_id:

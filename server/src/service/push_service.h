@@ -3,7 +3,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include "message.pb.h"
+#include "protocol.pb.h"
 
 class TcpConnection;
 

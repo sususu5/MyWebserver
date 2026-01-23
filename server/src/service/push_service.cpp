@@ -3,7 +3,7 @@
 #include "../core/tcp_connection.h"
 #include "../log/log.h"
 #include "../util/uuid_generator.h"
-#include "message.pb.h"
+#include "protocol.pb.h"
 
 void PushService::add_client(const std::string& user_id, TcpConnection* conn) {
     std::lock_guard<std::mutex> lock(mtx_);

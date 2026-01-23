@@ -1,0 +1,36 @@
+syntax = "proto3";
+package im;
+
+option cc_enable_arenas = true;
+
+import "common.proto";
+
+service MessageService {
+    rpc SendP2PMessage (P2PMessage) returns (MessageAck);
+    rpc PushP2PMessage (P2PMessage) returns (Empty);
+    rpc AcknowledgeMessage (MessageAck) returns (Empty);
+}
+
+enum ContentType {
+    CONTENT_TEXT    = 0;
+    CONTENT_IMAGE   = 1;
+    CONTENT_FILE    = 2;
+    CONTENT_AUDIO   = 3;
+    CONTENT_VIDEO   = 4;
+}
+
+message P2PMessage {
+    string msg_id = 1;
+    string sender_id = 2;
+    string receiver_id = 3;
+    ContentType content_type = 4;
+    bytes content = 5;
+    int64 timestamp = 6;
+}
+
+message MessageAck {
+    string msg_id = 1;
+    uint64 ref_seq = 2;
+    bool success = 3;
+    string error_msg = 4;
+}

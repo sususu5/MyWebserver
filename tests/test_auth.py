@@ -19,7 +19,7 @@ for p in proto_paths:
         sys.path.append(p)
 
 try:
-    import message_pb2
+    import protocol_pb2
     import auth_service_pb2
 except ImportError:
     print("[!] Protobuf modules not found. Please run:")
@@ -41,9 +41,9 @@ def run_test(username="test_user", password="password123"):
 
     # --- 1. Register ---
     print("\n--- Testing Register ---")
-    envelope = message_pb2.Envelope()
+    envelope = protocol_pb2.Envelope()
     envelope.seq = int(time.time() * 1000)
-    envelope.cmd = message_pb2.CMD_REGISTER_REQ
+    envelope.cmd = protocol_pb2.CMD_REGISTER_REQ
     envelope.timestamp = int(time.time())
 
     register_req = envelope.register_req
@@ -56,7 +56,7 @@ def run_test(username="test_user", password="password123"):
     if not resp:
         return
 
-    if resp.cmd == message_pb2.CMD_REGISTER_RES:
+    if resp.cmd == protocol_pb2.CMD_REGISTER_RES:
         res = resp.register_res
         if res.success:
             print(f"✅ Register Success: UserID={res.user_id}")
@@ -70,9 +70,9 @@ def run_test(username="test_user", password="password123"):
 
     # --- 2. Login ---
     print("\n--- Testing Login ---")
-    envelope = message_pb2.Envelope()
+    envelope = protocol_pb2.Envelope()
     envelope.seq = int(time.time() * 1000) + 1
-    envelope.cmd = message_pb2.CMD_LOGIN_REQ
+    envelope.cmd = protocol_pb2.CMD_LOGIN_REQ
     envelope.timestamp = int(time.time())
 
     login_req = envelope.login_req
@@ -86,7 +86,7 @@ def run_test(username="test_user", password="password123"):
         sock.close()
         return
 
-    if resp.cmd == message_pb2.CMD_LOGIN_RES:
+    if resp.cmd == protocol_pb2.CMD_LOGIN_RES:
         res = resp.login_res
         if res.success:
             print(f"✅ Login Success!")
@@ -121,7 +121,7 @@ def recv_msg(sock):
                 break
             resp_data += packet
             
-        envelope = message_pb2.Envelope()
+        envelope = protocol_pb2.Envelope()
         envelope.ParseFromString(resp_data)
         return envelope
     except Exception as e:

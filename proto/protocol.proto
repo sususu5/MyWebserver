@@ -5,8 +5,12 @@ option cc_enable_arenas = true;
 
 import "auth_service.proto";
 import "friend_service.proto";
+import "message_service.proto";
 
-// CommandType determines which structure the Envelope's oneof unpacks into
+// ============================================================================
+// Protocol Layer - CommandType and Envelope
+// ============================================================================
+
 enum CommandType {
     CMD_UNKNOWN       = 0;
 
@@ -15,7 +19,7 @@ enum CommandType {
     CMD_REGISTER_RES  = 2;
     CMD_LOGIN_REQ     = 3;
     CMD_LOGIN_RES     = 4;
-    
+
     // Friend commands
     CMD_ADD_FRIEND_REQ = 5;
     CMD_ADD_FRIEND_RES = 6;
@@ -27,16 +31,15 @@ enum CommandType {
     CMD_GET_FRIEND_LIST_RES = 12;
 
     // Message commands
-    CMD_P2P_MSG_REQ   = 50; // P2P message request (Client -> Server)
-    CMD_P2P_MSG_PUSH  = 51; // P2P message push (Server -> Client)
-    CMD_MSG_ACK       = 52; // Generic message acknowledgment (Server -> Client)
+    CMD_P2P_MSG_REQ   = 50;
+    CMD_P2P_MSG_PUSH  = 51;
+    CMD_MSG_ACK       = 52;
 }
 
-// Envelope is the top-level message structure
 message Envelope {
-    uint64 seq = 1;            // Sequence number for full-duplex link tracing
-    CommandType cmd = 2;       // CommandType enum
-    int64 timestamp = 3;       // Server timestamp
+    uint64 seq = 1;
+    CommandType cmd = 2;
+    int64 timestamp = 3;
 
     oneof payload {
         RegisterReq register_req = 100;
@@ -52,27 +55,9 @@ message Envelope {
         FriendStatusPush friend_status_push = 205;
         GetFriendListReq get_friend_list_req = 206;
         GetFriendListResp get_friend_list_res = 207;
+
+        P2PMessage p2p_msg_req = 300;
+        P2PMessage p2p_msg_push = 301;
+        MessageAck msg_ack = 302;
     }
-}
-
-// ContentType determines how to parse the content field
-enum ContentType {
-    CONTENT_TEXT    = 0;
-}
-
-// Message structure for P2P communication
-message P2PMessage {
-    string msg_id = 1;
-    string sender_id = 2;
-    string receiver_id = 3;
-    ContentType content_type = 4; 
-    bytes content = 5;         
-}
-
-// Message acknowledgment structure
-message MessageAck {
-    string msg_id = 1;
-    uint64 ref_seq = 2;
-    bool success = 3;
-    string error_msg = 4;
 }

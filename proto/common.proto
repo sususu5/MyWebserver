@@ -4,7 +4,7 @@ package im;
 option cc_enable_arenas = true;
 
 enum UserStatus {
-  USER_STATUS_UNSPECIFIED = 0; 
+  USER_STATUS_UNSPECIFIED = 0;
   USER_STATUS_OFFLINE = 1;
   USER_STATUS_ONLINE  = 2;
 }

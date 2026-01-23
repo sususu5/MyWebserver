@@ -3,8 +3,7 @@
 #include "../dao/friend_dao.h"
 #include "../dao/user_dao.h"
 #include "friend_service.pb.h"
-
-class PushService;
+#include "push_service.h"
 
 class FriendService {
 public:

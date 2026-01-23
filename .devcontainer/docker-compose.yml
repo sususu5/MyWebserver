@@ -8,17 +8,20 @@ services:
       - ssl-certs:/etc/mysql/certs:ro
     command: sleep infinity
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
+      - scylla
     environment:
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
       - MYSQL_USER=root
       - MYSQL_PASSWORD=123456
       - MYSQL_DATABASE=testdb
+      - SCYLLA_HOST=scylla
+      - SCYLLA_PORT=9042
 
   mysql:
     image: mysql:8.0
+    container_name: mysql
     restart: unless-stopped
     entrypoint:
       - /bin/bash
@@ -48,7 +51,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
+
+  scylla:
+    image: scylladb/scylla:5.4
+    container_name: scylla
+    ports:
+      - "9042:9042"
+    command: --smp 1 --memory 2G --overprovisioned 1 --developer-mode 1
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' localhost 9042"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
 
 volumes:
   mysql-data:

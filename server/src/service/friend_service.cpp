@@ -1,5 +1,4 @@
 #include "friend_service.h"
-#include "push_service.h"
 
 FriendService::FriendService(PushService* push_service) : push_service_(push_service) {}
 

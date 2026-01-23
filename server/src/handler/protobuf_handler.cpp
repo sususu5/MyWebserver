@@ -1,8 +1,9 @@
 #include "protobuf_handler.h"
 #include <arpa/inet.h>
 
-ProtobufHandler::ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service)
-    : conn_(conn), auth_service_(auth_service), friend_service_(friend_service) {}
+ProtobufHandler::ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service,
+                                 MsgService* msg_service)
+    : conn_(conn), auth_service_(auth_service), friend_service_(friend_service), msg_service_(msg_service) {}
 
 bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
     im::Envelope request;
@@ -83,6 +84,9 @@ void ProtobufHandler::dispatch(const im::Envelope& request, im::Envelope& respon
             break;
         case im::CMD_GET_FRIEND_LIST_REQ:
             handle_get_friend_list(request, response);
+            break;
+        case im::CMD_P2P_MSG_REQ:
+            handle_p2p_msg(request, response);
             break;
         default:
             handle_unknown(request, response);
@@ -189,6 +193,27 @@ void ProtobufHandler::handle_get_friend_list(const im::Envelope& request, im::En
     friend_service_->get_friend_list(current_user_id(), &get_friend_list_resp);
     response.set_cmd(im::CMD_GET_FRIEND_LIST_RES);
     response.mutable_get_friend_list_res()->CopyFrom(get_friend_list_resp);
+}
+
+void ProtobufHandler::handle_p2p_msg(const im::Envelope& request, im::Envelope& response) {
+    if (require_auth(response, im::CMD_MSG_ACK)) return;
+
+    if (!request.has_p2p_msg_req()) {
+        LOG_ERROR("CMD_P2P_MSG_REQ received but payload is missing");
+        response.set_cmd(im::CMD_MSG_ACK);
+        auto* resp = response.mutable_msg_ack();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing p2p message payload");
+        return;
+    }
+
+    const auto& req = request.p2p_msg_req();
+    LOG_INFO("P2P Msg request: from={} to={}, msg_id={}", current_user_id(), req.receiver_id(), req.msg_id());
+
+    im::MessageAck msg_ack;
+    msg_service_->send_p2p_message(current_user_id(), req, &msg_ack);
+    response.set_cmd(im::CMD_MSG_ACK);
+    response.mutable_msg_ack()->CopyFrom(msg_ack);
 }
 
 void ProtobufHandler::handle_unknown(const im::Envelope& request, im::Envelope& response) {

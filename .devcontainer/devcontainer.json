@@ -9,7 +9,8 @@
                 "ms-vscode.cpptools",
                 "ms-vscode.cmake-tools",
                 "twxs.cmake",
-                "ms-python.python"
+                "ms-python.python",
+                "cweijan.vscode-database-client2"
             ],
             "settings": {
                 "C_Cpp.intelliSenseEngine": "disabled",

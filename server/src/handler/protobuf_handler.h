@@ -2,6 +2,7 @@
 
 #include "../service/auth_service.h"
 #include "../service/friend_service.h"
+#include "../service/msg_service.h"
 #include "core/tcp_connection.h"
 #include "protocol.pb.h"
 
@@ -18,7 +19,8 @@
  */
 class ProtobufHandler : public ProtocolHandler {
 public:
-    explicit ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service);
+    ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service,
+                    MsgService* msg_service);
     ~ProtobufHandler() override = default;
 
     bool process(Buffer& read_buff, Buffer& write_buff) override;
@@ -40,6 +42,10 @@ private:
     void handle_add_friend(const im::Envelope& request, im::Envelope& response);
     void handle_handle_friend(const im::Envelope& request, im::Envelope& response);
     void handle_get_friend_list(const im::Envelope& request, im::Envelope& response);
+    
+    // Message command handlers
+    void handle_p2p_msg(const im::Envelope& request, im::Envelope& response);
+
     void handle_unknown(const im::Envelope& request, im::Envelope& response);
 
     // Helper to check authentication and get user_id
@@ -52,6 +58,7 @@ private:
     // Services (injected dependencies)
     AuthService* auth_service_;
     FriendService* friend_service_;
+    MsgService* msg_service_;
 
     // Constants
     static constexpr size_t kHeaderSize = 4;            // Length prefix size

@@ -11,6 +11,7 @@
 #include "../service/auth_service.h"
 #include "../service/friend_service.h"
 #include "../service/push_service.h"
+#include "../service/msg_service.h"
 #include "../timer/heaptimer.h"
 #include "epoller.h"
 #include "tcp_connection.h"
@@ -59,6 +60,7 @@ private:
     std::unique_ptr<PushService> pushService_;
     std::unique_ptr<AuthService> authService_;
     std::unique_ptr<FriendService> friendService_;
+    std::unique_ptr<MsgService> msgService_;
     // Store connections by fd, using unique_ptr since TcpConnection is not copyable
     std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;
 };

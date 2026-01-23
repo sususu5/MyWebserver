@@ -72,3 +72,14 @@ void PushService::push_friend_status(const std::string& sender_id, const std::st
 
     send_envelope(sender_id, envelope);
 }
+
+void PushService::push_p2p_message(const im::P2PMessage& msg) {
+    im::Envelope envelope;
+    envelope.set_seq(0);
+    envelope.set_cmd(im::CMD_P2P_MSG_PUSH);
+    envelope.set_timestamp(time(nullptr));
+
+    *envelope.mutable_p2p_msg_push() = msg;
+
+    send_envelope(msg.receiver_id(), envelope);
+}

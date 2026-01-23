@@ -5,7 +5,8 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
                      const char* dbName, int connPoolNum, int threadNum, bool openLog, int logLevel, int logQueSize)
     : port_(port), timeoutMS_(timeoutMS), isClose_(false), timer_(new HeapTimer()),
       threadPool_(new ThreadPool(threadNum)), epoller_(new Epoller()), pushService_(new PushService()),
-      authService_(new AuthService()), friendService_(new FriendService(pushService_.get())) {
+      authService_(new AuthService()), friendService_(new FriendService(pushService_.get())),
+      msgService_(new MsgService(pushService_.get())) {
     const char* sql_env_host = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "localhost";
 
     if (openLog) {
@@ -31,6 +32,7 @@ Webserver::Webserver(int port, int trigMode, int timeoutMS, int sqlPort, const c
     TcpConnection::auth_service = authService_.get();
     TcpConnection::friend_service = friendService_.get();
     TcpConnection::push_service = pushService_.get();
+    TcpConnection::msg_service = msgService_.get();
     TcpConnection::epoller_ = epoller_.get();
 
     SqlConnPool::Instance()->Init(sql_env_host, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);

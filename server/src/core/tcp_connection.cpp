@@ -14,6 +14,7 @@ AuthService* TcpConnection::auth_service = nullptr;
 FriendService* TcpConnection::friend_service = nullptr;
 PushService* TcpConnection::push_service = nullptr;
 Epoller* TcpConnection::epoller_ = nullptr;
+MsgService* TcpConnection::msg_service = nullptr;
 
 TcpConnection::~TcpConnection() { close_conn(); }
 
@@ -78,7 +79,7 @@ bool TcpConnection::process() {
             conn_type_ = ConnType::HTTP;
             LOG_INFO("Protocol determined: HTTP");
         } else {
-            handler_ = std::make_unique<ProtobufHandler>(this, auth_service, friend_service);
+            handler_ = std::make_unique<ProtobufHandler>(this, auth_service, friend_service, msg_service);
             conn_type_ = ConnType::PROTOBUF;
             LOG_INFO("Protocol determined: Protobuf");
         }

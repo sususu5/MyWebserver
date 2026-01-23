@@ -1,0 +1,16 @@
+#pragma once
+
+#include "message_service.pb.h"
+#include "push_service.h"
+
+class MsgService {
+public:
+    explicit MsgService(PushService* push_service);
+    ~MsgService() = default;
+
+    // Send a P2P message
+    void send_p2p_message(const std::string& sender_id, const im::P2PMessage& req, im::MessageAck* resp);
+
+private:
+    PushService* push_service_;
+};

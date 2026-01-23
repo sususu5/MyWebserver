@@ -21,6 +21,7 @@ public:
                          const std::string& verify_msg);
     void push_friend_status(const std::string& sender_id, const std::string& receiver_id,
                             const std::string& receiver_name, const im::FriendAction& action);
+    void push_p2p_message(const im::P2PMessage& msg);
 
 private:
     std::mutex mtx_;

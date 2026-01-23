@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y \
     unzip \
     tar \
     pkg-config \
+    libuv1-dev \
+    libssl-dev \
+    rustc \
+    cargo \
     gdb \
     clangd \
     clang-format \

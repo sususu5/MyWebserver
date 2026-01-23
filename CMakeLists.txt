@@ -26,6 +26,23 @@ find_package(protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf: ${protobuf_VERSION}")
 
 # ---------------------------------------------------------------------------
+# ScyllaDB C++ driver (cpp-rs-driver)
+# ---------------------------------------------------------------------------
+include(FetchContent)
+
+set(CASS_BUILD_STATIC OFF CACHE BOOL "Disable static build for cpp-rs-driver" FORCE)
+set(CASS_BUILD_SHARED ON CACHE BOOL "Enable shared build for cpp-rs-driver" FORCE)
+set(CASS_BUILD_EXAMPLES OFF CACHE BOOL "Disable cpp-rs-driver examples" FORCE)
+set(CASS_BUILD_INTEGRATION_TESTS OFF CACHE BOOL "Disable cpp-rs-driver tests" FORCE)
+
+FetchContent_Declare(
+    cpp_rs_driver
+    GIT_REPOSITORY https://github.com/scylladb/cpp-rs-driver.git
+    GIT_TAG v0.6.0
+)
+FetchContent_MakeAvailable(cpp_rs_driver)
+
+# ---------------------------------------------------------------------------
 # Sub-directories
 # ---------------------------------------------------------------------------
 add_subdirectory(proto)

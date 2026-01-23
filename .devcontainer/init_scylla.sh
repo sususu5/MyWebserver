@@ -10,7 +10,7 @@ until docker exec scylla cqlsh "$SCYLLA_HOST" "$SCYLLA_PORT" -e "DESCRIBE KEYSPA
 done
 
 echo "[scylla] initializing keyspace and tables..."
-docker exec scylla cqlsh "$SCYLLA_HOST" "$SCYLLA_PORT" <<'CQL'
+docker exec -i scylla cqlsh "$SCYLLA_HOST" "$SCYLLA_PORT" <<'CQL'
 CREATE KEYSPACE IF NOT EXISTS im
 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 

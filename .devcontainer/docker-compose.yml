@@ -18,6 +18,8 @@ services:
       - MYSQL_DATABASE=testdb
       - SCYLLA_HOST=scylla
       - SCYLLA_PORT=9042
+      - SCYLLA_USERNAME=cassandra
+      - SCYLLA_PASSWORD=cassandra
 
   mysql:
     image: mysql:8.0
@@ -60,7 +62,7 @@ services:
       - "9042:9042"
     command: --smp 1 --memory 2G --overprovisioned 1 --developer-mode 1
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' localhost 9042"]
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' $(hostname -i) 9042"]
       interval: 10s
       timeout: 5s
       retries: 20

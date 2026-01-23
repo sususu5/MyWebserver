@@ -14,6 +14,7 @@ class AuthService;
 class FriendService;
 class PushService;
 class Epoller;
+class MsgService;
 
 // ProtocolHandler is a pure virtual class that defines the interface for processing protocol data
 class ProtocolHandler {
@@ -76,6 +77,7 @@ public:
     static AuthService* auth_service;
     static FriendService* friend_service;
     static PushService* push_service;
+    static MsgService* msg_service;
     static Epoller* epoller_;
 
 protected:

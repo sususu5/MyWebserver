@@ -1,6 +1,6 @@
 #include "httprequest.h"
 #include "../dao/user_dao.h"
-#include "../util/uuid_generator.h"
+#include "../utils/id_generator.h"
 using namespace std;
 
 // Webpage path
@@ -188,7 +188,7 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
             LOG_INFO("user used!");
             return false;
         }
-        if (dao.Insert(UuidGenerator::generate(), name, pwd)) {
+        if (dao.Insert(IdGenerator::GenerateUuid(), name, pwd)) {
             LOG_DEBUG("register!");
             return true;
         } else {

@@ -1,7 +1,7 @@
 #include "auth_service.h"
 #include "../log/log.h"
-#include "../util/token_util.h"
-#include "../util/uuid_generator.h"
+#include "../utils/id_generator.h"
+#include "../utils/token_util.h"
 
 void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* resp) {
     const auto& username = req.username();
@@ -19,7 +19,7 @@ void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* re
         return;
     }
 
-    const auto& user_id = UuidGenerator::generate();
+    const auto& user_id = IdGenerator::GenerateUuid();
     if (user_dao_.Insert(user_id, username, password)) {
         resp->set_success(true);
         resp->set_user_id(user_id);

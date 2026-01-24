@@ -5,9 +5,19 @@
 MsgService::MsgService(PushService* push_service) : push_service_(push_service) {}
 
 void MsgService::send_p2p_message(const std::string& sender_id, const im::P2PMessage& req, im::MessageAck* resp) {
+    if (sender_id.empty()) {
+        resp->set_success(false);
+        resp->set_error_msg("Sender ID is empty");
+        return;
+    }
     if (req.receiver_id().empty()) {
         resp->set_success(false);
         resp->set_error_msg("Receiver ID is empty");
+        return;
+    }
+    if (req.timestamp() == 0) {
+        resp->set_success(false);
+        resp->set_error_msg("Timestamp is empty");
         return;
     }
 

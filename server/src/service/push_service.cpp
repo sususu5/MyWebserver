@@ -2,7 +2,7 @@
 #include <ctime>
 #include "../core/tcp_connection.h"
 #include "../log/log.h"
-#include "../util/uuid_generator.h"
+#include "../utils/id_generator.h"
 #include "protocol.pb.h"
 
 void PushService::add_client(const std::string& user_id, TcpConnection* conn) {
@@ -28,7 +28,7 @@ void PushService::push_friend_req(const std::string& sender_id, const std::strin
 
     auto* push = envelope.mutable_friend_req_push();
     // TODO: Changed random id into large integer id
-    push->set_req_id(UuidGenerator::generate());
+    push->set_req_id(IdGenerator::GenerateUuid());
     push->set_sender_id(sender_id);
     push->set_sender_name(sender_name);
     push->set_verify_msg(verify_msg);

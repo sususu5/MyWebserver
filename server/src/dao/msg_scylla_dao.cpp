@@ -2,6 +2,7 @@
 #include <cassandra.h>
 #include "../log/log.h"
 #include "../pool/scylla_session.h"
+#include "../utils/id_generator.h"
 
 namespace {
 std::string CassFutureError(CassFuture* future) {
@@ -28,7 +29,8 @@ bool MsgScyllaDao::InsertMessage(const std::string& conversation_id, const im::P
         "VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     CassStatement* statement = cass_statement_new(k_insert_query, 7);
-    cass_statement_bind_string(statement, 0, conversation_id.c_str());
+    auto p2p_conv_id = IdGenerator::GenerateP2PConvId(msg.sender_id(), msg.receiver_id());
+    cass_statement_bind_string(statement, 0, p2p_conv_id.c_str());
     cass_statement_bind_int64(statement, 1, static_cast<cass_int64_t>(msg.timestamp()));
     cass_statement_bind_string(statement, 2, msg.msg_id().c_str());
     cass_statement_bind_string(statement, 3, msg.sender_id().c_str());

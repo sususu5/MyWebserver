@@ -86,7 +86,7 @@ bool TcpConnection::process() {
         protocol_determined_ = true;
     }
 
-    if (handler_ && handler_->process(read_buff_, write_buff_)) {
+    if (handler_ && handler_->Process(read_buff_, write_buff_)) {
         // Setup iov for HTTP file sending
         if (conn_type_ == ConnType::HTTP) {
             setup_iov_for_http();
@@ -106,9 +106,9 @@ void TcpConnection::setup_iov_for_http() {
     iov_cnt_ = 1;
 
     // iov_[1] for mmap file content (zero-copy)
-    if (http_handler->file_len() > 0 && http_handler->file()) {
-        iov_[1].iov_base = http_handler->file();
-        iov_[1].iov_len = http_handler->file_len();
+    if (http_handler->FileLen() > 0 && http_handler->File()) {
+        iov_[1].iov_base = http_handler->File();
+        iov_[1].iov_len = http_handler->FileLen();
         iov_cnt_ = 2;
     }
 
@@ -125,7 +125,7 @@ size_t TcpConnection::to_write_bytes() {
 
 bool TcpConnection::is_keep_alive() const {
     if (handler_) {
-        return handler_->is_keep_alive();
+        return handler_->IsKeepAlive();
     }
     return false;
 }

@@ -2,7 +2,7 @@
 
 HttpHandler::~HttpHandler() { response_.UnmapFile(); }
 
-bool HttpHandler::process(Buffer& read_buff, Buffer& write_buff) {
+bool HttpHandler::Process(Buffer& read_buff, Buffer& write_buff) {
     request_.Init();
 
     if (read_buff.readable_bytes() <= 0) {

@@ -5,10 +5,10 @@ ProtobufHandler::ProtobufHandler(TcpConnection* conn, AuthService* auth_service,
                                  MsgService* msg_service)
     : conn_(conn), auth_service_(auth_service), friend_service_(friend_service), msg_service_(msg_service) {}
 
-bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
+bool ProtobufHandler::Process(Buffer& read_buff, Buffer& write_buff) {
     im::Envelope request;
 
-    if (!try_decode_message(read_buff, request)) {
+    if (!TryDecodeMessage(read_buff, request)) {
         return false;
     }
 
@@ -17,14 +17,14 @@ bool ProtobufHandler::process(Buffer& read_buff, Buffer& write_buff) {
     im::Envelope response;
     response.set_seq(request.seq());
     response.set_timestamp(time(nullptr));
-    dispatch(request, response);
-    encode_message(response, write_buff);
+    Dispatch(request, response);
+    EncodeMessage(response, write_buff);
 
     LOG_DEBUG("Sent response: cmd={}, seq={}", response.cmd(), response.seq());
     return true;
 }
 
-bool ProtobufHandler::try_decode_message(Buffer& read_buff, im::Envelope& envelope) {
+bool ProtobufHandler::TryDecodeMessage(Buffer& read_buff, im::Envelope& envelope) {
     if (read_buff.readable_bytes() < kHeaderSize) {
         return false;
     }
@@ -56,7 +56,7 @@ bool ProtobufHandler::try_decode_message(Buffer& read_buff, im::Envelope& envelo
     return true;
 }
 
-void ProtobufHandler::encode_message(const im::Envelope& envelope, Buffer& write_buff) {
+void ProtobufHandler::EncodeMessage(const im::Envelope& envelope, Buffer& write_buff) {
     std::string serialized;
     if (!envelope.SerializeToString(&serialized)) {
         LOG_ERROR("Failed to serialize protobuf message");
@@ -68,33 +68,33 @@ void ProtobufHandler::encode_message(const im::Envelope& envelope, Buffer& write
     write_buff.append(serialized.data(), serialized.size());
 }
 
-void ProtobufHandler::dispatch(const im::Envelope& request, im::Envelope& response) {
+void ProtobufHandler::Dispatch(const im::Envelope& request, im::Envelope& response) {
     switch (request.cmd()) {
         case im::CMD_REGISTER_REQ:
-            handle_register(request, response);
+            HandleRegister(request, response);
             break;
         case im::CMD_LOGIN_REQ:
-            handle_login(request, response);
+            HandleLogin(request, response);
             break;
         case im::CMD_ADD_FRIEND_REQ:
-            handle_add_friend(request, response);
+            HandleAddFriend(request, response);
             break;
         case im::CMD_HANDLE_FRIEND_REQ:
-            handle_handle_friend(request, response);
+            HandleHandleFriend(request, response);
             break;
         case im::CMD_GET_FRIEND_LIST_REQ:
-            handle_get_friend_list(request, response);
+            HandleGetFriendList(request, response);
             break;
         case im::CMD_P2P_MSG_REQ:
-            handle_p2p_msg(request, response);
+            HandleP2PMsg(request, response);
             break;
         default:
-            handle_unknown(request, response);
+            HandleUnknown(request, response);
             break;
     }
 }
 
-void ProtobufHandler::handle_register(const im::Envelope& request, im::Envelope& response) {
+void ProtobufHandler::HandleRegister(const im::Envelope& request, im::Envelope& response) {
     if (!request.has_register_req()) {
         LOG_ERROR("CMD_REGISTER_REQ received but payload is missing");
         response.set_cmd(im::CMD_REGISTER_RES);
@@ -113,7 +113,7 @@ void ProtobufHandler::handle_register(const im::Envelope& request, im::Envelope&
     response.mutable_register_res()->CopyFrom(register_resp);
 }
 
-void ProtobufHandler::handle_login(const im::Envelope& request, im::Envelope& response) {
+void ProtobufHandler::HandleLogin(const im::Envelope& request, im::Envelope& response) {
     if (!request.has_login_req()) {
         LOG_ERROR("CMD_LOGIN_REQ received but payload is missing");
         response.set_cmd(im::CMD_LOGIN_RES);
@@ -132,8 +132,8 @@ void ProtobufHandler::handle_login(const im::Envelope& request, im::Envelope& re
     response.mutable_login_res()->CopyFrom(login_resp);
 }
 
-void ProtobufHandler::handle_add_friend(const im::Envelope& request, im::Envelope& response) {
-    if (require_auth(response, im::CMD_ADD_FRIEND_RES)) return;
+void ProtobufHandler::HandleAddFriend(const im::Envelope& request, im::Envelope& response) {
+    if (RequireAuth(response, im::CMD_ADD_FRIEND_RES)) return;
 
     if (!request.has_add_friend_req()) {
         LOG_ERROR("CMD_ADD_FRIEND_REQ received but payload is missing");
@@ -145,16 +145,16 @@ void ProtobufHandler::handle_add_friend(const im::Envelope& request, im::Envelop
     }
 
     const auto& req = request.add_friend_req();
-    LOG_INFO("Add friend request: sender={}, receiver_id={}", current_user_id(), req.receiver_id());
+    LOG_INFO("Add friend request: sender={}, receiver_id={}", CurrentUserId(), req.receiver_id());
 
     im::AddFriendResp add_friend_resp;
-    friend_service_->add_friend(current_user_id(), req, &add_friend_resp);
+    friend_service_->add_friend(CurrentUserId(), req, &add_friend_resp);
     response.set_cmd(im::CMD_ADD_FRIEND_RES);
     response.mutable_add_friend_res()->CopyFrom(add_friend_resp);
 }
 
-void ProtobufHandler::handle_handle_friend(const im::Envelope& request, im::Envelope& response) {
-    if (require_auth(response, im::CMD_HANDLE_FRIEND_RES)) return;
+void ProtobufHandler::HandleHandleFriend(const im::Envelope& request, im::Envelope& response) {
+    if (RequireAuth(response, im::CMD_HANDLE_FRIEND_RES)) return;
 
     if (!request.has_handle_friend_req()) {
         LOG_ERROR("CMD_HANDLE_FRIEND_REQ received but payload is missing");
@@ -166,17 +166,17 @@ void ProtobufHandler::handle_handle_friend(const im::Envelope& request, im::Enve
     }
 
     const auto& req = request.handle_friend_req();
-    LOG_INFO("Handle friend request: receiver={}, req_id={}, sender_id={}", current_user_id(), req.req_id(),
+    LOG_INFO("Handle friend request: receiver={}, req_id={}, sender_id={}", CurrentUserId(), req.req_id(),
              req.sender_id());
 
     im::HandleFriendResp handle_friend_resp;
-    friend_service_->handle_friend(current_user_id(), req, &handle_friend_resp);
+    friend_service_->handle_friend(CurrentUserId(), req, &handle_friend_resp);
     response.set_cmd(im::CMD_HANDLE_FRIEND_RES);
     response.mutable_handle_friend_res()->CopyFrom(handle_friend_resp);
 }
 
-void ProtobufHandler::handle_get_friend_list(const im::Envelope& request, im::Envelope& response) {
-    if (require_auth(response, im::CMD_GET_FRIEND_LIST_RES)) return;
+void ProtobufHandler::HandleGetFriendList(const im::Envelope& request, im::Envelope& response) {
+    if (RequireAuth(response, im::CMD_GET_FRIEND_LIST_RES)) return;
 
     if (!request.has_get_friend_list_req()) {
         LOG_ERROR("CMD_GET_FRIEND_LIST_REQ received but payload is missing");
@@ -187,16 +187,16 @@ void ProtobufHandler::handle_get_friend_list(const im::Envelope& request, im::En
         return;
     }
 
-    LOG_INFO("Get friend list request: user={}", current_user_id());
+    LOG_INFO("Get friend list request: user={}", CurrentUserId());
 
     im::GetFriendListResp get_friend_list_resp;
-    friend_service_->get_friend_list(current_user_id(), &get_friend_list_resp);
+    friend_service_->get_friend_list(CurrentUserId(), &get_friend_list_resp);
     response.set_cmd(im::CMD_GET_FRIEND_LIST_RES);
     response.mutable_get_friend_list_res()->CopyFrom(get_friend_list_resp);
 }
 
-void ProtobufHandler::handle_p2p_msg(const im::Envelope& request, im::Envelope& response) {
-    if (require_auth(response, im::CMD_MSG_ACK)) return;
+void ProtobufHandler::HandleP2PMsg(const im::Envelope& request, im::Envelope& response) {
+    if (RequireAuth(response, im::CMD_MSG_ACK)) return;
 
     if (!request.has_p2p_msg_req()) {
         LOG_ERROR("CMD_P2P_MSG_REQ received but payload is missing");
@@ -208,20 +208,20 @@ void ProtobufHandler::handle_p2p_msg(const im::Envelope& request, im::Envelope& 
     }
 
     const auto& req = request.p2p_msg_req();
-    LOG_INFO("P2P Msg request: from={} to={}, msg_id={}", current_user_id(), req.receiver_id(), req.msg_id());
+    LOG_INFO("P2P Msg request: from={} to={}, msg_id={}", CurrentUserId(), req.receiver_id(), req.msg_id());
 
     im::MessageAck msg_ack;
-    msg_service_->send_p2p_message(current_user_id(), req, &msg_ack);
+    msg_service_->send_p2p_message(CurrentUserId(), req, &msg_ack);
     response.set_cmd(im::CMD_MSG_ACK);
     response.mutable_msg_ack()->CopyFrom(msg_ack);
 }
 
-void ProtobufHandler::handle_unknown(const im::Envelope& request, im::Envelope& response) {
+void ProtobufHandler::HandleUnknown(const im::Envelope& request, im::Envelope& response) {
     LOG_WARN("Unknown command received: {}", request.cmd());
     response.set_cmd(im::CMD_UNKNOWN);
 }
 
-bool ProtobufHandler::require_auth(im::Envelope& response, im::CommandType resp_cmd) {
+bool ProtobufHandler::RequireAuth(im::Envelope& response, im::CommandType resp_cmd) {
     if (!conn_ || !conn_->is_logged_in()) {
         LOG_WARN("Unauthorized request: user not logged in");
         response.set_cmd(resp_cmd);
@@ -230,7 +230,7 @@ bool ProtobufHandler::require_auth(im::Envelope& response, im::CommandType resp_
     return false;
 }
 
-const std::string& ProtobufHandler::current_user_id() const {
+const std::string& ProtobufHandler::CurrentUserId() const {
     static const std::string empty;
     return conn_ ? conn_->get_user_id() : empty;
 }

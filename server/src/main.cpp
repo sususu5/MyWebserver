@@ -9,7 +9,7 @@ void signal_handler(int sig) {
     write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 
     if (g_server) {
-        g_server->stop();
+        g_server->Stop();
     }
 }
 
@@ -25,7 +25,7 @@ int main() {
     {
         Webserver server(1316, 3, 60000, 3306, "root", "123456", "testdb", 12, 8, true, 1, 1024);
         g_server = &server;
-        server.start();
+        server.Start();
         g_server = nullptr;
         // Server destructor will be called here, logging shutdown
     }

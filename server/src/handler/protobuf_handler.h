@@ -23,34 +23,34 @@ public:
                     MsgService* msg_service);
     ~ProtobufHandler() override = default;
 
-    bool process(Buffer& read_buff, Buffer& write_buff) override;
-    bool is_keep_alive() const override { return true; }
+    bool Process(Buffer& read_buff, Buffer& write_buff) override;
+    bool IsKeepAlive() const override { return true; }
 
 private:
     // Message codec
-    bool try_decode_message(Buffer& read_buff, im::Envelope& envelope);
-    void encode_message(const im::Envelope& envelope, Buffer& write_buff);
+    bool TryDecodeMessage(Buffer& read_buff, im::Envelope& envelope);
+    void EncodeMessage(const im::Envelope& envelope, Buffer& write_buff);
 
     // Command dispatcher
-    void dispatch(const im::Envelope& request, im::Envelope& response);
+    void Dispatch(const im::Envelope& request, im::Envelope& response);
 
     // Auth command handlers
-    void handle_register(const im::Envelope& request, im::Envelope& response);
-    void handle_login(const im::Envelope& request, im::Envelope& response);
+    void HandleRegister(const im::Envelope& request, im::Envelope& response);
+    void HandleLogin(const im::Envelope& request, im::Envelope& response);
 
     // Friend command handlers (require authentication)
-    void handle_add_friend(const im::Envelope& request, im::Envelope& response);
-    void handle_handle_friend(const im::Envelope& request, im::Envelope& response);
-    void handle_get_friend_list(const im::Envelope& request, im::Envelope& response);
-    
-    // Message command handlers
-    void handle_p2p_msg(const im::Envelope& request, im::Envelope& response);
+    void HandleAddFriend(const im::Envelope& request, im::Envelope& response);
+    void HandleHandleFriend(const im::Envelope& request, im::Envelope& response);
+    void HandleGetFriendList(const im::Envelope& request, im::Envelope& response);
 
-    void handle_unknown(const im::Envelope& request, im::Envelope& response);
+    // Message command handlers
+    void HandleP2PMsg(const im::Envelope& request, im::Envelope& response);
+
+    void HandleUnknown(const im::Envelope& request, im::Envelope& response);
 
     // Helper to check authentication and get user_id
-    bool require_auth(im::Envelope& response, im::CommandType resp_cmd);
-    const std::string& current_user_id() const;
+    bool RequireAuth(im::Envelope& response, im::CommandType resp_cmd);
+    const std::string& CurrentUserId() const;
 
     // Connection (for session state)
     TcpConnection* conn_;
@@ -68,7 +68,7 @@ private:
 // Specialization for std::format to handle im::CommandType directly
 template <>
 struct std::formatter<im::CommandType> : std::formatter<int> {
-    auto format(im::CommandType cmd, format_context& ctx) const {
+    auto Format(im::CommandType cmd, format_context& ctx) const {
         return formatter<int>::format(static_cast<int>(cmd), ctx);
     }
 };

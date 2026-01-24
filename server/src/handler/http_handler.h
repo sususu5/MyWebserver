@@ -9,11 +9,11 @@ public:
     HttpHandler() = default;
     ~HttpHandler() override;
 
-    bool process(Buffer& read_buff, Buffer& write_buff) override;
-    bool is_keep_alive() const override { return request_.IsKeepAlive(); }
+    bool Process(Buffer& read_buff, Buffer& write_buff) override;
+    bool IsKeepAlive() const override { return request_.IsKeepAlive(); }
 
-    size_t file_len() const { return response_.FileLen(); }
-    char* file() { return response_.File(); }
+    size_t FileLen() const { return response_.FileLen(); }
+    char* File() { return response_.File(); }
 
 private:
     HttpRequest request_;

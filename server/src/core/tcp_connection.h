@@ -21,8 +21,8 @@ class ProtocolHandler {
 public:
     virtual ~ProtocolHandler() = default;
 
-    virtual bool process(Buffer& read_buff, Buffer& write_buff) = 0;
-    virtual bool is_keep_alive() const { return false; }
+    virtual bool Process(Buffer& read_buff, Buffer& write_buff) = 0;
+    virtual bool IsKeepAlive() const { return false; }
 };
 
 enum class ConnType {

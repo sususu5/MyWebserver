@@ -13,17 +13,18 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libuv1-dev \
     libssl-dev \
-    rustc \
-    cargo \
     gdb \
     clangd \
     clang-format \
+    libclang-dev \
     ninja-build \ 
     python3 \
     python3-pip \
     protobuf-compiler \
     python3-pyparsing \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain nightly
 
 RUN pip3 install --break-system-packages protobuf==5.29.5
 
@@ -37,6 +38,9 @@ RUN ./vcpkg/bootstrap-vcpkg.sh
 
 ENV VCPKG_ROOT=/opt/vcpkg
 ENV PATH=$VCPKG_ROOT:$PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
+ENV RUSTC="/root/.cargo/bin/rustc"
+ENV LIBCLANG_PATH="/usr/lib/llvm-18/lib"
 
 WORKDIR /workspace
 

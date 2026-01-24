@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../dao/msg_scylla_dao.h"
 #include "message_service.pb.h"
 #include "push_service.h"
 
@@ -13,4 +14,5 @@ public:
 
 private:
     PushService* push_service_;
+    MsgScyllaDao msg_scylla_dao_;
 };

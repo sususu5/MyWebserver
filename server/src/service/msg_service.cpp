@@ -11,7 +11,14 @@ void MsgService::send_p2p_message(const std::string& sender_id, const im::P2PMes
         return;
     }
 
-    im::P2PMessage msg_to_push = req;
+    auto ok = msg_scylla_dao_.InsertMessage(req.receiver_id(), req);
+    if (!ok) {
+        resp->set_success(false);
+        resp->set_error_msg("Failed to insert message");
+        return;
+    }
+
+    auto msg_to_push = req;
     msg_to_push.set_sender_id(sender_id);
 
     if (msg_to_push.timestamp() == 0) {

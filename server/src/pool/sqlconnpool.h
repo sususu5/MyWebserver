@@ -5,9 +5,6 @@
 #include <sqlpp11/sqlpp11.h>
 #include <mutex>
 #include <queue>
-#include <string>
-#include <thread>
-#include "../log/log.h"
 
 class SqlConnPool {
 public:
@@ -26,7 +23,7 @@ private:
 
     int MAX_CONN_;
 
-    std::queue<sqlpp::mysql::connection*> connQue_;
+    std::queue<sqlpp::mysql::connection*> conn_queue_;
     std::mutex mtx_;
     sem_t semId_;
 };

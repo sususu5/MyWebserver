@@ -26,6 +26,16 @@ find_package(protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf: ${protobuf_VERSION}")
 
 # ---------------------------------------------------------------------------
+# Rust toolchain (for cpp-rs-driver)
+# ---------------------------------------------------------------------------
+if(NOT DEFINED CMAKE_Rust_COMPILER)
+    set(CMAKE_Rust_COMPILER "/root/.cargo/bin/rustc" CACHE FILEPATH "Rust compiler" FORCE)
+endif()
+if(NOT DEFINED CARGO_EXECUTABLE)
+    set(CARGO_EXECUTABLE "/root/.cargo/bin/cargo" CACHE FILEPATH "Cargo executable" FORCE)
+endif()
+
+# ---------------------------------------------------------------------------
 # ScyllaDB C++ driver (cpp-rs-driver)
 # ---------------------------------------------------------------------------
 include(FetchContent)

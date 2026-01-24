@@ -154,7 +154,7 @@ docker-compose up --build
 ```
 
 **Code Formatting:**
-Using snake_case for variable names and function names, and CamelCase for class names.
+Using Google Style for C++: PascalCase for class names and function names, snake_case for variable names.
 
 ```bash
 find server/src tests -name "*.h" -o -name "*.cpp" | xargs clang-format -i

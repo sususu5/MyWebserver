@@ -61,6 +61,7 @@ add_dependencies(mywebserver generate_sql_models)
 # Public include path
 target_include_directories(mywebserver PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${cpp_rs_driver_SOURCE_DIR}/include
 )
 
 # ---------------------------------------------------------------------------
@@ -75,6 +76,7 @@ target_link_libraries(mywebserver PUBLIC
     nlohmann_json::nlohmann_json
     OpenSSL::SSL
     OpenSSL::Crypto
+    scylla-cpp-driver
 )
 
 if(TARGET proto_generated)

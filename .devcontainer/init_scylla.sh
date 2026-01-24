@@ -16,14 +16,14 @@ WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
 CREATE TABLE IF NOT EXISTS im.messages (
   conversation_id text,
-  ts bigint,
+  timestamp bigint,
   message_id text,
   sender_id text,
   receiver_id text,
   content_type int,
   content blob,
-  PRIMARY KEY (conversation_id, ts, message_id)
-) WITH CLUSTERING ORDER BY (ts DESC);
+  PRIMARY KEY (conversation_id, timestamp, message_id)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
 CQL
 
 echo "[scylla] init done."

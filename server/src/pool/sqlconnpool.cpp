@@ -1,4 +1,5 @@
 #include "sqlconnpool.h"
+#include "../log/log.h"
 
 SqlConnPool* SqlConnPool::Instance() {
     static SqlConnPool pool;
@@ -20,7 +21,7 @@ auto SqlConnPool::Init(const char* host, uint16_t port, const char* user, const 
     for (int i = 0; i < connSize; i++) {
         try {
             auto conn = new sqlpp::mysql::connection(config);
-            connQue_.emplace(conn);
+            conn_queue_.emplace(conn);
         } catch (const std::exception& e) {
             LOG_ERROR("MYSQL init error: {}", e.what());
         }
@@ -33,7 +34,7 @@ auto SqlConnPool::Init(const char* host, uint16_t port, const char* user, const 
 
 auto SqlConnPool::GetConn() -> sqlpp::mysql::connection* {
     sqlpp::mysql::connection* conn = nullptr;
-    if (connQue_.empty()) {
+    if (conn_queue_.empty()) {
         LOG_WARN("SqlConnPool busy!");
         return nullptr;
     }
@@ -41,28 +42,28 @@ auto SqlConnPool::GetConn() -> sqlpp::mysql::connection* {
     // If the semaphore is 0, the thread will be blocked
     sem_wait(&semId_);
     std::lock_guard<std::mutex> locker(mtx_);
-    conn = connQue_.front();
-    connQue_.pop();
+    conn = conn_queue_.front();
+    conn_queue_.pop();
     return conn;
 }
 
 auto SqlConnPool::FreeConn(sqlpp::mysql::connection* conn) -> void {
     assert(conn);
     std::lock_guard<std::mutex> locker(mtx_);
-    connQue_.push(conn);
+    conn_queue_.push(conn);
     sem_post(&semId_);
 }
 
 auto SqlConnPool::ClosePool() -> void {
     std::lock_guard<std::mutex> locker(mtx_);
-    while (!connQue_.empty()) {
-        auto conn = connQue_.front();
-        connQue_.pop();
+    while (!conn_queue_.empty()) {
+        auto conn = conn_queue_.front();
+        conn_queue_.pop();
         delete conn;
     }
 }
 
 auto SqlConnPool::GetFreeConnCount() -> int {
     std::lock_guard<std::mutex> locker(mtx_);
-    return connQue_.size();
+    return conn_queue_.size();
 }

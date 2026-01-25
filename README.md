@@ -140,6 +140,10 @@ python3 tests/test_friend.py
 # Test P2P Message System
 python3 tests/test_message.py
 
+# Run Client (FTXUI)
+./build/debug/client/client
+./build/release/client/client
+
 # If you want to use db visualization with scylla, run the following commands in devcontainer terminal
 apt-get update
 apt install openjdk-21-jdk

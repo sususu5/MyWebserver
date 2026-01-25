@@ -58,6 +58,7 @@ FetchContent_MakeAvailable(cpp_rs_driver)
 add_subdirectory(proto)
 add_subdirectory(server/src)
 add_subdirectory(tests)
+add_subdirectory(client)
 
 # ---------------------------------------------------------------------------
 # Packaging / installation rules (optional)

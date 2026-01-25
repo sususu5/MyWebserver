@@ -15,6 +15,11 @@
     "sqlpp11",
     "sqlpp11-connector-mysql",
     "jwt-cpp",
-    "nlohmann-json"
+    "nlohmann-json",
+    {
+
+      "name": "ftxui",
+      "version>=": "6.1.9"
+    }
   ]
 }

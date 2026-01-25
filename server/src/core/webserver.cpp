@@ -1,5 +1,7 @@
 #include "webserver.h"
+#include <cstdlib>
 #include "../log/log.h"
+#include "../pool/scylla_session.h"
 
 Webserver::Webserver(int port, int trig_mode, int timeout_ms, int sql_port, const char* sql_user, const char* sql_pwd,
                      const char* db_name, int conn_pool_num, int thread_num, bool open_log, int log_level,
@@ -25,6 +27,7 @@ Webserver::Webserver(int port, int trig_mode, int timeout_ms, int sql_port, cons
         }
     }
 
+    // Initialize services
     src_dir_ = getcwd(nullptr, 256);
     assert(src_dir_);
     strcat(src_dir_, "/resources/");
@@ -36,7 +39,20 @@ Webserver::Webserver(int port, int trig_mode, int timeout_ms, int sql_port, cons
     TcpConnection::msg_service = msg_service_.get();
     TcpConnection::epoller_ = epoller_.get();
 
+    // Initialize MySQL connection pool and Scylla session
     SqlConnPool::Instance()->Init(sql_env_host, sql_port, sql_user, sql_pwd, db_name, conn_pool_num);
+    const char* scylla_host = getenv("SCYLLA_HOST") ? getenv("SCYLLA_HOST") : "scylla";
+    const char* scylla_user = getenv("SCYLLA_USERNAME");
+    const char* scylla_pwd = getenv("SCYLLA_PASSWORD");
+    uint16_t scylla_port = 9042;
+    if (const char* scylla_port_str = getenv("SCYLLA_PORT"); scylla_port_str && *scylla_port_str) {
+        scylla_port = static_cast<uint16_t>(std::strtoul(scylla_port_str, nullptr, 10));
+    }
+    if (!ScyllaSession::Instance()->Init(scylla_host, scylla_port, scylla_user, scylla_pwd)) {
+        LOG_WARN("Scylla session init failed. Message persistence may be unavailable.");
+    } else {
+        LOG_INFO("Scylla session initialized successfully.");
+    }
     InitEventMode_(trig_mode);
     if (!InitSocket_()) {
         is_close_ = true;
@@ -49,6 +65,7 @@ Webserver::~Webserver() {
     is_close_ = true;
     free(src_dir_);
     SqlConnPool::Instance()->ClosePool();
+    ScyllaSession::Instance()->Close();
     LOG_INFO("========== Server stopped ==========");
     Log::instance()->flush();
 }

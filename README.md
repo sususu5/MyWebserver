@@ -137,6 +137,8 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 python3 tests/test_auth.py [username] [password]
 # Test Friend System (including Push)
 python3 tests/test_friend.py
+# Test P2P Message System
+python3 tests/test_message.py
 
 # If you want to use db visualization with scylla, run the following commands in devcontainer terminal
 apt-get update

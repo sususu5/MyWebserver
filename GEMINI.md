@@ -1,36 +1,33 @@
-# MyWebserver (C++ IM Backend)
+# Project Context: MyWebserver (CLI IM System)
 
-## 🔭 Project Overview
-This project is a high-performance **C++ Instant Messaging (IM) Backend** that evolved from a web server. It uses a **Reactor pattern** with Linux Epoll for non-blocking I/O and **Google Protobuf** for binary data serialization.
+## Overview
+This project is a high-performance **CLI Instant Messaging (IM) System** written in **C++20**, evolving from a web server foundation. It utilizes a Reactor pattern with **Linux Epoll** for networking, **Google Protobuf** for data serialization, and relies on **MySQL** and **ScyllaDB** for data persistence.
 
-### 🏗 Architecture
-- **Core:** Single-threaded Reactor (Event Loop) dispatching tasks to a Thread Pool.
-- **I/O Model:** Non-blocking I/O + Epoll (ET mode).
-- **Concurrency:** Fixed-size Thread Pool for computing tasks (business logic).
-- **Database:** MySQL with connection pooling, accessed via `sqlpp11` (Modern C++ ORM).
-- **Protocol:** Custom TCP protocol with Protobuf payloads.
-- **Auth:** JWT-based authentication.
+## Architecture
+- **Language**: C++20
+- **Network Model**: Linux Epoll (Reactor Pattern)
+- **Serialization**: Google Protobuf
+- **Database**: 
+  - **MySQL**: User data, auth (port 3306)
+  - **ScyllaDB**: Message storage (port 9042)
+- **Client UI**: FTXUI (Terminal-based UI)
+- **Build System**: CMake (Presets enabled) + Vcpkg
+- **Orchestration**: Docker Compose (DevContainer)
 
-### 🛠 Tech Stack
-- **Language:** C++20
-- **Build System:** CMake + Vcpkg
-- **Third-party Libraries:**
-  - `protobuf`: Serialization
-  - `sqlpp11`: Type-safe SQL embedding
-  - `jwt-cpp`: JWT generation/verification
-  - `nlohmann/json`: JSON parsing (auxiliary)
-  - `openssl`: Encryption
+## Directory Structure
+- `server/src/`: Core server logic (Reactor, ThreadPool, Database logic).
+  - `main.cpp`: Entry point. Initializes `Webserver` on port 1316.
+- `client/`: CLI client application using FTXUI.
+  - `main.cpp`: Entry point. Manages UI pages (Auth, Register, Main).
+- `proto/`: Protobuf definition files (`.proto`).
+- `tests/`: Python integration tests (`test_auth.py`, `test_friend.py`).
+- `.devcontainer/`: Development environment configuration (Dockerfile, docker-compose).
+- `sql/`: Database schema definitions.
 
----
+## Build & Run
 
-## 🚀 Building and Running
-
-### Prerequisites
-- Docker & VS Code DevContainer (Recommended)
-- OR: GCC 11+/Clang 14+, CMake 3.21+, Vcpkg
-
-### Build Commands
-The project uses CMake Presets.
+### 1. Build
+The project uses **CMake Presets** (`debug`, `release`).
 
 **Debug Build:**
 ```bash
@@ -44,51 +41,53 @@ cmake --preset release
 cmake --build build/release
 ```
 
-**Database Model Generation:**
-Changing `sql/schema.sql` requires a rebuild to regenerate C++ models (`server/src/model/schema.h`).
+### 2. Run Server
+The server listens on port **1316**.
 ```bash
-# Handled automatically by CMake via `ddl2cpp` script
-cmake --build build/debug --target generate_sql_models
-```
-
-### Running the Server
-```bash
+# Debug
 ./build/debug/server/src/server
+
+# Release
+./build/release/server/src/server
 ```
-*Port:* 1316 (Default)
-*DB:* testdb (User: root, Pass: 123456)
 
----
+### 3. Run Client
+The client connects to `127.0.0.1:1316`.
+```bash
+# Debug
+./build/debug/client/client
+```
 
-## 🧪 Testing
+## Testing
+Python scripts are used for integration testing. They send raw Protobuf packets over TCP.
 
-### Unit/Integration Tests
-The project uses Python scripts for functional testing of the TCP interface.
+**Prerequisites:**
+Ensure the server is running.
 
+**Run Tests:**
 ```bash
 # Test Authentication (Register/Login)
 python3 tests/test_auth.py [username] [password]
 
 # Test Friend System
 python3 tests/test_friend.py
+
+# Test Messaging
+python3 tests/test_message.py
 ```
 
----
+## Infrastructure
+The project relies on Docker for database services.
+- **MySQL**: 3306 (User/Auth)
+- **Scylla**: 9042 (Messages)
 
-## 📂 Key Directories
+**Start Infrastructure:**
+```bash
+docker-compose -f .devcontainer/docker-compose.yml up -d
+```
+(Or use the DevContainer which handles this automatically).
 
-- `server/src/core/`: Core reactor implementation (`Epoller`, `Webserver`, `TcpConnection`).
-- `server/src/service/`: Business logic (Auth, Friend, etc.).
-- `server/src/dao/`: Data Access Objects using `sqlpp11`.
-- `server/src/model/`: Generated C++ structs for DB tables.
-- `proto/`: Protocol Buffer definitions.
-- `sql/`: Database schema (`schema.sql`).
-- `tests/`: Python test scripts.
-
-## 📝 Conventions
-- **Naming:**
-  - Classes: `CamelCase`
-  - Functions/Variables: `snake_case`
-  - Member variables: `variable_` (trailing underscore)
-- **Formatting:** `clang-format` (file provided).
-- **Logging:** Async logger used throughout the codebase.
+## Development Conventions
+- **Code Style**: Google C++ Style (PascalCase for classes/functions, snake_case for variables).
+- **Protobuf**: When modifying `.proto` files, re-run CMake to regenerate C++ and Python headers.
+- **Database**: Schema changes require database re-initialization or migration.

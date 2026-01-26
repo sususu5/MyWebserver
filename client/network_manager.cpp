@@ -1,11 +1,5 @@
 #include "network_manager.h"
 
-NetworkManager::~NetworkManager() {
-    if (sock_ != -1) {
-        close(sock_);
-    }
-}
-
 bool NetworkManager::Connect(const std::string& host, int port) {
     if (connected_) return true;
 
@@ -101,9 +95,76 @@ bool NetworkManager::Register(const std::string& username, const std::string& pa
 
     const auto& resp = resp_env.register_res();
     if (resp.success()) {
+        if (!resp.user_id().empty()) {
+            user_id_ = resp.user_id();
+        }
         return true;
     } else {
         error_msg = resp.error_msg();
         return false;
     }
+}
+
+bool NetworkManager::Login(const std::string& username, const std::string& password, std::string& error_msg) {
+    im::LoginReq req;
+    req.set_username(username);
+    req.set_password(password);
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_LOGIN_REQ);
+    env.set_timestamp(time(NULL));
+    *env.mutable_login_req() = req;
+
+    if (!SendEnvelope(env)) {
+        error_msg = "Failed to send login request";
+        return false;
+    }
+
+    im::Envelope resp_env;
+    if (!ReceiveEnvelope(resp_env)) {
+        error_msg = "Failed to receive login response";
+        return false;
+    }
+
+    if (resp_env.cmd() != im::CMD_LOGIN_RES) {
+        error_msg = "Unexpected login response command";
+        return false;
+    }
+
+    const auto& resp = resp_env.login_res();
+    if (resp.success()) {
+        token_ = resp.token();
+        if (resp.has_user_info()) {
+            user_id_ = resp.user_info().user_id();
+            username_ = resp.user_info().username();
+        }
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}
+
+bool NetworkManager::Logout(std::string& error_msg) {
+    if (!IsLoggedIn()) {
+        return true;
+    }
+
+    ClearAuth();
+    Disconnect();
+    return true;
+}
+
+void NetworkManager::ClearAuth() {
+    token_.clear();
+    user_id_.clear();
+    username_.clear();
+}
+
+void NetworkManager::Disconnect() {
+    if (sock_ != -1) {
+        close(sock_);
+        sock_ = -1;
+    }
+    connected_ = false;
 }

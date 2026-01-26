@@ -3,11 +3,11 @@ find_package(Protobuf REQUIRED)
 
 add_executable(client main.cpp)
 target_sources(client PRIVATE
-    auth/auth_page.cpp
-    auth/login_page.cpp
-    auth/register_page.cpp
-    home_page.cpp
-    ui_common.cpp
+    ui/auth/auth_page.cpp
+    ui/auth/login_page.cpp
+    ui/auth/register_page.cpp
+    ui/home_page.cpp
+    ui/ui_common.cpp
     network_manager.cpp
 )
 

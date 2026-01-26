@@ -14,16 +14,28 @@ public:
     }
 
     bool Connect(const std::string& host, int port);
+    // Auth Service
     bool Register(const std::string& username, const std::string& password, std::string& error_msg);
-    // bool Login(...)
+    bool Login(const std::string& username, const std::string& password, std::string& error_msg);
+    bool Logout(std::string& error_msg);
+
+    bool IsLoggedIn() const { return !token_.empty(); }
+    const std::string& GetToken() const { return token_; }
+    const std::string& GetUserId() const { return user_id_; }
+    const std::string& GetUsername() const { return username_; }
 
 private:
     NetworkManager() = default;
-    ~NetworkManager();
+    ~NetworkManager() { Disconnect(); }
 
     int sock_ = -1;
     bool connected_ = false;
+    std::string token_;
+    std::string user_id_;
+    std::string username_;
 
     bool SendEnvelope(const im::Envelope& env);
     bool ReceiveEnvelope(im::Envelope& env);
+    void ClearAuth();
+    void Disconnect();
 };

@@ -6,11 +6,17 @@
 #include "auth/login_page.h"
 #include "auth/register_page.h"
 #include "home_page.h"
+#include "network_manager.h"
 
 using namespace ftxui;
 
 // Page enum class
 enum class Page { AUTH, REGISTER, LOGIN, MAIN };
+
+namespace {
+constexpr const char* kServerHost = "127.0.0.1";
+constexpr int kServerPort = 1316;
+}  // namespace
 
 class IMClient {
 public:
@@ -28,17 +34,21 @@ private:
 
         // Build register page
         auto on_reg_submit = [&] {
-            // TODO: Send registration request
-            current_page_ = (int)Page::MAIN;
+            if (!NetworkManager::GetInstance().Connect(kServerHost, kServerPort)) {
+                return;
+            }
+            std::string error_msg;
+            if (NetworkManager::GetInstance().Register(reg_username_, reg_password_, error_msg)) {
+                current_page_ = (int)Page::MAIN;
+            } else {
+                // TODO: Show error message
+            }
         };
         auto on_reg_back = [&] { current_page_ = (int)Page::AUTH; };
         auto register_page = BuildRegisterPage(reg_username_, reg_password_, on_reg_submit, on_reg_back);
 
         // Build login page
-        auto on_login_submit = [&] {
-            // TODO: Send login request
-            current_page_ = (int)Page::MAIN;
-        };
+        auto on_login_submit = [&] { current_page_ = (int)Page::MAIN; };
         auto on_login_back = [&] { current_page_ = (int)Page::AUTH; };
         auto login_page = BuildLoginPage(login_username_, login_password_, on_login_submit, on_login_back);
 

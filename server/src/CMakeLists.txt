@@ -2,9 +2,7 @@
 # Third-party / system dependencies
 # ---------------------------------------------------------------------------
 find_package(Threads REQUIRED)
-
 find_package(Sqlpp11 CONFIG REQUIRED COMPONENTS MariaDB)
-
 find_package(Protobuf REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(jwt-cpp CONFIG REQUIRED)

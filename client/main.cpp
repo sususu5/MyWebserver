@@ -7,6 +7,7 @@
 #include "ui/auth/login_page.h"
 #include "ui/auth/register_page.h"
 #include "ui/home_page.h"
+#include "ui/ui_common.h"
 
 using namespace ftxui;
 
@@ -35,15 +36,16 @@ private:
         // Build register page
         auto on_reg_submit = [&] {
             if (!NetworkManager::GetInstance().Connect(kServerHost, kServerPort)) {
+                error_msg_ = "Connection failed: Could not connect to server.";
+                show_error_ = true;
                 return;
             }
-            std::string error_msg;
-            if (NetworkManager::GetInstance().Register(reg_username_, reg_password_, error_msg)) {
+            if (NetworkManager::GetInstance().Register(reg_username_, reg_password_, error_msg_)) {
                 login_username_ = reg_username_;
                 login_password_ = reg_password_;
                 current_page_ = (int)Page::LOGIN;
             } else {
-                // TODO: Show error message
+                show_error_ = true;
             }
         };
         auto on_reg_back = [&] { current_page_ = (int)Page::AUTH; };
@@ -52,13 +54,14 @@ private:
         // Build login page
         auto on_login_submit = [&] {
             if (!NetworkManager::GetInstance().Connect(kServerHost, kServerPort)) {
+                error_msg_ = "Connection failed: Could not connect to server.";
+                show_error_ = true;
                 return;
             }
-            std::string error_msg;
-            if (NetworkManager::GetInstance().Login(login_username_, login_password_, error_msg)) {
+            if (NetworkManager::GetInstance().Login(login_username_, login_password_, error_msg_)) {
                 current_page_ = (int)Page::MAIN;
             } else {
-                // TODO: Show error message
+                show_error_ = true;
             }
         };
         auto on_login_back = [&] { current_page_ = (int)Page::AUTH; };
@@ -66,14 +69,14 @@ private:
 
         // Build home page
         auto on_logout = [&] {
-            std::string error_msg;
-            NetworkManager::GetInstance().Logout(error_msg);
+            std::string temp_error;
+            NetworkManager::GetInstance().Logout(temp_error);
             current_page_ = (int)Page::AUTH;
         };
         auto home_page = BuildHomePage(on_logout);
 
         // Build top level container
-        main_container_ = Container::Tab(
+        auto tab_container = Container::Tab(
             {
                 auth_page.renderer,
                 register_page.renderer,
@@ -81,6 +84,9 @@ private:
                 home_page.renderer,
             },
             &current_page_);
+
+        auto error_modal = ErrorModal(error_msg_, [&] { show_error_ = false; });
+        main_container_ = Modal(tab_container, error_modal, &show_error_);
     }
 
     int current_page_ = (int)Page::AUTH;
@@ -89,6 +95,9 @@ private:
 
     std::string reg_username_, reg_password_;
     std::string login_username_, login_password_;
+
+    std::string error_msg_;
+    bool show_error_ = false;
 };
 
 int main() {

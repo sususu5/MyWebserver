@@ -1,23 +1,87 @@
 #include "home_page.h"
 #include <ftxui/dom/elements.hpp>
+#include <string>
+#include "friend/add_friend_panel.h"
+#include "friend/handle_friend_panel.h"
 #include "ui_common.h"
 
 using namespace ftxui;
 
-HomePage BuildHomePage(const std::function<void()>& on_logout) {
-    auto btn_logout = Button("Logout", on_logout, MakeButtonStyle());
-    auto main_layout = Container::Vertical({
-        btn_logout,
+HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* state) {
+    enum class RightPanel { NONE = 0, ADD_FRIEND = 1, HANDLE_FRIEND = 2 };
+
+    auto btn_add_friend = Button(
+        "Send Friend Request",
+        [state] {
+            state->add_friend_hint.clear();
+            state->current_panel = static_cast<int>(RightPanel::ADD_FRIEND);
+        },
+        MakeButtonStyle());
+    auto btn_handle_friend = Button(
+        "Handle Friend Request",
+        [state] {
+            state->handle_hint.clear();
+            state->current_panel = static_cast<int>(RightPanel::HANDLE_FRIEND);
+        },
+        MakeButtonStyle());
+
+    auto left_panel = Container::Vertical({
+        btn_add_friend,
+        btn_handle_friend,
     });
 
-    auto main_renderer = Renderer(main_layout, [&, btn_logout] {
+    auto left_view = Renderer(left_panel, [=] {
+        return vbox({
+                   text("Contacts") | bold,
+                   separator(),
+                   vbox({
+                       btn_add_friend->Render(),
+                       btn_handle_friend->Render(),
+                   }) | flex,
+               }) |
+               border | size(WIDTH, EQUAL, 26) | size(HEIGHT, GREATER_THAN, 10);
+    });
+
+    auto add_friend_panel = BuildAddFriendPanel(
+        state->add_friend_user_id, state->add_friend_verify_msg, state->add_friend_hint, [] {},
+        [state] { state->current_panel = static_cast<int>(RightPanel::NONE); });
+
+    auto handle_friend_panel = BuildHandleFriendPanel(state->pending_friend_request, state->handle_hint, [] {}, [] {});
+
+    auto empty_layout = Container::Vertical({});
+    auto empty_renderer = Renderer(empty_layout, [] {
+        return vbox({
+                   text("Select an action on the left.") | dim | center,
+               }) |
+               border | flex;
+    });
+
+    auto right_panel = Container::Tab(
+        {
+            empty_renderer,
+            add_friend_panel.renderer,
+            handle_friend_panel.renderer,
+        },
+        &state->current_panel);
+
+    auto main_layout = Container::Horizontal({
+        left_view,
+        right_panel,
+    });
+
+    auto btn_logout = Button("Logout", on_logout, MakeButtonStyle());
+
+    auto main_renderer = Renderer(main_layout, [=] {
         return vbox({
             hbox({
                 text("Main Page") | bold,
                 filler(),
                 btn_logout->Render(),
             }) | border,
-            text("Welcome to IM System!") | center | flex,
+            hbox({
+                left_view->Render(),
+                right_panel->Render() | flex,
+            }) | flex,
         });
     });
 

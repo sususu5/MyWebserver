@@ -73,7 +73,7 @@ private:
             NetworkManager::GetInstance().Logout(temp_error);
             current_page_ = (int)Page::AUTH;
         };
-        auto home_page = BuildHomePage(on_logout);
+        auto home_page = BuildHomePage(on_logout, &home_page_state_);
 
         // Build top level container
         auto tab_container = Container::Tab(
@@ -95,6 +95,8 @@ private:
 
     std::string reg_username_, reg_password_;
     std::string login_username_, login_password_;
+
+    HomePageState home_page_state_;
 
     std::string error_msg_;
     bool show_error_ = false;

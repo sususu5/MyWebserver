@@ -3,10 +3,20 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <functional>
+#include <string>
+
+struct HomePageState {
+    std::string pending_friend_request;
+    std::string add_friend_user_id;
+    std::string add_friend_verify_msg;
+    std::string add_friend_hint;
+    std::string handle_hint;
+    int current_panel = 0;
+};
 
 struct HomePage {
     ftxui::Component layout;
     ftxui::Component renderer;
 };
 
-HomePage BuildHomePage(const std::function<void()>& on_logout);
+HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* state);

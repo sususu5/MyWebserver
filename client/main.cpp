@@ -85,8 +85,16 @@ private:
             },
             &current_page_);
 
-        auto error_modal = ErrorModal(error_msg_, [&] { show_error_ = false; });
+        auto error_modal = ErrorModal(&error_msg_, [&] { show_error_ = false; });
         main_container_ = Modal(tab_container, error_modal, &show_error_);
+
+        // Set error callback
+        NetworkManager::GetInstance().SetOnErrorCallback([this](const std::string& msg) {
+            screen_.Post([this, msg] {
+                error_msg_ = msg;
+                show_error_ = true;
+            });
+        });
     }
 
     int current_page_ = (int)Page::AUTH;

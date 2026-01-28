@@ -5,8 +5,6 @@ bool NetworkManager::Connect(const std::string& host, int port) {
 
     sock_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ < 0) {
-        // TODO: FTXUI Show error message
-        perror("Socket creation failed");
         return false;
     }
 
@@ -15,12 +13,10 @@ bool NetworkManager::Connect(const std::string& host, int port) {
     serv_addr.sin_port = htons(port);
 
     if (inet_pton(AF_INET, host.c_str(), &serv_addr.sin_addr) <= 0) {
-        perror("Invalid address/ Address not supported");
         return false;
     }
 
     if (connect(sock_, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection Failed");
         return false;
     }
 

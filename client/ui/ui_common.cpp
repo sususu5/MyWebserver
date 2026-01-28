@@ -45,11 +45,11 @@ Component Modal(Component main, Component modal, bool* show_modal) {
     });
 }
 
-Component ErrorModal(const std::string& error_msg, std::function<void()> on_close) {
+Component ErrorModal(const std::string* error_msg, std::function<void()> on_close) {
     auto close_button = Button("Close", on_close, MakeButtonStyle());
-    return Renderer(close_button, [=, &error_msg] {
+    return Renderer(close_button, [=] {
         return window(text("Error") | color(Color::Red) | bold, vbox({
-                                                                    text(error_msg) | center,
+                                                                    text(*error_msg) | center,
                                                                     separator(),
                                                                     close_button->Render() | center,
                                                                 })) |

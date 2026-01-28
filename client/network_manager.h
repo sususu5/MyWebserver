@@ -4,15 +4,20 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include "protocol.pb.h"
 
 class NetworkManager {
 public:
+    using OnErrorCallback = std::function<void(const std::string& error_msg)>;
+
     static NetworkManager& GetInstance() {
         static NetworkManager instance;
         return instance;
     }
+
+    void SetOnErrorCallback(OnErrorCallback callback) { on_error_callback_ = callback; }
 
     bool Connect(const std::string& host, int port);
     // Auth Service
@@ -29,14 +34,21 @@ private:
     NetworkManager() = default;
     ~NetworkManager() { Disconnect(); }
 
+    bool SendEnvelope(const im::Envelope& env);
+    bool ReceiveEnvelope(im::Envelope& env);
+    void ClearAuth();
+    void Disconnect();
+
+    void ReportError(const std::string& msg) {
+        if (on_error_callback_) {
+            on_error_callback_(msg);
+        }
+    }
+
     int sock_ = -1;
     bool connected_ = false;
     std::string token_;
     uint64_t user_id_ = 0;
     std::string username_;
-
-    bool SendEnvelope(const im::Envelope& env);
-    bool ReceiveEnvelope(im::Envelope& env);
-    void ClearAuth();
-    void Disconnect();
+    OnErrorCallback on_error_callback_;
 };

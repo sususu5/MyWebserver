@@ -230,7 +230,4 @@ bool ProtobufHandler::RequireAuth(im::Envelope& response, im::CommandType resp_c
     return false;
 }
 
-const std::string& ProtobufHandler::CurrentUserId() const {
-    static const std::string empty;
-    return conn_ ? conn_->get_user_id() : empty;
-}
+uint64_t ProtobufHandler::CurrentUserId() const { return conn_ ? conn_->get_user_id() : 0; }

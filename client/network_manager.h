@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <cstdint>
 #include <string>
 #include "protocol.pb.h"
 
@@ -21,7 +22,7 @@ public:
 
     bool IsLoggedIn() const { return !token_.empty(); }
     const std::string& GetToken() const { return token_; }
-    const std::string& GetUserId() const { return user_id_; }
+    uint64_t GetUserId() const { return user_id_; }
     const std::string& GetUsername() const { return username_; }
 
 private:
@@ -31,7 +32,7 @@ private:
     int sock_ = -1;
     bool connected_ = false;
     std::string token_;
-    std::string user_id_;
+    uint64_t user_id_ = 0;
     std::string username_;
 
     bool SendEnvelope(const im::Envelope& env);

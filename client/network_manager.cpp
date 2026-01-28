@@ -95,9 +95,7 @@ bool NetworkManager::Register(const std::string& username, const std::string& pa
 
     const auto& resp = resp_env.register_res();
     if (resp.success()) {
-        if (!resp.user_id().empty()) {
-            user_id_ = resp.user_id();
-        }
+        user_id_ = resp.user_id();
         return true;
     } else {
         error_msg = resp.error_msg();
@@ -157,7 +155,7 @@ bool NetworkManager::Logout(std::string& error_msg) {
 
 void NetworkManager::ClearAuth() {
     token_.clear();
-    user_id_.clear();
+    user_id_ = 0;
     username_.clear();
 }
 

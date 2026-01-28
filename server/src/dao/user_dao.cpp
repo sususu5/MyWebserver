@@ -10,7 +10,7 @@ auto UserDao::QueryExist(const std::string& username) -> bool {
     return exists("QueryExist", table_.username == username);
 }
 
-auto UserDao::Insert(const std::string& user_id, const std::string& username, const std::string& password) -> bool {
+auto UserDao::Insert(uint64_t user_id, const std::string& username, const std::string& password) -> bool {
     return insert("Insert", table_.userId = user_id, table_.username = username, table_.password = password);
 }
 
@@ -41,7 +41,7 @@ im::User UserDao::FindByUsername(const std::string& username) {
         "FindByUsername", im::User{});
 }
 
-im::User UserDao::FindById(const std::string& user_id) {
+im::User UserDao::FindById(uint64_t user_id) {
     return execute(
         [&](auto& conn) -> im::User {
             auto result =

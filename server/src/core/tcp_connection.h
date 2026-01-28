@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <sys/uio.h>
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include "../buffer/buffer.h"
@@ -58,9 +59,9 @@ public:
 
     size_t to_write_bytes();
 
-    void set_user_id(const std::string& user_id);
-    const std::string& get_user_id() const { return user_id_; }
-    bool is_logged_in() const { return !user_id_.empty(); }
+    void set_user_id(uint64_t user_id);
+    uint64_t get_user_id() const { return user_id_; }
+    bool is_logged_in() const { return user_id_ != 0; }
 
     // Message queue for push service
     void enqueue_message(std::string data);
@@ -104,5 +105,5 @@ private:
     void setup_iov_for_http();
     void notify_writable();
 
-    std::string user_id_;
+    uint64_t user_id_{0};
 };

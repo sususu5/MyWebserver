@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include "base_dao.h"
 #include "common.pb.h"
@@ -13,11 +14,11 @@ public:
     // Check if user exists
     bool QueryExist(const std::string& username);
     // Insert a new user
-    bool Insert(const std::string& user_id, const std::string& username, const std::string& password);
+    bool Insert(uint64_t user_id, const std::string& username, const std::string& password);
     // Verify user credentials
     bool VerifyUser(const std::string& username, const std::string& password);
     // Find user by username
     im::User FindByUsername(const std::string& username);
     // Find user by user_id
-    im::User FindById(const std::string& user_id);
+    im::User FindById(uint64_t user_id);
 };

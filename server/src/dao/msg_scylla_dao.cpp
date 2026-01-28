@@ -16,7 +16,7 @@ std::string CassFutureError(CassFuture* future) {
 }
 }  // namespace
 
-bool MsgScyllaDao::InsertMessage(const std::string& conversation_id, const im::P2PMessage& msg) {
+bool MsgScyllaDao::InsertMessage(const im::P2PMessage& msg) {
     auto* session = ScyllaSession::Instance()->Session();
     if (!session) {
         LOG_ERROR("Scylla session is not initialized");
@@ -32,9 +32,9 @@ bool MsgScyllaDao::InsertMessage(const std::string& conversation_id, const im::P
     auto p2p_conv_id = IdGenerator::GenerateP2PConvId(msg.sender_id(), msg.receiver_id());
     cass_statement_bind_string(statement, 0, p2p_conv_id.c_str());
     cass_statement_bind_int64(statement, 1, static_cast<cass_int64_t>(msg.timestamp()));
-    cass_statement_bind_string(statement, 2, msg.msg_id().c_str());
-    cass_statement_bind_string(statement, 3, msg.sender_id().c_str());
-    cass_statement_bind_string(statement, 4, msg.receiver_id().c_str());
+    cass_statement_bind_int64(statement, 2, static_cast<cass_int64_t>(msg.msg_id()));
+    cass_statement_bind_int64(statement, 3, static_cast<cass_int64_t>(msg.sender_id()));
+    cass_statement_bind_int64(statement, 4, static_cast<cass_int64_t>(msg.receiver_id()));
     cass_statement_bind_int32(statement, 5, static_cast<cass_int32_t>(msg.content_type()));
     const std::string& content = msg.content();
     cass_statement_bind_bytes(statement, 6, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());

@@ -356,7 +356,7 @@ def test_unauthorized_access():
     
     # Try to add friend without login
     print("\n[1] Attempting add_friend without login")
-    res = client.add_friend("some_user_id")
+    res = client.add_friend(123456789)
     if res is None or not res.success:
         print(f"    ✅ Correctly rejected (not logged in)")
     else:

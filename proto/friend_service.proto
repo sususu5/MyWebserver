@@ -14,7 +14,7 @@ service FriendService {
 }
 
 message AddFriendReq {
-    string receiver_id = 1;
+    uint64 receiver_id = 1;
     string verify_msg = 2;
 }
 
@@ -24,8 +24,8 @@ message AddFriendResp {
 }
 
 message FriendReqPush {
-    string req_id = 1;
-    string sender_id = 2;
+    uint64 req_id = 1;
+    uint64 sender_id = 2;
     string sender_name = 3;
     string verify_msg = 4;
     int64 timestamp = 5;
@@ -37,19 +37,19 @@ enum FriendAction {
 }
 
 message HandleFriendReq {
-    string req_id = 1;
-    string sender_id = 2;
+    uint64 req_id = 1;
+    uint64 sender_id = 2;
     FriendAction action = 3;
 }
 
 message HandleFriendResp {
     bool success = 1;
     string error_msg = 2;
-    string sender_id = 3;
+    uint64 sender_id = 3;
 }
 
 message FriendStatusPush {
-    string receiver_id = 1;
+    uint64 receiver_id = 1;
     string receiver_name = 2;
     FriendAction action = 3;
 }

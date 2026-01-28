@@ -10,7 +10,7 @@ enum UserStatus {
 }
 
 message User {
-    string user_id = 1;
+    uint64 user_id = 1;
     string username = 2;
     UserStatus status = 3;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "../service/auth_service.h"
 #include "../service/friend_service.h"
 #include "../service/msg_service.h"
@@ -50,7 +51,7 @@ private:
 
     // Helper to check authentication and get user_id
     bool RequireAuth(im::Envelope& response, im::CommandType resp_cmd);
-    const std::string& CurrentUserId() const;
+    uint64_t CurrentUserId() const;
 
     // Connection (for session state)
     TcpConnection* conn_;

@@ -4,13 +4,13 @@
 
 MsgService::MsgService(PushService* push_service) : push_service_(push_service) {}
 
-void MsgService::send_p2p_message(const std::string& sender_id, const im::P2PMessage& req, im::MessageAck* resp) {
-    if (sender_id.empty()) {
+void MsgService::send_p2p_message(uint64_t sender_id, const im::P2PMessage& req, im::MessageAck* resp) {
+    if (sender_id == 0) {
         resp->set_success(false);
         resp->set_error_msg("Sender ID is empty");
         return;
     }
-    if (req.receiver_id().empty()) {
+    if (req.receiver_id() == 0) {
         resp->set_success(false);
         resp->set_error_msg("Receiver ID is empty");
         return;
@@ -21,7 +21,7 @@ void MsgService::send_p2p_message(const std::string& sender_id, const im::P2PMes
         return;
     }
 
-    auto ok = msg_scylla_dao_.InsertMessage(req.receiver_id(), req);
+    auto ok = msg_scylla_dao_.InsertMessage(req);
     if (!ok) {
         resp->set_success(false);
         resp->set_error_msg("Failed to insert message");

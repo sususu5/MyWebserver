@@ -32,7 +32,7 @@ void TcpConnection::init(int socket_fd, const sockaddr_in& addr) {
     protocol_determined_ = false;
     handler_.reset();
     iov_cnt_ = 0;
-    user_id_.clear();
+    user_id_ = 0;
     LOG_INFO("Client[{}]({}:{}) in, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
 }
 
@@ -41,7 +41,7 @@ void TcpConnection::close_conn() {
         is_close_ = true;
         user_count--;
 
-        if (!user_id_.empty() && push_service) {
+        if (user_id_ != 0 && push_service) {
             push_service->remove_client(user_id_);
         }
 
@@ -50,7 +50,7 @@ void TcpConnection::close_conn() {
     }
 }
 
-void TcpConnection::set_user_id(const std::string& user_id) {
+void TcpConnection::set_user_id(uint64_t user_id) {
     user_id_ = user_id;
     if (push_service) {
         push_service->add_client(user_id, this);

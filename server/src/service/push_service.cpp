@@ -5,13 +5,13 @@
 #include "../utils/id_generator.h"
 #include "protocol.pb.h"
 
-void PushService::add_client(const std::string& user_id, TcpConnection* conn) {
+void PushService::add_client(uint64_t user_id, TcpConnection* conn) {
     std::lock_guard<std::mutex> lock(mtx_);
     online_connections_[user_id] = conn;
     LOG_INFO("User[{}] registered for push service", user_id);
 }
 
-void PushService::remove_client(const std::string& user_id) {
+void PushService::remove_client(uint64_t user_id) {
     std::lock_guard<std::mutex> lock(mtx_);
     if (online_connections_.contains(user_id)) {
         online_connections_.erase(user_id);
@@ -19,16 +19,15 @@ void PushService::remove_client(const std::string& user_id) {
     }
 }
 
-void PushService::push_friend_req(const std::string& sender_id, const std::string& sender_name,
-                                  const std::string& receiver_id, const std::string& verify_msg) {
+void PushService::push_friend_req(uint64_t sender_id, const std::string& sender_name, uint64_t receiver_id,
+                                  const std::string& verify_msg) {
     im::Envelope envelope;
     envelope.set_seq(0);
     envelope.set_cmd(im::CMD_FRIEND_REQ_PUSH);
     envelope.set_timestamp(time(nullptr));
 
     auto* push = envelope.mutable_friend_req_push();
-    // TODO: Changed random id into large integer id
-    push->set_req_id(IdGenerator::GenerateUuid());
+    push->set_req_id(IdGenerator::GenerateRandId());
     push->set_sender_id(sender_id);
     push->set_sender_name(sender_name);
     push->set_verify_msg(verify_msg);
@@ -37,7 +36,7 @@ void PushService::push_friend_req(const std::string& sender_id, const std::strin
     send_envelope(receiver_id, envelope);
 }
 
-void PushService::send_envelope(const std::string& target_id, const im::Envelope& envelope) {
+void PushService::send_envelope(uint64_t target_id, const im::Envelope& envelope) {
     TcpConnection* conn = nullptr;
     {
         std::lock_guard<std::mutex> lock(mtx_);
@@ -58,8 +57,8 @@ void PushService::send_envelope(const std::string& target_id, const im::Envelope
     }
 }
 
-void PushService::push_friend_status(const std::string& sender_id, const std::string& receiver_id,
-                                     const std::string& receiver_name, const im::FriendAction& action) {
+void PushService::push_friend_status(uint64_t sender_id, uint64_t receiver_id, const std::string& receiver_name,
+                                     const im::FriendAction& action) {
     im::Envelope envelope;
     envelope.set_seq(0);
     envelope.set_cmd(im::CMD_FRIEND_STATUS_PUSH);

@@ -188,7 +188,7 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
             LOG_INFO("user used!");
             return false;
         }
-        if (dao.Insert(IdGenerator::GenerateUuid(), name, pwd)) {
+        if (dao.Insert(IdGenerator::GenerateRandId(), name, pwd)) {
             LOG_DEBUG("register!");
             return true;
         } else {

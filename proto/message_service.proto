@@ -20,16 +20,16 @@ enum ContentType {
 }
 
 message P2PMessage {
-    string msg_id = 1;
-    string sender_id = 2;
-    string receiver_id = 3;
+    uint64 msg_id = 1;
+    uint64 sender_id = 2;
+    uint64 receiver_id = 3;
     ContentType content_type = 4;
     bytes content = 5;
     int64 timestamp = 6;
 }
 
 message MessageAck {
-    string msg_id = 1;
+    uint64 msg_id = 1;
     uint64 ref_seq = 2;
     bool success = 3;
     string error_msg = 4;

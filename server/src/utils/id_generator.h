@@ -1,50 +1,36 @@
 #pragma once
 
+#include <chrono>
+#include <cstdint>
 #include <random>
-#include <sstream>
 #include <string>
 
 class IdGenerator {
 public:
-    // generate a random UUID v4 string
-    static std::string GenerateUuid() {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        static std::uniform_int_distribution<> dis(0, 15);
-        static std::uniform_int_distribution<> dis2(8, 11);
+    // generate a random 64-bit integer id
+    static uint64_t GenerateRandId() {
+        constexpr uint64_t EPOCH = 1704067200000ULL;
 
-        std::stringstream ss;
-        int i;
-        ss << std::hex;
-        for (i = 0; i < 8; i++) {
-            ss << dis(gen);
+        uint64_t now_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
+
+        if (now_ms < EPOCH) {
+            now_ms = EPOCH;
         }
-        ss << "-";
-        for (i = 0; i < 4; i++) {
-            ss << dis(gen);
-        }
-        ss << "-4";
-        for (i = 0; i < 3; i++) {
-            ss << dis(gen);
-        }
-        ss << "-";
-        ss << dis2(gen);
-        for (i = 0; i < 3; i++) {
-            ss << dis(gen);
-        }
-        ss << "-";
-        for (i = 0; i < 12; i++) {
-            ss << dis(gen);
-        }
-        return ss.str();
+
+        thread_local std::mt19937 generator(std::random_device{}());
+        thread_local std::uniform_int_distribution<uint32_t> distribution(0, 0x3FFFFF);
+        uint64_t random_val = distribution(generator);
+
+        return ((now_ms - EPOCH) << 22) | random_val;
     }
 
-    static std::string GenerateP2PConvId(const std::string& sender_id, const std::string& receiver_id) {
-        std::string small = std::min(sender_id, receiver_id);
-        std::string large = std::max(sender_id, receiver_id);
-
-        std::stringstream ss;
-        ss << "p2p_" << small << "_" << large;
-        return ss.str();
+    static std::string GenerateP2PConvId(uint64_t sender_id, uint64_t receiver_id) {
+        if (sender_id <= receiver_id) {
+            return std::to_string(sender_id) + "_" + std::to_string(receiver_id);
+        } else {
+            return std::to_string(receiver_id) + "_" + std::to_string(sender_id);
+        }
     }
 };

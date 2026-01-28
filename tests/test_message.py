@@ -107,7 +107,7 @@ class TestP2PMessage(unittest.TestCase):
 
         # 2. A sends message to B
         msg_content = "Hello Bob, this is Alice!"
-        msg_id = f"msg_{ts}_1"
+        msg_id = ts * 1000 + 1
         
         envelope = protocol_pb2.Envelope()
         envelope.seq = 100
@@ -146,7 +146,7 @@ class TestP2PMessage(unittest.TestCase):
 
         # 5. B replies to A
         reply_content = "Hi Alice! Got it."
-        reply_msg_id = f"msg_{ts}_2"
+        reply_msg_id = ts * 1000 + 2
         
         envelope = protocol_pb2.Envelope()
         envelope.seq = 101

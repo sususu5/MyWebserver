@@ -19,7 +19,7 @@ void AuthService::user_register(const im::RegisterReq& req, im::RegisterResp* re
         return;
     }
 
-    const auto& user_id = IdGenerator::GenerateUuid();
+    const auto& user_id = IdGenerator::GenerateRandId();
     if (user_dao_.Insert(user_id, username, password)) {
         resp->set_success(true);
         resp->set_user_id(user_id);

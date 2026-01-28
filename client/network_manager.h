@@ -17,13 +17,18 @@ public:
         return instance;
     }
 
+    bool Connect(const std::string& host, int port);
     void SetOnErrorCallback(OnErrorCallback callback) { on_error_callback_ = callback; }
 
-    bool Connect(const std::string& host, int port);
     // Auth Service
     bool Register(const std::string& username, const std::string& password, std::string& error_msg);
     bool Login(const std::string& username, const std::string& password, std::string& error_msg);
     bool Logout(std::string& error_msg);
+
+    // Friend Service
+    bool AddFriend(uint64_t receiver_id, const std::string& verify_msg, std::string& error_msg);
+    bool HandleFriendRequest(uint64_t req_id, uint64_t sender_id, im::FriendAction action, std::string& error_msg);
+    bool GetFriendList(std::vector<im::User>& friend_info_list, std::string& error_msg);
 
     bool IsLoggedIn() const { return !token_.empty(); }
     const std::string& GetToken() const { return token_; }

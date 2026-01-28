@@ -16,7 +16,6 @@ AddFriendPanel BuildAddFriendPanel(std::string& user_id, std::string& verify_msg
                 return;
             }
             hint = "Request prepared. Please connect to backend.";
-            verify_msg.clear();
             on_send();
         },
         MakeButtonStyle());

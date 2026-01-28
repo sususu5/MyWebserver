@@ -9,6 +9,6 @@ struct HandleFriendPanel {
     ftxui::Component renderer;
 };
 
-HandleFriendPanel BuildHandleFriendPanel(std::string& pending_request, std::string& hint,
+HandleFriendPanel BuildHandleFriendPanel(std::string& req_id, std::string& sender_id, std::string& hint,
                                          const std::function<void()>& on_accept,
                                          const std::function<void()>& on_reject);

@@ -6,10 +6,11 @@
 #include <string>
 
 struct HomePageState {
-    std::string pending_friend_request;
     std::string add_friend_user_id;
     std::string add_friend_verify_msg;
     std::string add_friend_hint;
+    std::string handle_req_id;
+    std::string handle_sender_id;
     std::string handle_hint;
     int current_panel = 0;
 };

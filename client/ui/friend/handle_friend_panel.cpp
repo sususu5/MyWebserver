@@ -4,38 +4,48 @@
 
 using namespace ftxui;
 
-HandleFriendPanel BuildHandleFriendPanel(std::string& pending_request, std::string& hint,
+HandleFriendPanel BuildHandleFriendPanel(std::string& req_id, std::string& sender_id, std::string& hint,
                                          const std::function<void()>& on_accept,
                                          const std::function<void()>& on_reject) {
+    auto input_req_id = Input(&req_id, "Request ID");
+    auto input_sender_id = Input(&sender_id, "Sender ID");
+
     auto btn_accept_request = Button(
         "Accept",
         [&] {
-            hint = "Request accepted.";
-            pending_request.clear();
+            if (req_id.empty() || sender_id.empty()) {
+                hint = "IDs cannot be empty.";
+                return;
+            }
+            hint = "Processing accept...";
             on_accept();
         },
         MakeButtonStyle());
     auto btn_reject_request = Button(
         "Reject",
         [&] {
-            hint = "Request rejected.";
-            pending_request.clear();
+            if (req_id.empty() || sender_id.empty()) {
+                hint = "IDs cannot be empty.";
+                return;
+            }
+            hint = "Processing reject...";
             on_reject();
         },
         MakeButtonStyle());
 
     auto layout = Container::Vertical({
+        input_req_id,
+        input_sender_id,
         btn_accept_request,
         btn_reject_request,
     });
 
-    auto renderer = Renderer(layout, [=, &pending_request, &hint] {
-        const auto& request_text =
-            pending_request.empty() ? std::string("No pending friend requests.") : pending_request;
+    auto renderer = Renderer(layout, [=, &hint] {
         return vbox({
-                   text("Friend Requests") | bold,
+                   text("Handle Friend Request") | bold,
                    separator(),
-                   paragraph(request_text) | flex,
+                   hbox(text("Req ID:    "), input_req_id->Render()) | flex,
+                   hbox(text("Sender ID: "), input_sender_id->Render()) | flex,
                    separator(),
                    hbox(btn_accept_request->Render() | flex, btn_reject_request->Render() | flex),
                    separator(),

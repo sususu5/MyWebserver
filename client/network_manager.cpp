@@ -162,3 +162,112 @@ void NetworkManager::Disconnect() {
     }
     connected_ = false;
 }
+
+bool NetworkManager::AddFriend(uint64_t receiver_id, const std::string& verify_msg, std::string& error_msg) {
+    im::AddFriendReq req;
+    req.set_receiver_id(receiver_id);
+    req.set_verify_msg(verify_msg);
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_ADD_FRIEND_REQ);
+    env.set_timestamp(time(NULL));
+    *env.mutable_add_friend_req() = req;
+
+    if (!SendEnvelope(env)) {
+        error_msg = "Failed to send add friend request";
+        return false;
+    }
+
+    im::Envelope resp_env;
+    if (!ReceiveEnvelope(resp_env)) {
+        error_msg = "Failed to receive add friend response";
+        return false;
+    }
+
+    if (resp_env.cmd() != im::CMD_ADD_FRIEND_RES) {
+        error_msg = "Unexpected add friend response command";
+        return false;
+    }
+
+    const auto& resp = resp_env.add_friend_res();
+    if (resp.success()) {
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}
+
+bool NetworkManager::HandleFriendRequest(uint64_t req_id, uint64_t sender_id, im::FriendAction action,
+                                         std::string& error_msg) {
+    im::HandleFriendReq req;
+    req.set_req_id(req_id);
+    req.set_sender_id(sender_id);
+    req.set_action(action);
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_HANDLE_FRIEND_REQ);
+    env.set_timestamp(time(NULL));
+    *env.mutable_handle_friend_req() = req;
+
+    if (!SendEnvelope(env)) {
+        error_msg = "Failed to send handle friend request";
+        return false;
+    }
+
+    im::Envelope resp_env;
+    if (!ReceiveEnvelope(resp_env)) {
+        error_msg = "Failed to receive handle friend response";
+        return false;
+    }
+
+    if (resp_env.cmd() != im::CMD_HANDLE_FRIEND_RES) {
+        error_msg = "Unexpected handle friend response command";
+        return false;
+    }
+
+    const auto& resp = resp_env.handle_friend_res();
+    if (resp.success()) {
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}
+
+bool NetworkManager::GetFriendList(std::vector<im::User>& friend_info_list, std::string& error_msg) {
+    im::GetFriendListReq req;
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_GET_FRIEND_LIST_REQ);
+    env.set_timestamp(time(NULL));
+    *env.mutable_get_friend_list_req() = req;
+
+    if (!SendEnvelope(env)) {
+        error_msg = "Failed to send get friend list request";
+        return false;
+    }
+
+    im::Envelope resp_env;
+    if (!ReceiveEnvelope(resp_env)) {
+        error_msg = "Failed to receive get friend list response";
+        return false;
+    }
+
+    if (resp_env.cmd() != im::CMD_GET_FRIEND_LIST_RES) {
+        error_msg = "Unexpected get friend list response command";
+        return false;
+    }
+
+    const auto& resp = resp_env.get_friend_list_res();
+    if (resp.success()) {
+        friend_info_list.clear();
+        for (const auto& user : resp.friend_list()) {
+            friend_info_list.emplace_back(user);
+        }
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}

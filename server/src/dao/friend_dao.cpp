@@ -39,8 +39,18 @@ std::optional<uint64_t> FriendDao::handle_friend(uint64_t receiver_id, uint64_t 
                              .set(table_.status = STATUS_ACCEPTED)
                              .where((table_.userId == sender_id) && (table_.friendId == receiver_id)));
 
-                    conn(sqlpp::insert_into(table_).set(table_.userId = receiver_id, table_.friendId = sender_id,
-                                                        table_.status = STATUS_ACCEPTED));
+                    // Check if reverse relation exists
+                    auto reverse_exists = conn(sqlpp::select(table_.id).from(table_).where(
+                        (table_.userId == receiver_id) && (table_.friendId == sender_id)));
+
+                    if (reverse_exists.empty()) {
+                        conn(sqlpp::insert_into(table_).set(table_.userId = receiver_id, table_.friendId = sender_id,
+                                                            table_.status = STATUS_ACCEPTED));
+                    } else {
+                        conn(sqlpp::update(table_)
+                                 .set(table_.status = STATUS_ACCEPTED)
+                                 .where((table_.userId == receiver_id) && (table_.friendId == sender_id)));
+                    }
                 } else {
                     conn(sqlpp::update(table_)
                              .set(table_.status = STATUS_REJECTED)

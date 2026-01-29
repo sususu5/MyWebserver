@@ -1,4 +1,6 @@
 #include "network_manager.h"
+#include <algorithm>
+#include <chrono>
 
 bool NetworkManager::Connect(const std::string& host, int port) {
     if (connected_) return true;
@@ -21,7 +23,23 @@ bool NetworkManager::Connect(const std::string& host, int port) {
     }
 
     connected_ = true;
+    running_ = true;
+    listener_thread_ = std::thread(&NetworkManager::ListenerLoop, this);
     return true;
+}
+
+void NetworkManager::Disconnect() {
+    running_ = false;
+    if (sock_ != -1) {
+        shutdown(sock_, SHUT_RDWR);
+        close(sock_);
+        sock_ = -1;
+    }
+
+    if (listener_thread_.joinable()) {
+        listener_thread_.join();
+    }
+    connected_ = false;
 }
 
 bool NetworkManager::SendEnvelope(const im::Envelope& env) {
@@ -38,29 +56,102 @@ bool NetworkManager::SendEnvelope(const im::Envelope& env) {
     return sent == static_cast<ssize_t>(packet.size());
 }
 
-bool NetworkManager::ReceiveEnvelope(im::Envelope& env) {
-    if (!connected_) return false;
+bool NetworkManager::SendRequestAndWait(const im::Envelope& request, im::Envelope& response,
+                                        im::CommandType expected_cmd) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    has_response_ = false;
 
-    uint32_t net_len;
-    auto len_buf = reinterpret_cast<char*>(&net_len);
-    size_t received = 0;
-    while (received < 4) {
-        auto r = recv(sock_, len_buf + received, 4 - received, 0);
-        if (r <= 0) return false;
-        received += r;
+    if (!SendEnvelope(request)) {
+        return false;
     }
 
-    auto msg_len = ntohl(net_len);
-    std::string buffer;
-    buffer.resize(msg_len);
-    received = 0;
-    while (received < msg_len) {
-        auto r = recv(sock_, &buffer[received], msg_len - received, 0);
-        if (r <= 0) return false;
-        received += r;
+    // Wait for response with a timeout
+    if (cv_response_.wait_for(lock, std::chrono::seconds(5), [this] { return has_response_; })) {
+        if (response_envelope_.cmd() == expected_cmd) {
+            response = response_envelope_;
+            return true;
+        }
+        return false;
+    } else {
+        return false;
     }
+}
 
-    return env.ParseFromString(buffer);
+void NetworkManager::ListenerLoop() {
+    while (running_) {
+        uint32_t net_len;
+        auto len_buf = reinterpret_cast<char*>(&net_len);
+        size_t received = 0;
+
+        // Read header
+        while (received < 4 && running_) {
+            auto r = recv(sock_, len_buf + received, 4 - received, 0);
+            if (r <= 0) {
+                if (running_) {
+                    if (on_error_callback_) on_error_callback_("Connection lost");
+                    running_ = false;
+                    connected_ = false;
+                }
+                return;
+            }
+            received += r;
+        }
+        if (!running_) break;
+
+        auto msg_len = ntohl(net_len);
+        if (msg_len > 10 * 1024 * 1024) {  // 10MB limit
+            if (running_) {
+                if (on_error_callback_) on_error_callback_("Protocol Error: Packet too large");
+                // Do not set running_ = false here immediately to allow error to be reported?
+                // Actually safer to stop.
+                running_ = false;
+                connected_ = false;
+            }
+            return;  // Exit thread
+        }
+
+        std::string buffer;
+        buffer.resize(msg_len);
+        received = 0;
+
+        // Read body
+        while (received < msg_len && running_) {
+            auto r = recv(sock_, &buffer[received], msg_len - received, 0);
+            if (r <= 0) {
+                if (running_) {
+                    if (on_error_callback_) on_error_callback_("Connection lost reading body");
+                    running_ = false;
+                    connected_ = false;
+                }
+                return;
+            }
+            received += r;
+        }
+        if (!running_) break;
+
+        im::Envelope env;
+        if (!env.ParseFromString(buffer)) {
+            continue;
+        }
+
+        // Handle Packet
+        if (env.cmd() == im::CMD_FRIEND_REQ_PUSH) {
+            const auto req = env.friend_req_push();
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                pending_friend_requests_.push_back(req);
+            }
+            if (on_friend_request_callback_) {
+                on_friend_request_callback_(req);
+            }
+        } else {
+            std::lock_guard<std::mutex> lock(mutex_);
+            response_envelope_ = env;
+            has_response_ = true;
+            // If the command is not push, notify the response
+            cv_response_.notify_one();
+        }
+    }
 }
 
 bool NetworkManager::Register(const std::string& username, const std::string& password, std::string& error_msg) {
@@ -73,19 +164,9 @@ bool NetworkManager::Register(const std::string& username, const std::string& pa
     env.set_timestamp(time(NULL));
     *env.mutable_register_req() = req;
 
-    if (!SendEnvelope(env)) {
-        error_msg = "Failed to send register request";
-        return false;
-    }
-
     im::Envelope resp_env;
-    if (!ReceiveEnvelope(resp_env)) {
-        error_msg = "Failed to receive register response";
-        return false;
-    }
-
-    if (resp_env.cmd() != im::CMD_REGISTER_RES) {
-        error_msg = "Unexpected register response command";
+    if (!SendRequestAndWait(env, resp_env, im::CMD_REGISTER_RES)) {
+        error_msg = "Request timeout or network error";
         return false;
     }
 
@@ -109,19 +190,9 @@ bool NetworkManager::Login(const std::string& username, const std::string& passw
     env.set_timestamp(time(NULL));
     *env.mutable_login_req() = req;
 
-    if (!SendEnvelope(env)) {
-        error_msg = "Failed to send login request";
-        return false;
-    }
-
     im::Envelope resp_env;
-    if (!ReceiveEnvelope(resp_env)) {
-        error_msg = "Failed to receive login response";
-        return false;
-    }
-
-    if (resp_env.cmd() != im::CMD_LOGIN_RES) {
-        error_msg = "Unexpected login response command";
+    if (!SendRequestAndWait(env, resp_env, im::CMD_LOGIN_RES)) {
+        error_msg = "Request timeout or network error";
         return false;
     }
 
@@ -143,7 +214,6 @@ bool NetworkManager::Logout(std::string& error_msg) {
     if (!IsLoggedIn()) {
         return true;
     }
-
     ClearAuth();
     Disconnect();
     return true;
@@ -153,14 +223,6 @@ void NetworkManager::ClearAuth() {
     token_.clear();
     user_id_ = 0;
     username_.clear();
-}
-
-void NetworkManager::Disconnect() {
-    if (sock_ != -1) {
-        close(sock_);
-        sock_ = -1;
-    }
-    connected_ = false;
 }
 
 bool NetworkManager::AddFriend(uint64_t receiver_id, const std::string& verify_msg, std::string& error_msg) {
@@ -173,19 +235,9 @@ bool NetworkManager::AddFriend(uint64_t receiver_id, const std::string& verify_m
     env.set_timestamp(time(NULL));
     *env.mutable_add_friend_req() = req;
 
-    if (!SendEnvelope(env)) {
-        error_msg = "Failed to send add friend request";
-        return false;
-    }
-
     im::Envelope resp_env;
-    if (!ReceiveEnvelope(resp_env)) {
-        error_msg = "Failed to receive add friend response";
-        return false;
-    }
-
-    if (resp_env.cmd() != im::CMD_ADD_FRIEND_RES) {
-        error_msg = "Unexpected add friend response command";
+    if (!SendRequestAndWait(env, resp_env, im::CMD_ADD_FRIEND_RES)) {
+        error_msg = "Request timeout or network error";
         return false;
     }
 
@@ -210,19 +262,9 @@ bool NetworkManager::HandleFriendRequest(uint64_t req_id, uint64_t sender_id, im
     env.set_timestamp(time(NULL));
     *env.mutable_handle_friend_req() = req;
 
-    if (!SendEnvelope(env)) {
-        error_msg = "Failed to send handle friend request";
-        return false;
-    }
-
     im::Envelope resp_env;
-    if (!ReceiveEnvelope(resp_env)) {
-        error_msg = "Failed to receive handle friend response";
-        return false;
-    }
-
-    if (resp_env.cmd() != im::CMD_HANDLE_FRIEND_RES) {
-        error_msg = "Unexpected handle friend response command";
+    if (!SendRequestAndWait(env, resp_env, im::CMD_HANDLE_FRIEND_RES)) {
+        error_msg = "Request timeout or network error";
         return false;
     }
 
@@ -243,31 +285,35 @@ bool NetworkManager::GetFriendList(std::vector<im::User>& friend_info_list, std:
     env.set_timestamp(time(NULL));
     *env.mutable_get_friend_list_req() = req;
 
-    if (!SendEnvelope(env)) {
-        error_msg = "Failed to send get friend list request";
-        return false;
-    }
-
     im::Envelope resp_env;
-    if (!ReceiveEnvelope(resp_env)) {
-        error_msg = "Failed to receive get friend list response";
+    if (!SendRequestAndWait(env, resp_env, im::CMD_GET_FRIEND_LIST_RES)) {
+        error_msg = "Request timeout or network error";
         return false;
     }
 
-    if (resp_env.cmd() != im::CMD_GET_FRIEND_LIST_RES) {
-        error_msg = "Unexpected get friend list response command";
-        return false;
-    }
-
-    const auto& resp = resp_env.get_friend_list_res();
-    if (resp.success()) {
+    auto* resp = resp_env.mutable_get_friend_list_res();
+    if (resp->success()) {
         friend_info_list.clear();
-        for (const auto& user : resp.friend_list()) {
-            friend_info_list.emplace_back(user);
+        friend_info_list.reserve(resp->friend_list_size());
+        for (auto& user : *resp->mutable_friend_list()) {
+            friend_info_list.push_back(std::move(user));
         }
         return true;
     } else {
-        error_msg = resp.error_msg();
+        error_msg = resp->error_msg();
         return false;
     }
+}
+
+std::vector<im::FriendReqPush> NetworkManager::GetPendingFriendRequests() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return pending_friend_requests_;
+}
+
+void NetworkManager::RemovePendingRequest(uint64_t req_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    pending_friend_requests_.erase(
+        std::remove_if(pending_friend_requests_.begin(), pending_friend_requests_.end(),
+                       [req_id](const im::FriendReqPush& req) { return req.req_id() == req_id; }),
+        pending_friend_requests_.end());
 }

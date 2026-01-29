@@ -10,7 +10,7 @@ AddFriendPanel BuildAddFriendPanel(std::string& user_id, std::string& verify_msg
     auto input_verify_msg = Input(&verify_msg, "Verification");
     auto btn_send_request = Button(
         "Send",
-        [&] {
+        [&user_id, &hint, on_send] {
             if (user_id.empty()) {
                 hint = "User ID cannot be empty.";
                 return;
@@ -21,7 +21,7 @@ AddFriendPanel BuildAddFriendPanel(std::string& user_id, std::string& verify_msg
         MakeButtonStyle());
     auto btn_cancel_request = Button(
         "Cancel",
-        [&] {
+        [&user_id, &verify_msg, &hint, on_cancel] {
             user_id.clear();
             verify_msg.clear();
             hint.clear();

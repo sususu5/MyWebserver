@@ -47,48 +47,39 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
         state->add_friend_user_id, state->add_friend_verify_msg, state->add_friend_hint,
         [state] {
             std::string error_msg;
-            if (!NetworkManager::GetInstance().AddFriend(std::stoull(state->add_friend_user_id),
-                                                         state->add_friend_verify_msg, error_msg)) {
-                state->add_friend_hint = error_msg;
+            try {
+                if (!NetworkManager::GetInstance().AddFriend(std::stoull(state->add_friend_user_id),
+                                                             state->add_friend_verify_msg, error_msg)) {
+                    state->add_friend_hint = error_msg;
+                } else {
+                    state->current_panel = static_cast<int>(RightPanel::NONE);
+                }
+            } catch (...) {
+                state->add_friend_hint = "Invalid User ID format.";
             }
-            state->current_panel = static_cast<int>(RightPanel::NONE);
         },
         [state] { state->current_panel = static_cast<int>(RightPanel::NONE); });
 
     auto handle_friend_panel = BuildHandleFriendPanel(
-        state->handle_req_id, state->handle_sender_id, state->handle_hint,
-        [state] {
+        state->handle_hint,
+        [state](uint64_t req_id, uint64_t sender_id) {
             std::string error_msg;
-            try {
-                if (!NetworkManager::GetInstance().HandleFriendRequest(std::stoull(state->handle_req_id),
-                                                                       std::stoull(state->handle_sender_id),
-                                                                       im::FriendAction::ACTION_ACCEPT, error_msg)) {
-                    state->handle_hint = error_msg;
-                } else {
-                    state->handle_hint = "Request accepted successfully.";
-                    state->handle_req_id.clear();
-                    state->handle_sender_id.clear();
-                    state->current_panel = static_cast<int>(RightPanel::NONE);
-                }
-            } catch (...) {
-                state->handle_hint = "Invalid ID format.";
+            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id,
+                                                                   im::FriendAction::ACTION_ACCEPT, error_msg)) {
+                state->handle_hint = error_msg;
+            } else {
+                state->handle_hint = "Request accepted successfully.";
+                NetworkManager::GetInstance().RemovePendingRequest(req_id);
             }
         },
-        [state] {
+        [state](uint64_t req_id, uint64_t sender_id) {
             std::string error_msg;
-            try {
-                if (!NetworkManager::GetInstance().HandleFriendRequest(std::stoull(state->handle_req_id),
-                                                                       std::stoull(state->handle_sender_id),
-                                                                       im::FriendAction::ACTION_REJECT, error_msg)) {
-                    state->handle_hint = error_msg;
-                } else {
-                    state->handle_hint = "Request rejected successfully.";
-                    state->handle_req_id.clear();
-                    state->handle_sender_id.clear();
-                    state->current_panel = static_cast<int>(RightPanel::NONE);
-                }
-            } catch (...) {
-                state->handle_hint = "Invalid ID format.";
+            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id,
+                                                                   im::FriendAction::ACTION_REJECT, error_msg)) {
+                state->handle_hint = error_msg;
+            } else {
+                state->handle_hint = "Request rejected successfully.";
+                NetworkManager::GetInstance().RemovePendingRequest(req_id);
             }
         });
 

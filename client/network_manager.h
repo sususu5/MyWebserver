@@ -3,14 +3,20 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <vector>
 #include "protocol.pb.h"
 
 class NetworkManager {
 public:
     using OnErrorCallback = std::function<void(const std::string& error_msg)>;
+    using OnFriendRequestCallback = std::function<void(const im::FriendReqPush& req)>;
 
     static NetworkManager& GetInstance() {
         static NetworkManager instance;
@@ -19,6 +25,7 @@ public:
 
     bool Connect(const std::string& host, int port);
     void SetOnErrorCallback(OnErrorCallback callback) { on_error_callback_ = callback; }
+    void SetOnFriendRequestCallback(OnFriendRequestCallback callback) { on_friend_request_callback_ = callback; }
 
     // Auth Service
     bool Register(const std::string& username, const std::string& password, std::string& error_msg);
@@ -35,12 +42,17 @@ public:
     uint64_t GetUserId() const { return user_id_; }
     const std::string& GetUsername() const { return username_; }
 
+    std::vector<im::FriendReqPush> GetPendingFriendRequests();
+    void RemovePendingRequest(uint64_t req_id);
+
 private:
     NetworkManager() = default;
     ~NetworkManager() { Disconnect(); }
 
+    // Internal Helpers
     bool SendEnvelope(const im::Envelope& env);
-    bool ReceiveEnvelope(im::Envelope& env);
+    bool SendRequestAndWait(const im::Envelope& request, im::Envelope& response, im::CommandType expected_cmd);
+    void ListenerLoop();
     void ClearAuth();
     void Disconnect();
 
@@ -50,10 +62,24 @@ private:
         }
     }
 
+    // Network State
     int sock_ = -1;
-    bool connected_ = false;
+    std::atomic<bool> connected_{false};
     std::string token_;
     uint64_t user_id_ = 0;
     std::string username_;
+
+    // Async Handling
+    std::thread listener_thread_;
+    std::atomic<bool> running_{false};
+
+    std::mutex mutex_;
+    std::condition_variable cv_response_;
+    im::Envelope response_envelope_;
+    bool has_response_ = false;
+
+    // Callbacks & Storage
     OnErrorCallback on_error_callback_;
+    OnFriendRequestCallback on_friend_request_callback_;
+    std::vector<im::FriendReqPush> pending_friend_requests_;
 };

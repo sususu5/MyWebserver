@@ -95,6 +95,10 @@ private:
                 show_error_ = true;
             });
         });
+
+        // Set friend request callback
+        NetworkManager::GetInstance().SetOnFriendRequestCallback(
+            [this](const im::FriendReqPush& req) { screen_.Post(Event::Custom); });
     }
 
     int current_page_ = (int)Page::AUTH;

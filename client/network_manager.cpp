@@ -25,6 +25,7 @@ bool NetworkManager::Connect(const std::string& host, int port) {
     connected_ = true;
     running_ = true;
     listener_thread_ = std::thread(&NetworkManager::ListenerLoop, this);
+    heartbeat_thread_ = std::thread(&NetworkManager::HeartbeatLoop, this);
     return true;
 }
 
@@ -38,6 +39,9 @@ void NetworkManager::Disconnect() {
 
     if (listener_thread_.joinable()) {
         listener_thread_.join();
+    }
+    if (heartbeat_thread_.joinable()) {
+        heartbeat_thread_.join();
     }
     connected_ = false;
 }
@@ -102,12 +106,10 @@ void NetworkManager::ListenerLoop() {
         if (msg_len > 10 * 1024 * 1024) {  // 10MB limit
             if (running_) {
                 if (on_error_callback_) on_error_callback_("Protocol Error: Packet too large");
-                // Do not set running_ = false here immediately to allow error to be reported?
-                // Actually safer to stop.
                 running_ = false;
                 connected_ = false;
             }
-            return;  // Exit thread
+            return;
         }
 
         std::string buffer;
@@ -150,6 +152,19 @@ void NetworkManager::ListenerLoop() {
             has_response_ = true;
             // If the command is not push, notify the response
             cv_response_.notify_one();
+        }
+    }
+}
+
+void NetworkManager::HeartbeatLoop() {
+    while (running_) {
+        std::this_thread::sleep_for(std::chrono::seconds(15));
+        if (!running_) break;
+        if (connected_) {
+            im::Envelope env;
+            env.set_cmd(im::CMD_HEARTBEAT);
+            env.set_timestamp(time(NULL));
+            SendEnvelope(env);
         }
     }
 }

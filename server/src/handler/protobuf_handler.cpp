@@ -88,6 +88,9 @@ void ProtobufHandler::Dispatch(const im::Envelope& request, im::Envelope& respon
         case im::CMD_P2P_MSG_REQ:
             HandleP2PMsg(request, response);
             break;
+        case im::CMD_HEARTBEAT:
+            // Heartbeat received, connection timer is already refreshed by OnRead_
+            return;
         default:
             HandleUnknown(request, response);
             break;

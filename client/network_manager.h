@@ -53,6 +53,7 @@ private:
     bool SendEnvelope(const im::Envelope& env);
     bool SendRequestAndWait(const im::Envelope& request, im::Envelope& response, im::CommandType expected_cmd);
     void ListenerLoop();
+    void HeartbeatLoop();
     void ClearAuth();
     void Disconnect();
 
@@ -71,6 +72,7 @@ private:
 
     // Async Handling
     std::thread listener_thread_;
+    std::thread heartbeat_thread_;
     std::atomic<bool> running_{false};
 
     std::mutex mutex_;

@@ -34,6 +34,9 @@ enum CommandType {
     CMD_P2P_MSG_REQ   = 50;
     CMD_P2P_MSG_PUSH  = 51;
     CMD_MSG_ACK       = 52;
+
+    // Heartbeat
+    CMD_HEARTBEAT     = 99;
 }
 
 message Envelope {

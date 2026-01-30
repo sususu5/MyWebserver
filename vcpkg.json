@@ -11,15 +11,26 @@
     {
       "name": "protobuf",
       "version>=": "3.21.12"
-    },
-    "sqlpp11",
-    "sqlpp11-connector-mysql",
-    "jwt-cpp",
-    "nlohmann-json",
-    {
-
-      "name": "ftxui",
-      "version>=": "6.1.9"
     }
-  ]
+  ],
+  "features": {
+    "client": {
+      "description": "Client dependencies",
+      "dependencies": [
+        {
+          "name": "ftxui",
+          "version>=": "6.1.9"
+        }
+      ]
+    },
+    "server": {
+      "description": "Server dependencies",
+      "dependencies": [
+        "sqlpp11",
+        "sqlpp11-connector-mysql",
+        "jwt-cpp",
+        "nlohmann-json"
+      ]
+    }
+  }
 }

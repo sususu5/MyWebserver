@@ -159,6 +159,56 @@ If you just want to run the server without setting up a development environment:
 docker-compose up --build
 ```
 
+---
+
+## 🖥️ Local Client Development (macOS/Linux)
+
+If you want to run the **FTXUI Client** locally on your host machine while the backend runs in Docker, follow these steps. This setup isolates the server environment while giving you a native terminal UI experience.
+
+### 1. Start the Backend (Docker)
+
+Start the Server, MySQL, and ScyllaDB in the background. We mount the generated certificates so the server can connect securely.
+
+```bash
+# Build and start services in detached mode
+docker compose up --build -d
+```
+
+### 2. Build the Client (Local)
+
+We use a special CMake preset (`macos-debug`) that:
+*   **Skips server dependencies** (MySQL, ScyllaDB drivers are NOT required locally).
+*   **Only builds the client** and protocol buffers.
+*   **Uses Ninja** for faster builds.
+
+```bash
+# 1. Configure the project (Client Only)
+cmake --preset macos-debug
+
+# 2. Build the client executable
+cmake --build --preset macos-debug --target client
+```
+
+### 3. Run the Client
+
+```bash
+./build/macos-debug/client/client
+```
+
+### ❓ Troubleshooting
+
+*   **Database Internal Error / TLS Error**:
+    If the client says "Database internal error", check the server logs:
+    ```bash
+    docker logs mywebserver-server-1
+    ```
+    If you see `TLS/SSL error: No such file or directory`, ensure you ran `docker compose down -v` to reset the certificate volumes and that `docker-compose.yml` mounts `ssl-certs:/etc/mysql/certs:ro` for the server.
+
+*   **CMake Error: Generator Ninja**:
+    If you see an error about "Unix Makefiles" vs "Ninja", run `rm -rf build/macos-debug` to clear the cache.
+
+---
+
 **Code Formatting:**
 Using Google Style for C++: PascalCase for class names and function names, snake_case for variable names.
 

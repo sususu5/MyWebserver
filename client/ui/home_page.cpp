@@ -18,7 +18,7 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
         if (NetworkManager::GetInstance().GetFriendList(users, err)) {
             state->friend_names.clear();
             for (const auto& u : users) {
-                state->friend_names.push_back(u.username() + " (" + std::to_string(u.user_id()) + ")");
+                state->friend_names.push_back(u.username());
             }
         }
     };

@@ -1,9 +1,22 @@
 services:
   server:
     build: .
-    container_name: mywebserver
     ports:
       - "1316:1316"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      scylla:
+        condition: service_healthy
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - SCYLLA_HOST=scylla
+      - SCYLLA_PORT=9042
+      - SCYLLA_USERNAME=cassandra
+      - SCYLLA_PASSWORD=cassandra
+    volumes:
+      - ssl-certs:/etc/mysql/certs:ro
     command: >
       bash -c "
       rm -rf build/release;
@@ -11,3 +24,52 @@ services:
       cmake --build build/release &&
       ./build/release/server/src/server
       "
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        mkdir -p /certs
+        openssl genrsa 2048 > /certs/ca-key.pem
+        openssl req -new -x509 -nodes -days 3600 -key /certs/ca-key.pem -out /certs/ca.pem -subj "/CN=MySQL-CA"
+        openssl req -newkey rsa:2048 -days 3600 -nodes -keyout /certs/server-key.pem -out /certs/server-req.pem -subj "/CN=mysql"
+        openssl rsa -in /certs/server-key.pem -out /certs/server-key.pem
+        openssl x509 -req -in /certs/server-req.pem -days 3600 -CA /certs/ca.pem -CAkey /certs/ca-key.pem -set_serial 01 -out /certs/server-cert.pem
+        chown -R mysql:mysql /certs
+        chmod 600 /certs/*.pem
+        chmod 644 /certs/ca.pem /certs/server-cert.pem
+        exec /usr/local/bin/docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password --require-secure-transport=ON --ssl-ca=/certs/ca.pem --ssl-cert=/certs/server-cert.pem --ssl-key=/certs/server-key.pem
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: testdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ssl-certs:/certs
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  scylla:
+    image: scylladb/scylla:5.4
+    ports:
+      - "9042:9042"
+    command: --smp 1 --memory 2G --overprovisioned 1 --developer-mode 1
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' $(hostname -i) 9042"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+
+volumes:
+  mysql-data:
+  ssl-certs:

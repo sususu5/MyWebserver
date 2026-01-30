@@ -107,7 +107,7 @@ private:
             if (NetworkManager::GetInstance().GetFriendList(users, err)) {
                 home_page_state_.friend_names.clear();
                 for (const auto& u : users) {
-                    home_page_state_.friend_names.push_back(u.username() + " (" + std::to_string(u.user_id()) + ")");
+                    home_page_state_.friend_names.push_back(u.username());
                 }
             }
             screen_.Post(Event::Custom);

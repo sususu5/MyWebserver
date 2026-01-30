@@ -4,8 +4,8 @@
 build/
 bin/
 cmake-build-*/
-
 compile_commands.json
+CMakeUserPresets.json
 
 # ---------------------------------------------------------------------------
 # Dependencies & Cache

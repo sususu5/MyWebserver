@@ -150,6 +150,15 @@ void NetworkManager::ListenerLoop() {
             if (on_friend_status_callback_) {
                 on_friend_status_callback_(env.friend_status_push());
             }
+        } else if (env.cmd() == im::CMD_P2P_MSG_PUSH) {
+            auto msg = env.p2p_msg_push();
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                p2p_chat_history_[msg.receiver_id()].push_back(msg);
+            }
+            if (on_message_callback_) {
+                on_message_callback_(msg);
+            }
         } else {
             std::lock_guard<std::mutex> lock(mutex_);
             response_envelope_ = env;
@@ -335,4 +344,40 @@ void NetworkManager::RemovePendingRequest(uint64_t req_id) {
         std::remove_if(pending_friend_requests_.begin(), pending_friend_requests_.end(),
                        [req_id](const im::FriendReqPush& req) { return req.req_id() == req_id; }),
         pending_friend_requests_.end());
+}
+
+bool NetworkManager::SendP2PMessage(uint64_t receiver_id, const std::string& content, std::string& error_msg) {
+    im::P2PMessage req;
+    req.set_sender_id(user_id_);
+    req.set_receiver_id(receiver_id);
+    req.set_content(content);
+    req.set_timestamp(time(nullptr));
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_P2P_MSG_REQ);
+    env.set_timestamp(time(nullptr));
+    *env.mutable_p2p_msg_req() = req;
+
+    im::Envelope resp_env;
+    if (!SendRequestAndWait(env, resp_env, im::CMD_MSG_ACK)) {
+        error_msg = "Request timeout or network error";
+        return false;
+    }
+
+    const auto& resp = resp_env.msg_ack();
+    if (resp.success()) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            p2p_chat_history_[receiver_id].push_back(req);
+        }
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}
+
+const std::vector<im::P2PMessage>& NetworkManager::GetP2PHistory(uint64_t receiver_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return p2p_chat_history_.at(receiver_id);
 }

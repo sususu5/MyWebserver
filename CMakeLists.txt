@@ -25,39 +25,48 @@ endif()
 find_package(protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf: ${protobuf_VERSION}")
 
+# Optionally build only the client
+option(BUILD_CLIENT_ONLY "Build only the client application" OFF)
+
 # ---------------------------------------------------------------------------
-# Rust toolchain (for cpp-rs-driver)
+# Rust toolchain (for cpp-rs-driver) - Only needed for server
 # ---------------------------------------------------------------------------
-if(NOT DEFINED CMAKE_Rust_COMPILER)
-    set(CMAKE_Rust_COMPILER "/root/.cargo/bin/rustc" CACHE FILEPATH "Rust compiler" FORCE)
+if(NOT BUILD_CLIENT_ONLY)
+    if(NOT DEFINED CMAKE_Rust_COMPILER)
+        set(CMAKE_Rust_COMPILER "/root/.cargo/bin/rustc" CACHE FILEPATH "Rust compiler" FORCE)
+    endif()
+    if(NOT DEFINED CARGO_EXECUTABLE)
+        set(CARGO_EXECUTABLE "/root/.cargo/bin/cargo" CACHE FILEPATH "Cargo executable" FORCE)
+    endif()
+
+    # ---------------------------------------------------------------------------
+    # ScyllaDB C++ driver (cpp-rs-driver)
+    # ---------------------------------------------------------------------------
+    include(FetchContent)
+
+    set(CASS_BUILD_STATIC OFF CACHE BOOL "Disable static build for cpp-rs-driver" FORCE)
+    set(CASS_BUILD_SHARED ON CACHE BOOL "Enable shared build for cpp-rs-driver" FORCE)
+    set(CASS_BUILD_EXAMPLES OFF CACHE BOOL "Disable cpp-rs-driver examples" FORCE)
+    set(CASS_BUILD_INTEGRATION_TESTS OFF CACHE BOOL "Disable cpp-rs-driver tests" FORCE)
+
+    FetchContent_Declare(
+        cpp_rs_driver
+        GIT_REPOSITORY https://github.com/scylladb/cpp-rs-driver.git
+        GIT_TAG v0.6.0
+    )
+    FetchContent_MakeAvailable(cpp_rs_driver)
 endif()
-if(NOT DEFINED CARGO_EXECUTABLE)
-    set(CARGO_EXECUTABLE "/root/.cargo/bin/cargo" CACHE FILEPATH "Cargo executable" FORCE)
-endif()
-
-# ---------------------------------------------------------------------------
-# ScyllaDB C++ driver (cpp-rs-driver)
-# ---------------------------------------------------------------------------
-include(FetchContent)
-
-set(CASS_BUILD_STATIC OFF CACHE BOOL "Disable static build for cpp-rs-driver" FORCE)
-set(CASS_BUILD_SHARED ON CACHE BOOL "Enable shared build for cpp-rs-driver" FORCE)
-set(CASS_BUILD_EXAMPLES OFF CACHE BOOL "Disable cpp-rs-driver examples" FORCE)
-set(CASS_BUILD_INTEGRATION_TESTS OFF CACHE BOOL "Disable cpp-rs-driver tests" FORCE)
-
-FetchContent_Declare(
-    cpp_rs_driver
-    GIT_REPOSITORY https://github.com/scylladb/cpp-rs-driver.git
-    GIT_TAG v0.6.0
-)
-FetchContent_MakeAvailable(cpp_rs_driver)
 
 # ---------------------------------------------------------------------------
 # Sub-directories
 # ---------------------------------------------------------------------------
 add_subdirectory(proto)
-add_subdirectory(server/src)
-add_subdirectory(tests)
+
+if(NOT BUILD_CLIENT_ONLY)
+    add_subdirectory(server/src)
+    add_subdirectory(tests)
+endif()
+
 add_subdirectory(client)
 
 # ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 #include "protocol.pb.h"
 
@@ -18,6 +19,7 @@ public:
     using OnErrorCallback = std::function<void(const std::string& error_msg)>;
     using OnFriendRequestCallback = std::function<void(const im::FriendReqPush& req)>;
     using OnFriendStatusCallback = std::function<void(const im::FriendStatusPush& status)>;
+    using OnMessageCallback = std::function<void(const im::P2PMessage& msg)>;
 
     static NetworkManager& GetInstance() {
         static NetworkManager instance;
@@ -28,6 +30,7 @@ public:
     void SetOnErrorCallback(OnErrorCallback callback) { on_error_callback_ = callback; }
     void SetOnFriendRequestCallback(OnFriendRequestCallback callback) { on_friend_request_callback_ = callback; }
     void SetOnFriendStatusCallback(OnFriendStatusCallback callback) { on_friend_status_callback_ = callback; }
+    void SetOnMessageCallback(OnMessageCallback callback) { on_message_callback_ = callback; }
 
     // Auth Service
     bool Register(const std::string& username, const std::string& password, std::string& error_msg);
@@ -38,6 +41,10 @@ public:
     bool AddFriend(uint64_t receiver_id, const std::string& verify_msg, std::string& error_msg);
     bool HandleFriendRequest(uint64_t req_id, uint64_t sender_id, im::FriendAction action, std::string& error_msg);
     bool GetFriendList(std::vector<im::User>& friend_info_list, std::string& error_msg);
+
+    // Message Service
+    bool SendP2PMessage(uint64_t receiver_id, const std::string& content, std::string& error_msg);
+    const std::vector<im::P2PMessage>& GetP2PHistory(uint64_t receiver_id);
 
     bool IsLoggedIn() const { return !token_.empty(); }
     const std::string& GetToken() const { return token_; }
@@ -86,5 +93,8 @@ private:
     OnErrorCallback on_error_callback_;
     OnFriendRequestCallback on_friend_request_callback_;
     OnFriendStatusCallback on_friend_status_callback_;
+    OnMessageCallback on_message_callback_;
+
     std::vector<im::FriendReqPush> pending_friend_requests_;
+    std::unordered_map<uint64_t, std::vector<im::P2PMessage>> p2p_chat_history_;
 };

@@ -12,6 +12,7 @@ struct HomePageState {
     std::string handle_req_id;
     std::string handle_sender_id;
     std::string handle_hint;
+    std::vector<std::string> friend_names;
     int current_panel = 0;
 };
 

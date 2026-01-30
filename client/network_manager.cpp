@@ -146,6 +146,10 @@ void NetworkManager::ListenerLoop() {
             if (on_friend_request_callback_) {
                 on_friend_request_callback_(req);
             }
+        } else if (env.cmd() == im::CMD_FRIEND_STATUS_PUSH) {
+            if (on_friend_status_callback_) {
+                on_friend_status_callback_(env.friend_status_push());
+            }
         } else {
             std::lock_guard<std::mutex> lock(mutex_);
             response_envelope_ = env;

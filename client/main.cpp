@@ -99,6 +99,19 @@ private:
         // Set friend request callback
         NetworkManager::GetInstance().SetOnFriendRequestCallback(
             [this](const im::FriendReqPush& req) { screen_.Post(Event::Custom); });
+
+        // Set friend status callback
+        NetworkManager::GetInstance().SetOnFriendStatusCallback([this](const im::FriendStatusPush& status) {
+            std::vector<im::User> users;
+            std::string err;
+            if (NetworkManager::GetInstance().GetFriendList(users, err)) {
+                home_page_state_.friend_names.clear();
+                for (const auto& u : users) {
+                    home_page_state_.friend_names.push_back(u.username() + " (" + std::to_string(u.user_id()) + ")");
+                }
+            }
+            screen_.Post(Event::Custom);
+        });
     }
 
     int current_page_ = (int)Page::AUTH;

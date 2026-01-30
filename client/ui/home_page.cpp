@@ -1,6 +1,7 @@
 #include "home_page.h"
 #include <ftxui/dom/elements.hpp>
 #include <string>
+#include <vector>
 #include "../network_manager.h"
 #include "friend/add_friend_panel.h"
 #include "friend/handle_friend_panel.h"
@@ -11,15 +12,28 @@ using namespace ftxui;
 HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* state) {
     enum class RightPanel { NONE = 0, ADD_FRIEND = 1, HANDLE_FRIEND = 2 };
 
+    auto refresh_friends = [state] {
+        std::vector<im::User> users;
+        std::string err;
+        if (NetworkManager::GetInstance().GetFriendList(users, err)) {
+            state->friend_names.clear();
+            for (const auto& u : users) {
+                state->friend_names.push_back(u.username() + " (" + std::to_string(u.user_id()) + ")");
+            }
+        }
+    };
+
+    refresh_friends();
+
     auto btn_add_friend = Button(
-        "Send Friend Request",
+        "Add Friend",
         [state] {
             state->add_friend_hint.clear();
             state->current_panel = static_cast<int>(RightPanel::ADD_FRIEND);
         },
         MakeButtonStyle());
     auto btn_handle_friend = Button(
-        "Handle Friend Request",
+        "Friend Requests",
         [state] {
             state->handle_hint.clear();
             state->current_panel = static_cast<int>(RightPanel::HANDLE_FRIEND);
@@ -32,13 +46,20 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
     });
 
     auto left_view = Renderer(left_panel, [=] {
+        Elements list_elements;
+        for (const auto& name : state->friend_names) {
+            list_elements.push_back(text(name));
+        }
+
         return vbox({
                    text("Contacts") | bold,
+                   separator(),
+                   vbox(list_elements) | flex,
                    separator(),
                    vbox({
                        btn_add_friend->Render(),
                        btn_handle_friend->Render(),
-                   }) | flex,
+                   }),
                }) |
                border | size(WIDTH, EQUAL, 26) | size(HEIGHT, GREATER_THAN, 10);
     });
@@ -53,6 +74,7 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
                     state->add_friend_hint = error_msg;
                 } else {
                     state->current_panel = static_cast<int>(RightPanel::NONE);
+                    state->add_friend_hint = "Request sent.";
                 }
             } catch (...) {
                 state->add_friend_hint = "Invalid User ID format.";
@@ -62,20 +84,21 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
 
     auto handle_friend_panel = BuildHandleFriendPanel(
         state->handle_hint,
-        [state](uint64_t req_id, uint64_t sender_id) {
+        [state, refresh_friends](uint64_t req_id, uint64_t sender_id) {
             std::string error_msg;
-            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id,
-                                                                   im::FriendAction::ACTION_ACCEPT, error_msg)) {
+            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id, im::FriendAction::ACTION_ACCEPT,
+                                                                   error_msg)) {
                 state->handle_hint = error_msg;
             } else {
                 state->handle_hint = "Request accepted successfully.";
                 NetworkManager::GetInstance().RemovePendingRequest(req_id);
+                refresh_friends();
             }
         },
         [state](uint64_t req_id, uint64_t sender_id) {
             std::string error_msg;
-            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id,
-                                                                   im::FriendAction::ACTION_REJECT, error_msg)) {
+            if (!NetworkManager::GetInstance().HandleFriendRequest(req_id, sender_id, im::FriendAction::ACTION_REJECT,
+                                                                   error_msg)) {
                 state->handle_hint = error_msg;
             } else {
                 state->handle_hint = "Request rejected successfully.";
@@ -99,6 +122,8 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
         },
         &state->current_panel);
 
+    auto right_panel_renderer = Renderer(right_panel, [=] { return right_panel->Render() | flex; });
+
     auto body_layout = Container::Horizontal({
         left_view,
         right_panel,
@@ -120,7 +145,7 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
             }) | border,
             hbox({
                 left_view->Render(),
-                right_panel->Render() | flex,
+                right_panel_renderer->Render() | flex,
             }) | flex,
         });
     });

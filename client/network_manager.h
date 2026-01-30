@@ -17,6 +17,7 @@ class NetworkManager {
 public:
     using OnErrorCallback = std::function<void(const std::string& error_msg)>;
     using OnFriendRequestCallback = std::function<void(const im::FriendReqPush& req)>;
+    using OnFriendStatusCallback = std::function<void(const im::FriendStatusPush& status)>;
 
     static NetworkManager& GetInstance() {
         static NetworkManager instance;
@@ -26,6 +27,7 @@ public:
     bool Connect(const std::string& host, int port);
     void SetOnErrorCallback(OnErrorCallback callback) { on_error_callback_ = callback; }
     void SetOnFriendRequestCallback(OnFriendRequestCallback callback) { on_friend_request_callback_ = callback; }
+    void SetOnFriendStatusCallback(OnFriendStatusCallback callback) { on_friend_status_callback_ = callback; }
 
     // Auth Service
     bool Register(const std::string& username, const std::string& password, std::string& error_msg);
@@ -83,5 +85,6 @@ private:
     // Callbacks & Storage
     OnErrorCallback on_error_callback_;
     OnFriendRequestCallback on_friend_request_callback_;
+    OnFriendStatusCallback on_friend_status_callback_;
     std::vector<im::FriendReqPush> pending_friend_requests_;
 };

@@ -1,72 +1,83 @@
-# Project Context: MyWebserver (CLI IM System)
+# MyWebserver (CLI IM System) Context
 
-## Overview
-This project is a high-performance **CLI Instant Messaging (IM) System** written in **C++20**, evolving from a web server foundation. It utilizes a Reactor pattern with **Linux Epoll** for networking, **Google Protobuf** for data serialization, and relies on **MySQL** and **ScyllaDB** for data persistence.
+## Project Overview
+This project is a high-performance C++ application evolving from a WebServer into a **CLI Instant Messaging (IM) System**. It utilizes modern C++20 standards, a Reactor-based networking model, and Google Protobuf for efficient binary communication. The system features a server backend and a terminal-based client user interface.
+
+## Key Technologies
+*   **Language:** C++20
+*   **Build System:** CMake (with Presets), Vcpkg (Dependency Management)
+*   **Networking:** Linux Epoll (Reactor Pattern), Non-blocking I/O
+*   **Protocol:** Google Protobuf
+*   **Database:**
+    *   **New:** ScyllaDB (via `cpp-rs-driver`) - *Current focus*
+    *   **Legacy/Transition:** MySQL (via `sqlpp11`)
+*   **Client UI:** FTXUI (Functional Terminal User Interface)
+*   **Other Libs:** `jwt-cpp` (Authentication), `nlohmann-json`, `spdlog` (format supported in custom logger)
+*   **Containerization:** Docker, DevContainer support
 
 ## Architecture
-- **Language**: C++20
-- **Network Model**: Linux Epoll (Reactor Pattern)
-- **Serialization**: Google Protobuf
-- **Database**: 
-  - **MySQL**: User data, auth (port 3306)
-  - **ScyllaDB**: Message storage (port 9042)
-- **Client UI**: FTXUI (Terminal-based UI)
-- **Build System**: CMake (Presets enabled) + Vcpkg
-- **Orchestration**: Docker Compose (DevContainer)
+### Server (`server/src/`)
+*   **Core:** Custom `Webserver` class utilizing `Epoller` for event handling.
+*   **Concurrency:** Thread Pool for task execution and connection handling.
+*   **Storage:** DAO layer abstracting database access (`msg_scylla_dao`, `friend_dao`, etc.).
+*   **Service Layer:** Business logic separated into services (`AuthService`, `FriendService`, `MsgService`, `PushService`).
+*   **Logging:** Custom asynchronous logging system.
+
+### Client (`client/`)
+*   **UI:** Terminal-based UI built with **FTXUI**.
+*   **Structure:** Network manager handles communication; UI components (`home_page`, `auth_page`, etc.) manage display and user input.
+
+### Protocol (`proto/`)
+*   Defines message structures and service contracts using `.proto` files.
+*   CMake automatically generates C++ code from these definitions.
 
 ## Directory Structure
-- `server/src/`: Core server logic (Reactor, ThreadPool, Database logic).
-  - `main.cpp`: Entry point. Initializes `Webserver` on port 1316.
-- `client/`: CLI client application using FTXUI.
-  - `main.cpp`: Entry point. Manages UI pages (Auth, Register, Main).
-- `proto/`: Protobuf definition files (`.proto`).
-- `tests/`: Python integration tests (`test_auth.py`, `test_friend.py`).
-- `.devcontainer/`: Development environment configuration (Dockerfile, docker-compose).
-- `sql/`: Database schema definitions.
+*   `server/src/`: Core server source code.
+*   `client/`: Client application source code.
+*   `proto/`: Protobuf definition files.
+*   `tests/`: Python functional tests and C++ unit tests.
+*   `sql/`: Database schema definitions.
+*   `vcpkg.json`: Project dependencies.
+*   `docker-compose.yml`: Deployment configuration.
 
 ## Build & Run
 
-### 1. Build
-The project uses **CMake Presets** (`debug`, `release`).
+**Prerequisites:**
+The project is best developed using the provided **DevContainer** (requires Docker & VS Code). Alternatively, ensure `cmake`, `vcpkg`, `clang`, and necessary DB drivers are installed.
 
-**Debug Build:**
+**Build Commands (inside DevContainer or configured env):**
 ```bash
+# Configure (Release or Debug)
+cmake --preset release
+# OR
 cmake --preset debug
+
+# Build
+cmake --build build/release
+# OR
 cmake --build build/debug
 ```
 
-**Release Build:**
+**Run Server:**
 ```bash
-cmake --preset release
-cmake --build build/release
-```
-
-### 2. Run Server
-The server listens on port **1316**.
-```bash
-# Debug
 ./build/debug/server/src/server
-
-# Release
+# OR
 ./build/release/server/src/server
+# Note: Server listens on port 1316 by default.
 ```
 
-### 3. Run Client
-The client connects to `127.0.0.1:1316`.
+**Run Client:**
 ```bash
-# Debug
 ./build/debug/client/client
+# OR
+./build/release/client/client
 ```
 
 ## Testing
-Python scripts are used for integration testing. They send raw Protobuf packets over TCP.
+The project includes Python scripts for functional testing of specific features.
 
-**Prerequisites:**
-Ensure the server is running.
-
-**Run Tests:**
 ```bash
-# Test Authentication (Register/Login)
+# Test Authentication
 python3 tests/test_auth.py [username] [password]
 
 # Test Friend System
@@ -76,18 +87,14 @@ python3 tests/test_friend.py
 python3 tests/test_message.py
 ```
 
-## Infrastructure
-The project relies on Docker for database services.
-- **MySQL**: 3306 (User/Auth)
-- **Scylla**: 9042 (Messages)
+## Development Status & Roadmap
+*   **Transitioning to ScyllaDB:** The project is moving from MySQL to ScyllaDB for better scalability.
+*   **Current Focus:**
+    *   Password Encryption (bcrypt/Argon2)
+    *   P2P Message persistence and delivery guarantees.
+    *   Offline message storage.
+*   **Completed:** User Auth (JWT), Friend System, Real-time Push, Connection Pool.
 
-**Start Infrastructure:**
-```bash
-docker-compose -f .devcontainer/docker-compose.yml up -d
-```
-(Or use the DevContainer which handles this automatically).
-
-## Development Conventions
-- **Code Style**: Google C++ Style (PascalCase for classes/functions, snake_case for variables).
-- **Protobuf**: When modifying `.proto` files, re-run CMake to regenerate C++ and Python headers.
-- **Database**: Schema changes require database re-initialization or migration.
+## Conventions
+*   **Code Style:** Google Style (PascalCase for classes/functions, snake_case for variables).
+*   **Formatting:** `clang-format` used on `.h` and `.cpp` files.

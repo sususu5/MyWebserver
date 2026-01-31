@@ -154,7 +154,7 @@ void NetworkManager::ListenerLoop() {
             auto msg = env.p2p_msg_push();
             {
                 std::lock_guard<std::mutex> lock(mutex_);
-                p2p_chat_history_[msg.receiver_id()].push_back(msg);
+                p2p_chat_history_[msg.sender_id()].push_back(msg);
             }
             if (on_message_callback_) {
                 on_message_callback_(msg);
@@ -377,7 +377,7 @@ bool NetworkManager::SendP2PMessage(uint64_t receiver_id, const std::string& con
     }
 }
 
-const std::vector<im::P2PMessage>& NetworkManager::GetP2PHistory(uint64_t receiver_id) {
+std::vector<im::P2PMessage> NetworkManager::GetP2PHistory(uint64_t receiver_id) {
     std::lock_guard<std::mutex> lock(mutex_);
-    return p2p_chat_history_.at(receiver_id);
+    return p2p_chat_history_[receiver_id];
 }

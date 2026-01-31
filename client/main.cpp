@@ -112,6 +112,11 @@ private:
             }
             screen_.Post(Event::Custom);
         });
+
+        // Set message callback
+        NetworkManager::GetInstance().SetOnMessageCallback([this](const im::P2PMessage& msg) {
+            screen_.Post(Event::Custom);
+        });
     }
 
     int current_page_ = (int)Page::AUTH;

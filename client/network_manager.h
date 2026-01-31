@@ -44,7 +44,7 @@ public:
 
     // Message Service
     bool SendP2PMessage(uint64_t receiver_id, const std::string& content, std::string& error_msg);
-    const std::vector<im::P2PMessage>& GetP2PHistory(uint64_t receiver_id);
+    std::vector<im::P2PMessage> GetP2PHistory(uint64_t receiver_id);
 
     bool IsLoggedIn() const { return !token_.empty(); }
     const std::string& GetToken() const { return token_; }

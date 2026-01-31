@@ -102,21 +102,23 @@ private:
 
         // Set friend status callback
         NetworkManager::GetInstance().SetOnFriendStatusCallback([this](const im::FriendStatusPush& status) {
-            std::vector<im::User> users;
-            std::string err;
-            if (NetworkManager::GetInstance().GetFriendList(users, err)) {
-                home_page_state_.friend_names.clear();
-                for (const auto& u : users) {
-                    home_page_state_.friend_names.push_back(u.username());
+            // This lambda is called in the listener thread, so we need to post it to the main thread to update the UI
+            screen_.Post([this] {
+                std::vector<im::User> users;
+                std::string err;
+                if (NetworkManager::GetInstance().GetFriendList(users, err)) {
+                    home_page_state_.friend_list = users;
+                    home_page_state_.friend_names.clear();
+                    for (const auto& u : users) {
+                        home_page_state_.friend_names.push_back(u.username());
+                    }
                 }
-            }
-            screen_.Post(Event::Custom);
+            });
         });
 
         // Set message callback
-        NetworkManager::GetInstance().SetOnMessageCallback([this](const im::P2PMessage& msg) {
-            screen_.Post(Event::Custom);
-        });
+        NetworkManager::GetInstance().SetOnMessageCallback(
+            [this](const im::P2PMessage& msg) { screen_.Post(Event::Custom); });
     }
 
     int current_page_ = (int)Page::AUTH;

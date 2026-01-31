@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Top-level project declaration
-project(MyWebserver VERSION 1.0.0 LANGUAGES CXX)
+project(TermChat)
 
 # ---------------------------------------------------------------------------
 # Global build options
@@ -26,12 +26,12 @@ find_package(protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf: ${protobuf_VERSION}")
 
 # Optionally build only the client
-option(BUILD_CLIENT_ONLY "Build only the client application" OFF)
+option(BUILD_SERVER "Build the server application" ON)
 
 # ---------------------------------------------------------------------------
 # Rust toolchain (for cpp-rs-driver) - Only needed for server
 # ---------------------------------------------------------------------------
-if(NOT BUILD_CLIENT_ONLY)
+if(BUILD_SERVER)
     if(NOT DEFINED CMAKE_Rust_COMPILER)
         set(CMAKE_Rust_COMPILER "/root/.cargo/bin/rustc" CACHE FILEPATH "Rust compiler" FORCE)
     endif()
@@ -62,7 +62,7 @@ endif()
 # ---------------------------------------------------------------------------
 add_subdirectory(proto)
 
-if(NOT BUILD_CLIENT_ONLY)
+if(BUILD_SERVER)
     add_subdirectory(server/src)
     add_subdirectory(tests)
 endif()

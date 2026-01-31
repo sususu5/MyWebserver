@@ -53,11 +53,11 @@ list(REMOVE_ITEM PROJECT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 # ---------------------------------------------------------------------------
 # Define static library
 # ---------------------------------------------------------------------------
-add_library(mywebserver STATIC ${PROJECT_SRC} ${GENERATED_SCHEMA_HEADER})
-add_dependencies(mywebserver generate_sql_models)
+add_library(termchat_core STATIC ${PROJECT_SRC} ${GENERATED_SCHEMA_HEADER})
+add_dependencies(termchat_core generate_sql_models)
 
 # Public include path
-target_include_directories(mywebserver PUBLIC 
+target_include_directories(termchat_core PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${cpp_rs_driver_SOURCE_DIR}/include
 )
@@ -65,7 +65,7 @@ target_include_directories(mywebserver PUBLIC
 # ---------------------------------------------------------------------------
 # Link all dependencies
 # ---------------------------------------------------------------------------
-target_link_libraries(mywebserver PUBLIC 
+target_link_libraries(termchat_core PUBLIC 
     Threads::Threads 
     protobuf::libprotobuf
     sqlpp11::sqlpp11
@@ -78,7 +78,7 @@ target_link_libraries(mywebserver PUBLIC
 )
 
 if(TARGET proto_generated)
-    target_link_libraries(mywebserver PUBLIC proto_generated)
+    target_link_libraries(termchat_core PUBLIC proto_generated)
 endif()
 
 # ---------------------------------------------------------------------------
@@ -86,4 +86,4 @@ endif()
 # ---------------------------------------------------------------------------
 add_executable(server "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 
-target_link_libraries(server PRIVATE mywebserver)
+target_link_libraries(server PRIVATE termchat_core)

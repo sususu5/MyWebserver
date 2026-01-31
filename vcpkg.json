@@ -1,9 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "name": "mywebserver",
+  "name": "termchat",
   "version": "1.0.0",
   "description": "A high-performance C++ web server evolving into an enterprise-grade IM backend service",
-  "homepage": "https://github.com/sususu5/MyWebserver",
+  "homepage": "https://github.com/sususu5/TermChat",
   "license": "MIT",
   "supports": "linux | osx",
   "builtin-baseline": "2cf2bcc60add50f79b2c418487d9cd1b6c7c1fec",

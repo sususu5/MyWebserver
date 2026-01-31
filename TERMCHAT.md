@@ -1,7 +1,7 @@
-# MyWebserver (CLI IM System) Context
+# TermChat (CLI IM System) Context
 
 ## Project Overview
-This project is a high-performance C++ application evolving from a WebServer into a **CLI Instant Messaging (IM) System**. It utilizes modern C++20 standards, a Reactor-based networking model, and Google Protobuf for efficient binary communication. The system features a server backend and a terminal-based client user interface.
+**TermChat** (formerly MyWebserver) is a high-performance C++ application evolving into a **CLI Instant Messaging (IM) System**. It utilizes modern C++20 standards, a Reactor-based networking model, and Google Protobuf for efficient binary communication. The system features a server backend and a terminal-based client user interface.
 
 ## Key Technologies
 *   **Language:** C++20

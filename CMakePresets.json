@@ -46,6 +46,21 @@
       "displayName": "Default (Release)",
       "description": "Default release build",
       "inherits": "release"
+    },
+    {
+      "name": "macos-debug",
+      "displayName": "macOS Debug (Client Only)",
+      "description": "Debug build for macOS (Client only, no DB drivers)",
+      "binaryDir": "${sourceDir}/build/macos-debug",
+      "generator": "Ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_SERVER": "OFF",
+        "VCPKG_MANIFEST_FEATURES": "client"
+      }
     }
   ],
   "buildPresets": [
@@ -60,6 +75,10 @@
     {
       "name": "default",
       "configurePreset": "default"
+    },
+    {
+      "name": "macos-debug",
+      "configurePreset": "macos-debug"
     }
   ]
 }

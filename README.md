@@ -1,18 +1,19 @@
-# MyWebserver (Evolution to CLI IM)
+# TermChat
 
 ## 📖 Introduction
-This project is evolving from a high-performance C++ WebServer into a **CLI Instant Messaging (IM) System**. 
-The goal is to build a robust, scalable backend using modern C++ standards (C++20) and industry-proven technologies.
+**TermChat** is a robust, CLI-based Instant Messaging system built with modern C++20. It leverages industry-proven technologies like the Reactor pattern (Epoll), Protocol Buffers for efficient serialization, and ScyllaDB for high-throughput data persistence. The project features a complete backend server and a rich TUI (Text User Interface) client built with FTXUI.
 
 ## 🛠 Tech Stack
 - **Language**: C++20
-- **Network Model**: Linux Epoll (Reactor Pattern)
-- **Protocol**: Google Protobuf (Binary Serialization)
-- **Database Layer**: sqlpp11 (Modern C++ EDSL for SQL - *In Transition*)
-- **Concurrency**: Thread Pool & MySQL Connection Pool
-- **Logging**: Custom Asynchronous Logging (support for Spdlog format)
+- **Network Model**: Linux Epoll (Reactor Pattern) / Non-blocking I/O
+- **Protocol**: Google Protobuf 3 (Binary Serialization)
+- **Database**:
+    - **ScyllaDB**: High-performance NoSQL for message storage (Current)
+    - **MySQL**: Relational data (User auth/Friends) - *Legacy/Transition*
+- **Client UI**: FTXUI (Functional Terminal User Interface)
+- **Concurrency**: Thread Pool & Connection Pools
 - **Build System**: CMake (Presets) + Vcpkg
-- **Toolchain**: clangd + compile_commands.json
+- **DevOps**: Docker & DevContainer support
 
 ---
 
@@ -20,87 +21,61 @@ The goal is to build a robust, scalable backend using modern C++ standards (C++2
 
 ```text
 /
-├── proto/               # Protocol definitions (.proto files)
+├── client/              # FTXUI-based Terminal Client
+│   ├── ui/              # UI Components (Auth, Chat, Friend panels)
+│   ├── network_manager* # Client-side networking & state management
+│   └── main.cpp         # Client entry point
 ├── server/
 │   └── src/             # Core Backend Logic
 │       ├── main.cpp     # Entry point
-│       ├── buffer/      # Custom I/O buffer management
-│       ├── dao/         # Data Access Objects (Database logic)
-│       ├── service/     # Business logic layer (Auth, Chat, Friend, Push, etc.)
-│       ├── core/        # Webserver & Epoller (Reactor core)
-│       ├── pool/        # ThreadPool & SqlConnPool
-│       ├── http/        # HTTP protocol handling (legacy)
-│       ├── log/         # Async logging system
-│       ├── timer/       # Heap-based timer for timeouts
-│       ├── util/        # Utilities (UUID, Token, etc.)
-│       └── CMakeLists.txt
-├── resources/           # Static assets (HTML, JS, CSS)
-├── test/                # Unit tests & Benchmarking
-├── build/               # Build artifacts (generated pb files)
+│       ├── core/        # Reactor core (Epoll, Webserver)
+│       ├── service/     # Business Logic (Auth, Msg, Friend, Push)
+│       ├── dao/         # Data Access Objects (ScyllaDB/MySQL)
+│       ├── handler/     # Protocol Dispatchers (HTTP/Protobuf)
+│       ├── pool/        # Connection Pools (Thread, SQL, Scylla)
+│       └── buffer/      # Zero-copy buffer management
+├── proto/               # Protobuf definitions (.proto files)
+├── tests/               # Python Functional Tests & C++ Unit Tests
 ├── .devcontainer/       # VS Code DevContainer config
 ├── vcpkg.json           # Dependency management
-├── CMakePresets.json    # Build presets configuration
 └── docker-compose.yml   # Multi-container orchestration
 ```
 
 ---
 
-## 🗺️ Development Roadmap
+## ✨ Features
 
-> After updating the proto files, the project needs to be re-compiled to generate the C++ models.
+### ✅ Core Functionality
+- **High-Performance Server**: Event-driven architecture handling concurrent connections.
+- **Protocol Buffers**: Compact and efficient binary message format.
+- **Cross-Platform Client**: TUI client works on macOS, Linux, and Windows (via WSL/Docker).
 
-### Phase 1: Security & Foundation 🔐
+### 🔐 Authentication & Security
+- [x] **User Registration & Login**: Secure credential handling.
+- [x] **JWT Authentication**: Stateless session management using JSON Web Tokens.
+- [x] **Connection Management**: Heartbeats and automatic timeouts.
 
-- [ ] **Password Encryption**: Replace plaintext storage with bcrypt/Argon2 + salt
-- [ ] **JWT Secret Management**: Move hardcoded secret to environment variable
-- [ ] **Heartbeat Mechanism**: Implement client-server keepalive (PING/PONG)
-- [ ] **Message ID Generator**: Implement Snowflake algorithm for distributed unique IDs
-- [x] **User Online Status**: In-memory status map (Partially implemented via `PushService`)
+### 💬 Messaging
+- [x] **P2P Messaging**: Real-time private messaging between users.
+- [x] **Offline Messages**: Messages sent to offline users are stored (ScyllaDB) and pushed upon reconnection.
+- [x] **Message History**: Persistent chat history retrieval.
+- [x] **Rich TUI**: Scrollable chat history, real-time updates, and visual status indicators.
 
-### Phase 2: Core Messaging 💬
+### 👥 Social Graph
+- [x] **Friend System**: Send, Accept, and Reject friend requests.
+- [x] **Real-time Notifications**: Instant push notifications for friend requests and status updates.
+- [x] **Contact List**: Dynamic friend list with online status (partial).
 
-- [ ] **P2P Message Send/Receive**: Implement `CMD_P2P_MSG_REQ` / `CMD_P2P_MSG_PUSH`
-- [ ] **Message Persistence**: Store messages in MySQL/MongoDB
-- [ ] **Message ACK Confirmation**: Implement `MessageAck` logic for delivery guarantee
-- [ ] **Offline Message Storage**: Create offline message table and pull mechanism
-- [ ] **Message Retry**: Exponential backoff retry for failed deliveries
+---
 
-### Phase 3: Social Features 👥
+## 🗺️ Roadmap
 
-- [x] **Friend Request Flow**: Request → Accept/Reject → Notification
-- [x] **Friend List**: Retrieve friend list
-- [ ] **Friend Management**: Remove friend
-- [ ] **User Profile**: Status message
-- [ ] **Block User**: Implement user blocking functionality
-
-### Phase 4: Architecture Evolution 🏗️
-
-- [ ] **Master-Slave Reactor**: Evolve from single Reactor to multi-Reactor pattern
-- [ ] **Redis Integration**: Session management, user routing, online status
-- [ ] **Message Queue**: Integrate Kafka/RabbitMQ for async processing
-- [ ] **Multi-Node Deployment**: Stateless server + message routing layer
-- [ ] **Load Balancing**: Consistent hashing for user-server mapping
-
-### Phase 5: Production Readiness 🚀
-
-- [ ] **Rate Limiting**: Token bucket / Sliding window algorithm
-- [ ] **Circuit Breaker**: Graceful degradation under high load
-- [ ] **Monitoring**: Prometheus metrics + Grafana dashboards
-- [ ] **Distributed Tracing**: Jaeger/Zipkin integration
-- [ ] **Stress Testing**: Benchmark with webbench / wrk / custom tools
-- [ ] **Configuration Center**: etcd/consul for dynamic config
-
-### Completed ✅
-
-- [x] User Registration (Protobuf)
-- [x] User Login with JWT Token
-- [x] Protocol auto-detection (HTTP/Protobuf)
-- [x] MySQL Connection Pool
-- [x] Thread Pool
-- [x] Async Logging System
-- [x] Heap-based Timer for Connection Timeout
-- [x] Real-time Push Notifications (PushService)
-- [x] Friend System (Req/Resp/Push)
+- [ ] **Group Chat**: Implementation of multi-user chat rooms.
+- [ ] **File Transfer**: Support for sending images and files.
+- [ ] **End-to-End Encryption**: Integrate Signal Protocol or similar for privacy.
+- [ ] **Message Acknowledgement (ACK)**: Delivery receipts (Sent/Delivered/Read).
+- [ ] **Search**: Full-text search for message history.
+- [ ] **Metrics**: Prometheus/Grafana integration for server monitoring.
 
 ---
 
@@ -200,7 +175,7 @@ cmake --build --preset macos-debug --target client
 *   **Database Internal Error / TLS Error**:
     If the client says "Database internal error", check the server logs:
     ```bash
-    docker logs mywebserver-server-1
+    docker compose logs server
     ```
     If you see `TLS/SSL error: No such file or directory`, ensure you ran `docker compose down -v` to reset the certificate volumes and that `docker-compose.yml` mounts `ssl-certs:/etc/mysql/certs:ro` for the server.
 

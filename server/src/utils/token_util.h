@@ -18,7 +18,7 @@ public:
         const std::string kSecretKey = "yzyxjj20021225";
 
         auto token = jwt::create<traits>()
-                         .set_issuer("mywebserver")
+                         .set_issuer("termchat")
                          .set_type("JWS")
                          .set_payload_claim("user_id", std::to_string(user_id))
                          .set_payload_claim("username", username)
@@ -34,9 +34,8 @@ public:
 
         try {
             auto decoded = jwt::decode<traits>(token);
-            auto verifier =
-                jwt::verify<traits>().allow_algorithm(jwt::algorithm::hs256{kSecretKey}).with_issuer("mywebserver");
-
+                    auto verifier =
+                        jwt::verify<traits>().allow_algorithm(jwt::algorithm::hs256{kSecretKey}).with_issuer("termchat");
             verifier.verify(decoded);
 
             if (decoded.has_payload_claim("user_id")) {

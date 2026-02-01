@@ -59,6 +59,19 @@ private:
                 return;
             }
             if (NetworkManager::GetInstance().Login(login_username_, login_password_, error_msg_)) {
+                // Sync all message history and friends
+                std::string temp_err;
+                NetworkManager::GetInstance().SyncMessages(temp_err);
+
+                std::vector<im::User> friends;
+                if (NetworkManager::GetInstance().GetFriendList(friends, temp_err)) {
+                    home_page_state_.friend_list = friends;
+                    home_page_state_.friend_names.clear();
+                    for (const auto& u : friends) {
+                        home_page_state_.friend_names.push_back(u.username());
+                    }
+                }
+
                 current_page_ = (int)Page::MAIN;
             } else {
                 show_error_ = true;
@@ -71,6 +84,7 @@ private:
         auto on_logout = [&] {
             std::string temp_error;
             NetworkManager::GetInstance().Logout(temp_error);
+            home_page_state_ = HomePageState();
             current_page_ = (int)Page::AUTH;
         };
         auto home_page = BuildHomePage(on_logout, &home_page_state_);

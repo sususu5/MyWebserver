@@ -45,3 +45,20 @@ void MsgService::send_p2p_message(uint64_t sender_id, const im::P2PMessage& req,
 
     LOG_INFO("P2P Message from User[{}] to User[{}] processed.", sender_id, req.receiver_id());
 }
+
+void MsgService::sync_messages(uint64_t user_id, const im::SyncMessagesReq& req, im::SyncMessagesResp* resp) {
+    if (user_id == 0) {
+        resp->set_success(false);
+        resp->set_error_msg("User ID is empty");
+        return;
+    }
+
+    auto messages = msg_scylla_dao_.GetMessagesForUser(user_id);
+    
+    resp->set_success(true);
+    for (const auto& msg : messages) {
+        *resp->add_messages() = msg;
+    }
+    
+    LOG_INFO("User[{}] synced {} messages (latest 500).", user_id, messages.size());
+}

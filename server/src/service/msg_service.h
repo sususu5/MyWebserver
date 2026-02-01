@@ -12,6 +12,8 @@ public:
 
     // Send a P2P message
     void send_p2p_message(uint64_t sender_id, const im::P2PMessage& req, im::MessageAck* resp);
+    // Sync offline messages
+    void sync_messages(uint64_t user_id, const im::SyncMessagesReq& req, im::SyncMessagesResp* resp);
 
 private:
     PushService* push_service_;

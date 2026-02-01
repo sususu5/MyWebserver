@@ -34,6 +34,8 @@ enum CommandType {
     CMD_P2P_MSG_REQ   = 50;
     CMD_P2P_MSG_PUSH  = 51;
     CMD_MSG_ACK       = 52;
+    CMD_SYNC_MSGS_REQ = 53;
+    CMD_SYNC_MSGS_RES = 54;
 
     // Heartbeat
     CMD_HEARTBEAT     = 99;
@@ -62,5 +64,7 @@ message Envelope {
         P2PMessage p2p_msg_req = 300;
         P2PMessage p2p_msg_push = 301;
         MessageAck msg_ack = 302;
+        SyncMessagesReq sync_msgs_req = 303;
+        SyncMessagesResp sync_msgs_res = 304;
     }
 }

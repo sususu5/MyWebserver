@@ -23,32 +23,127 @@ bool MsgScyllaDao::InsertMessage(const im::P2PMessage& msg) {
         return false;
     }
 
-    constexpr const char* k_insert_query =
+    // Use a batch to ensure atomicity and reduce round-trips
+    CassBatch* batch = cass_batch_new(CASS_BATCH_TYPE_LOGGED);
+
+    // 1. Insert into conversation history
+    constexpr const char* k_insert_history =
         "INSERT INTO im.messages (conversation_id, timestamp, message_id, sender_id, "
         "receiver_id, content_type, content) "
         "VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-    CassStatement* statement = cass_statement_new(k_insert_query, 7);
+    CassStatement* stmt_history = cass_statement_new(k_insert_history, 7);
     auto p2p_conv_id = IdGenerator::GenerateP2PConvId(msg.sender_id(), msg.receiver_id());
-    cass_statement_bind_string(statement, 0, p2p_conv_id.c_str());
-    cass_statement_bind_int64(statement, 1, static_cast<cass_int64_t>(msg.timestamp()));
-    cass_statement_bind_int64(statement, 2, static_cast<cass_int64_t>(msg.msg_id()));
-    cass_statement_bind_int64(statement, 3, static_cast<cass_int64_t>(msg.sender_id()));
-    cass_statement_bind_int64(statement, 4, static_cast<cass_int64_t>(msg.receiver_id()));
-    cass_statement_bind_int32(statement, 5, static_cast<cass_int32_t>(msg.content_type()));
+    cass_statement_bind_string(stmt_history, 0, p2p_conv_id.c_str());
+    cass_statement_bind_int64(stmt_history, 1, static_cast<cass_int64_t>(msg.timestamp()));
+    cass_statement_bind_int64(stmt_history, 2, static_cast<cass_int64_t>(msg.msg_id()));
+    cass_statement_bind_int64(stmt_history, 3, static_cast<cass_int64_t>(msg.sender_id()));
+    cass_statement_bind_int64(stmt_history, 4, static_cast<cass_int64_t>(msg.receiver_id()));
+    cass_statement_bind_int32(stmt_history, 5, static_cast<cass_int32_t>(msg.content_type()));
     const std::string& content = msg.content();
-    cass_statement_bind_bytes(statement, 6, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());
+    cass_statement_bind_bytes(stmt_history, 6, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());
 
-    CassFuture* future = cass_session_execute(session, statement);
+    cass_batch_add_statement(batch, stmt_history);
+    cass_statement_free(stmt_history);
+
+    // 2. Insert into receiver's inbox (Sync/Offline retrieval)
+    constexpr const char* k_insert_inbox =
+        "INSERT INTO im.user_messages (user_id, message_id, sender_id, receiver_id, content_type, content, timestamp) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+    // Insert for Receiver
+    CassStatement* stmt_inbox_receiver = cass_statement_new(k_insert_inbox, 7);
+    cass_statement_bind_int64(stmt_inbox_receiver, 0, static_cast<cass_int64_t>(msg.receiver_id()));
+    cass_statement_bind_int64(stmt_inbox_receiver, 1, static_cast<cass_int64_t>(msg.msg_id()));
+    cass_statement_bind_int64(stmt_inbox_receiver, 2, static_cast<cass_int64_t>(msg.sender_id()));
+    cass_statement_bind_int64(stmt_inbox_receiver, 3, static_cast<cass_int64_t>(msg.receiver_id()));
+    cass_statement_bind_int32(stmt_inbox_receiver, 4, static_cast<cass_int32_t>(msg.content_type()));
+    cass_statement_bind_bytes(stmt_inbox_receiver, 5, reinterpret_cast<const cass_byte_t*>(content.data()),
+                              content.size());
+    cass_statement_bind_int64(stmt_inbox_receiver, 6, static_cast<cass_int64_t>(msg.timestamp()));
+
+    cass_batch_add_statement(batch, stmt_inbox_receiver);
+    cass_statement_free(stmt_inbox_receiver);
+
+    // Insert for Sender (Sync Sent messages)
+    CassStatement* stmt_inbox_sender = cass_statement_new(k_insert_inbox, 7);
+    cass_statement_bind_int64(stmt_inbox_sender, 0, static_cast<cass_int64_t>(msg.sender_id()));
+    cass_statement_bind_int64(stmt_inbox_sender, 1, static_cast<cass_int64_t>(msg.msg_id()));
+    cass_statement_bind_int64(stmt_inbox_sender, 2, static_cast<cass_int64_t>(msg.sender_id()));
+    cass_statement_bind_int64(stmt_inbox_sender, 3, static_cast<cass_int64_t>(msg.receiver_id()));
+    cass_statement_bind_int32(stmt_inbox_sender, 4, static_cast<cass_int32_t>(msg.content_type()));
+    cass_statement_bind_bytes(stmt_inbox_sender, 5, reinterpret_cast<const cass_byte_t*>(content.data()),
+                              content.size());
+    cass_statement_bind_int64(stmt_inbox_sender, 6, static_cast<cass_int64_t>(msg.timestamp()));
+
+    cass_batch_add_statement(batch, stmt_inbox_sender);
+    cass_statement_free(stmt_inbox_sender);
+
+    // Execute Batch·
+    CassFuture* future = cass_session_execute_batch(session, batch);
     cass_future_wait(future);
 
     bool ok = true;
     if (cass_future_error_code(future) != CASS_OK) {
-        LOG_ERROR("Scylla insert failed: {}", CassFutureError(future));
+        LOG_ERROR("Scylla batch insert failed: {}", CassFutureError(future));
         ok = false;
     }
 
     cass_future_free(future);
-    cass_statement_free(statement);
+    cass_batch_free(batch);
     return ok;
+}
+
+std::vector<im::P2PMessage> MsgScyllaDao::GetMessagesForUser(uint64_t user_id) {
+    std::vector<im::P2PMessage> result;
+    auto* session = ScyllaSession::Instance()->Session();
+    if (!session) return result;
+
+    constexpr const char* k_select_latest =
+        "SELECT message_id, sender_id, receiver_id, content_type, content, timestamp FROM im.user_messages "
+        "WHERE user_id = ? ORDER BY timestamp DESC LIMIT 500;";
+
+    CassStatement* statement = cass_statement_new(k_select_latest, 1);
+    cass_statement_bind_int64(statement, 0, static_cast<cass_int64_t>(user_id));
+
+    CassFuture* future = cass_session_execute(session, statement);
+    cass_future_wait(future);
+
+    if (cass_future_error_code(future) == CASS_OK) {
+        const CassResult* cass_result = cass_future_get_result(future);
+        CassIterator* iterator = cass_iterator_from_result(cass_result);
+
+        while (cass_iterator_next(iterator)) {
+            const CassRow* row = cass_iterator_get_row(iterator);
+            im::P2PMessage msg;
+            cass_int64_t msg_id, sender_id, receiver_id, ts;
+            cass_int32_t c_type;
+            const cass_byte_t* c_data;
+            size_t c_len;
+
+            cass_value_get_int64(cass_row_get_column(row, 0), &msg_id);
+            cass_value_get_int64(cass_row_get_column(row, 1), &sender_id);
+            cass_value_get_int64(cass_row_get_column(row, 2), &receiver_id);
+            cass_value_get_int32(cass_row_get_column(row, 3), &c_type);
+            cass_value_get_bytes(cass_row_get_column(row, 4), &c_data, &c_len);
+            cass_value_get_int64(cass_row_get_column(row, 5), &ts);
+
+            msg.set_msg_id(msg_id);
+            msg.set_sender_id(sender_id);
+            msg.set_receiver_id(receiver_id);
+            msg.set_content_type(static_cast<im::ContentType>(c_type));
+            msg.set_content(reinterpret_cast<const char*>(c_data), c_len);
+            msg.set_timestamp(ts);
+
+            result.push_back(std::move(msg));
+        }
+        cass_iterator_free(iterator);
+        cass_result_free(cass_result);
+    } else {
+        LOG_ERROR("Scylla query failed: {}", CassFutureError(future));
+    }
+
+    cass_future_free(future);
+    cass_statement_free(statement);
+    return result;
 }

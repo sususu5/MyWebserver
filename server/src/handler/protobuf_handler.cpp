@@ -88,6 +88,9 @@ void ProtobufHandler::Dispatch(const im::Envelope& request, im::Envelope& respon
         case im::CMD_P2P_MSG_REQ:
             HandleP2PMsg(request, response);
             break;
+        case im::CMD_SYNC_MSGS_REQ:
+            HandleSyncMessages(request, response);
+            break;
         case im::CMD_HEARTBEAT:
             // Heartbeat received, connection timer is already refreshed by OnRead_
             return;
@@ -217,6 +220,27 @@ void ProtobufHandler::HandleP2PMsg(const im::Envelope& request, im::Envelope& re
     msg_service_->send_p2p_message(CurrentUserId(), req, &msg_ack);
     response.set_cmd(im::CMD_MSG_ACK);
     response.mutable_msg_ack()->CopyFrom(msg_ack);
+}
+
+void ProtobufHandler::HandleSyncMessages(const im::Envelope& request, im::Envelope& response) {
+    if (RequireAuth(response, im::CMD_SYNC_MSGS_RES)) return;
+
+    if (!request.has_sync_msgs_req()) {
+        LOG_ERROR("CMD_SYNC_MSGS_REQ received but payload is missing");
+        response.set_cmd(im::CMD_SYNC_MSGS_RES);
+        auto* resp = response.mutable_sync_msgs_res();
+        resp->set_success(false);
+        resp->set_error_msg("Invalid request: missing sync messages payload");
+        return;
+    }
+
+    const auto& req = request.sync_msgs_req();
+    LOG_INFO("Sync messages request: user={}", CurrentUserId());
+
+    im::SyncMessagesResp sync_resp;
+    msg_service_->sync_messages(CurrentUserId(), req, &sync_resp);
+    response.set_cmd(im::CMD_SYNC_MSGS_RES);
+    response.mutable_sync_msgs_res()->CopyFrom(sync_resp);
 }
 
 void ProtobufHandler::HandleUnknown(const im::Envelope& request, im::Envelope& response) {

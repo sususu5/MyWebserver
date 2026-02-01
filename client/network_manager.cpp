@@ -251,6 +251,11 @@ void NetworkManager::ClearAuth() {
     token_.clear();
     user_id_ = 0;
     username_.clear();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        p2p_chat_history_.clear();
+        pending_friend_requests_.clear();
+    }
 }
 
 bool NetworkManager::AddFriend(uint64_t receiver_id, const std::string& verify_msg, std::string& error_msg) {
@@ -369,6 +374,37 @@ bool NetworkManager::SendP2PMessage(uint64_t receiver_id, const std::string& con
         {
             std::lock_guard<std::mutex> lock(mutex_);
             p2p_chat_history_[receiver_id].push_back(req);
+        }
+        return true;
+    } else {
+        error_msg = resp.error_msg();
+        return false;
+    }
+}
+
+bool NetworkManager::SyncMessages(std::string& error_msg) {
+    im::SyncMessagesReq req;
+    req.set_user_id(user_id_);
+
+    im::Envelope env;
+    env.set_cmd(im::CMD_SYNC_MSGS_REQ);
+    env.set_timestamp(time(nullptr));
+    *env.mutable_sync_msgs_req() = req;
+
+    im::Envelope resp_env;
+    if (!SendRequestAndWait(env, resp_env, im::CMD_SYNC_MSGS_RES)) {
+        error_msg = "Request timeout or network error";
+        return false;
+    }
+
+    const auto& resp = resp_env.sync_msgs_res();
+    if (resp.success()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        p2p_chat_history_.clear();
+        for (int i = resp.messages_size() - 1; i >= 0; --i) {
+            const auto& msg = resp.messages(i);
+            uint64_t chat_partner_id = (msg.sender_id() == user_id_) ? msg.receiver_id() : msg.sender_id();
+            p2p_chat_history_[chat_partner_id].push_back(msg);
         }
         return true;
     } else {

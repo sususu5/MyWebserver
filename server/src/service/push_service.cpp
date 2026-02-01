@@ -51,9 +51,6 @@ void PushService::send_envelope(uint64_t target_id, const im::Envelope& envelope
             conn->enqueue_message(std::move(serialized));
             LOG_INFO("Push enqueued for User[{}], cmd={}", target_id, static_cast<int>(envelope.cmd()));
         }
-    } else {
-        // TODO: Store offline message?
-        LOG_WARN("User[{}] not online, push failed", target_id);
     }
 }
 

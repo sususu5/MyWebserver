@@ -1,51 +1,48 @@
-#ifndef HEAP_TIMER_H
-#define HEAP_TIMER_H
+#pragma once
 
 #include <arpa/inet.h>
 #include <assert.h>
 #include <time.h>
-#include <algorithm>
 #include <chrono>
 #include <functional>
-#include <queue>
-#include <unordered_map>
-#include "../log/log.h"
 
-typedef std::function<void()> TimeoutCallBack;
-typedef std::chrono::high_resolution_clock Clock;
-typedef std::chrono::milliseconds MS;
-typedef Clock::time_point TimeStamp;
+using TimeoutCallBack = std::function<void(int)>;
+using Clock = std::chrono::high_resolution_clock;
+using MS = std::chrono::milliseconds;
+using TimeStamp = Clock::time_point;
 
 struct TimerNode {
     int id;
     TimeStamp expires;
-    TimeoutCallBack cb;
     bool operator<(const TimerNode& t) { return expires < t.expires; }
     bool operator>(const TimerNode& t) { return expires > t.expires; }
 };
 
 class HeapTimer {
 public:
-    HeapTimer() { heap_.reserve(64); }
-    ~HeapTimer() { clear(); }
+    HeapTimer() {
+        heap_.reserve(64);
+        ref_.assign(65536, -1);
+    }
+    ~HeapTimer() { Clear(); }
 
-    void adjust(int id, int newExpires);
-    void add(int id, int timeOut, const TimeoutCallBack& cb);
-    void doWork(int id);
-    void clear();
-    void tick();
-    void pop();
-    int getNextTick();
+    void Adjust(int id, int newExpires);
+    void Add(int id, int timeOut);
+    void DoWork(int id);
+    void Clear();
+    void Tick();
+    void Pop();
+    int GetNextTick();
+    void SetCallBack(TimeoutCallBack cb) { callback_ = cb; }
 
 private:
-    void del_(size_t index);
-    void siftUp_(size_t index);
-    bool siftDown_(size_t index, size_t n);
-    void swapNode_(size_t index, size_t j);
+    void Del_(size_t index);
+    void SiftUp_(size_t index);
+    bool SiftDown_(size_t index, size_t n);
+    void SwapNode_(size_t index, size_t j);
 
     std::vector<TimerNode> heap_;
-    // Map the id to the index of the heap_
-    std::unordered_map<int, size_t> ref_;
+    // id -> index of the heap_
+    std::vector<size_t> ref_;
+    TimeoutCallBack callback_;
 };
-
-#endif

@@ -39,6 +39,13 @@ Webserver::Webserver(int port, int trig_mode, int timeout_ms, int sql_port, cons
     TcpConnection::msg_service = msg_service_.get();
     TcpConnection::epoller_ = epoller_.get();
 
+    // Initialize timer callback
+    timer_->SetCallBack([this](int fd) {
+        if (connections_.count(fd)) {
+            CloseConn_(connections_[fd].get());
+        }
+    });
+
     // Initialize MySQL connection pool and Scylla session
     SqlConnPool::Instance()->Init(sql_env_host, sql_port, sql_user, sql_pwd, db_name, conn_pool_num);
     const char* scylla_host = getenv("SCYLLA_HOST") ? getenv("SCYLLA_HOST") : "scylla";
@@ -101,7 +108,7 @@ void Webserver::Start() {
     }
     while (!is_close_) {
         if (timeout_ms_ > 0) {
-            time_ms = timer_->getNextTick();
+            time_ms = timer_->GetNextTick();
         }
         int event_cnt = epoller_->Wait(time_ms);
         for (int i = 0; i < event_cnt; i++) {
@@ -154,7 +161,7 @@ void Webserver::AddClient_(int fd, sockaddr_in addr) {
     TcpConnection* conn_ptr = conn.get();
     connections_[fd] = std::move(conn);
     if (timeout_ms_ > 0) {
-        timer_->add(fd, timeout_ms_, std::bind(&Webserver::CloseConn_, this, conn_ptr));
+        timer_->Add(fd, timeout_ms_);
     }
     epoller_->addFd(fd, EPOLLIN | conn_event_);
     SetFdNonblock(fd);
@@ -193,7 +200,7 @@ void Webserver::DealWrite_(TcpConnection* client) {
 void Webserver::ExtendTime_(TcpConnection* client) {
     assert(client);
     if (timeout_ms_ > 0) {
-        timer_->adjust(client->get_fd(), timeout_ms_);
+        timer_->Adjust(client->get_fd(), timeout_ms_);
     }
 }
 

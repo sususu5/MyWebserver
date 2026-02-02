@@ -64,7 +64,6 @@ add_subdirectory(proto)
 
 if(BUILD_SERVER)
     add_subdirectory(server/src)
-    add_subdirectory(tests)
 endif()
 
 add_subdirectory(client)

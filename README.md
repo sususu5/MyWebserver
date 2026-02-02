@@ -101,12 +101,18 @@ cmake --preset debug
 cmake --build build/debug
 ```
 
+```bash
+cmake --preset perf
+cmake --build build/relwithdebinfo
+```
+
 Every time the sql files are changed, the project needs to be re-compiled to generate the C++ models.
 
 **Run Server & Test:**
 ```bash
 ./build/debug/server/src/server
 ./build/release/server/src/server
+./build/relwithdebinfo/server/src/server
 
 # Test Auth
 python3 tests/test_auth.py [username] [password]
@@ -114,10 +120,16 @@ python3 tests/test_auth.py [username] [password]
 python3 tests/test_friend.py
 # Test P2P Message System
 python3 tests/test_message.py
+# Test Benchmark
+perf record -F 99 -p $(pgrep server) -g -- sleep 30
+python3 tests/benchmark_im.py > ./log/benchmark_im.log 2>&1
+# Generate flamegraph
+perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
 
 # Run Client (FTXUI)
 ./build/debug/client/client
 ./build/release/client/client
+./build/relwithdebinfo/client/client
 
 # If you want to use db visualization with scylla, run the following commands in devcontainer terminal
 apt-get update

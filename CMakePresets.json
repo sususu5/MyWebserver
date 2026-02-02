@@ -42,6 +42,16 @@
       }
     },
     {
+      "name": "perf",
+      "displayName": "RelWithDebInfo",
+      "description": "Release build with Debug Info for profiling",
+      "inherits": "vcpkg",
+      "binaryDir": "${sourceDir}/build/relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "default",
       "displayName": "Default (Release)",
       "description": "Default release build",
@@ -71,6 +81,10 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "perf",
+      "configurePreset": "perf"
     },
     {
       "name": "default",

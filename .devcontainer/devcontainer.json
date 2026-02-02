@@ -42,8 +42,11 @@
     },
     "workspaceFolder": "/workspace",
     
-    "postCreateCommand": "cmake -B build/release -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "postCreateCommand": "cmake --preset perf",
     "postStartCommand": "bash .devcontainer/init_scylla.sh",
+    "runArgs": [
+        "--privileged"
+    ],
     "remoteUser": "root",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {

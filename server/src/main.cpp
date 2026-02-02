@@ -23,7 +23,7 @@ int main() {
     sigaction(SIGTERM, &sa, nullptr);  // kill command
 
     {
-        Webserver server(1316, 3, 60000, 3306, "root", "123456", "testdb", 12, 8, true, 1, 1024);
+        Webserver server(1316, 3, 60000, 3306, "root", "123456", "testdb", 50, 40, true, 1, 1024);
         g_server = &server;
         server.Start();
         g_server = nullptr;

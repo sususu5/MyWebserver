@@ -14,7 +14,7 @@ import message_service_pb2
 
 HOST = '127.0.0.1'
 PORT = 1316
-CLIENT_COUNT = 500
+CLIENT_COUNT = 1000
 MSGS_PER_CLIENT = 2000
 
 def send_packet(sock, cmd, message):

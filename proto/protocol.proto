@@ -2,6 +2,7 @@ syntax = "proto3";
 package im;
 
 option cc_enable_arenas = true;
+option go_package = "./;im";
 
 import "auth_service.proto";
 import "friend_service.proto";

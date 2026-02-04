@@ -2,6 +2,7 @@ syntax = "proto3";
 package im;
 
 option cc_enable_arenas = true;
+option go_package = "./;im";
 
 enum UserStatus {
   USER_STATUS_UNSPECIFIED = 0;

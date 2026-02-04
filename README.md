@@ -114,6 +114,11 @@ Every time the sql files are changed, the project needs to be re-compiled to gen
 ./build/release/server/src/server
 ./build/relwithdebinfo/server/src/server
 
+# Run Server with log disabled
+./build/debug/server/src/server -l 0
+./build/release/server/src/server -l 0
+./build/relwithdebinfo/server/src/server -l 0
+
 # Test Auth
 python3 tests/test_auth.py [username] [password]
 # Test Friend System (including Push)

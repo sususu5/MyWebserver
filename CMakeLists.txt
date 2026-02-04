@@ -32,12 +32,11 @@ option(BUILD_SERVER "Build the server application" ON)
 # Rust toolchain (for cpp-rs-driver) - Only needed for server
 # ---------------------------------------------------------------------------
 if(BUILD_SERVER)
-    if(NOT DEFINED CMAKE_Rust_COMPILER)
-        set(CMAKE_Rust_COMPILER "/root/.cargo/bin/rustc" CACHE FILEPATH "Rust compiler" FORCE)
-    endif()
-    if(NOT DEFINED CARGO_EXECUTABLE)
-        set(CARGO_EXECUTABLE "/root/.cargo/bin/cargo" CACHE FILEPATH "Cargo executable" FORCE)
-    endif()
+    find_program(CMAKE_Rust_COMPILER rustc REQUIRED)
+    find_program(CARGO_EXECUTABLE cargo REQUIRED)
+
+    message(STATUS "Using rustc: ${CMAKE_Rust_COMPILER}")
+    message(STATUS "Using cargo: ${CARGO_EXECUTABLE}")
 
     # ---------------------------------------------------------------------------
     # ScyllaDB C++ driver (cpp-rs-driver)

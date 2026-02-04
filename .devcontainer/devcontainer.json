@@ -10,6 +10,7 @@
                 "ms-vscode.cmake-tools",
                 "twxs.cmake",
                 "ms-python.python",
+                "golang.go",
                 "cweijan.vscode-database-client2"
             ],
             "settings": {

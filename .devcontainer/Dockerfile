@@ -24,12 +24,20 @@ RUN apt-get update && apt-get install -y \
     python3-pyparsing \
     linux-tools-common \
     linux-tools-generic \
+    golang-go \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH=$PATH:/root/go/bin
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 RUN mv /usr/bin/perf /usr/bin/perf.wrapper || true && \
     ln -s $(find /usr/lib/linux-tools -name perf | head -n 1) /usr/bin/perf
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain nightly
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain nightly --no-modify-path
 
 RUN pip3 install --break-system-packages protobuf==5.29.5
 

@@ -13,7 +13,22 @@ void signal_handler(int sig) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    bool open_log = true;
+    int opt;
+    const char* opt_string = "l:";
+
+    while ((opt = getopt(argc, argv, opt_string)) != -1) {
+        switch (opt) {
+            case 'l':
+                open_log = false;
+                break;
+            default:
+                printf("Usage: %s [-l 0[1]\n", argv[0]);
+                return 1;
+        }
+    }
+
     struct sigaction sa;
     sa.sa_handler = signal_handler;
     sigemptyset(&sa.sa_mask);
@@ -23,11 +38,10 @@ int main() {
     sigaction(SIGTERM, &sa, nullptr);  // kill command
 
     {
-        Webserver server(1316, 3, 60000, 3306, "root", "123456", "testdb", 50, 40, true, 1, 1024);
+        Webserver server(1316, 3, 60000, 3306, "root", "123456", "testdb", 50, 40, open_log, 1, 1024);
         g_server = &server;
         server.Start();
         g_server = nullptr;
-        // Server destructor will be called here, logging shutdown
     }
 
     return 0;

@@ -15,7 +15,7 @@ import message_service_pb2
 HOST = '127.0.0.1'
 PORT = 1316
 CLIENT_COUNT = 500
-MSGS_PER_CLIENT = 100
+MSGS_PER_CLIENT = 2000
 
 def send_packet(sock, cmd, message):
     serialized = message.SerializeToString()
@@ -79,7 +79,8 @@ def client_task(client_id):
         for i in range(MSGS_PER_CLIENT):
             msg = message_service_pb2.P2PMessage()
             msg.receiver_id = client_id + 1
-            msg.content = (f"Benchmark payload data {i}" * 5).encode('utf-8')
+            payload = f"Hello world {i} from client {client_id} time {time.time()}"
+            msg.content = payload.encode('ascii')
             msg.timestamp = int(time.time())
             
             env = protocol_pb2.Envelope()

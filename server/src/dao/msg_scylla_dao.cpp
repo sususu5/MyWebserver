@@ -94,6 +94,80 @@ bool MsgScyllaDao::InsertMessage(const im::P2PMessage& msg) {
     return ok;
 }
 
+bool MsgScyllaDao::InsertBatch(const std::vector<im::P2PMessage>& msgs) {
+    if (msgs.empty()) return true;
+
+    auto* session = ScyllaSession::Instance()->Session();
+    if (!session) {
+        LOG_ERROR("Scylla session is not initialized");
+        return false;
+    }
+
+    CassBatch* batch = cass_batch_new(CASS_BATCH_TYPE_LOGGED);
+
+    constexpr const char* k_insert_history =
+        "INSERT INTO im.messages (conversation_id, timestamp, message_id, sender_id, "
+        "receiver_id, content_type, content) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+    constexpr const char* k_insert_inbox =
+        "INSERT INTO im.user_messages (user_id, message_id, sender_id, receiver_id, content_type, content, timestamp) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+    for (const auto& msg : msgs) {
+        // 1. History
+        CassStatement* stmt1 = cass_statement_new(k_insert_history, 7);
+        auto p2p_conv_id = IdGenerator::GenerateP2PConvId(msg.sender_id(), msg.receiver_id());
+        cass_statement_bind_string(stmt1, 0, p2p_conv_id.c_str());
+        cass_statement_bind_int64(stmt1, 1, static_cast<cass_int64_t>(msg.timestamp()));
+        cass_statement_bind_int64(stmt1, 2, static_cast<cass_int64_t>(msg.msg_id()));
+        cass_statement_bind_int64(stmt1, 3, static_cast<cass_int64_t>(msg.sender_id()));
+        cass_statement_bind_int64(stmt1, 4, static_cast<cass_int64_t>(msg.receiver_id()));
+        cass_statement_bind_int32(stmt1, 5, static_cast<cass_int32_t>(msg.content_type()));
+        const std::string& content = msg.content();
+        cass_statement_bind_bytes(stmt1, 6, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());
+        cass_batch_add_statement(batch, stmt1);
+        cass_statement_free(stmt1);
+
+        // 2. Receiver Inbox
+        CassStatement* stmt2 = cass_statement_new(k_insert_inbox, 7);
+        cass_statement_bind_int64(stmt2, 0, static_cast<cass_int64_t>(msg.receiver_id()));
+        cass_statement_bind_int64(stmt2, 1, static_cast<cass_int64_t>(msg.msg_id()));
+        cass_statement_bind_int64(stmt2, 2, static_cast<cass_int64_t>(msg.sender_id()));
+        cass_statement_bind_int64(stmt2, 3, static_cast<cass_int64_t>(msg.receiver_id()));
+        cass_statement_bind_int32(stmt2, 4, static_cast<cass_int32_t>(msg.content_type()));
+        cass_statement_bind_bytes(stmt2, 5, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());
+        cass_statement_bind_int64(stmt2, 6, static_cast<cass_int64_t>(msg.timestamp()));
+        cass_batch_add_statement(batch, stmt2);
+        cass_statement_free(stmt2);
+
+        // 3. Sender Inbox
+        CassStatement* stmt3 = cass_statement_new(k_insert_inbox, 7);
+        cass_statement_bind_int64(stmt3, 0, static_cast<cass_int64_t>(msg.sender_id()));
+        cass_statement_bind_int64(stmt3, 1, static_cast<cass_int64_t>(msg.msg_id()));
+        cass_statement_bind_int64(stmt3, 2, static_cast<cass_int64_t>(msg.sender_id()));
+        cass_statement_bind_int64(stmt3, 3, static_cast<cass_int64_t>(msg.receiver_id()));
+        cass_statement_bind_int32(stmt3, 4, static_cast<cass_int32_t>(msg.content_type()));
+        cass_statement_bind_bytes(stmt3, 5, reinterpret_cast<const cass_byte_t*>(content.data()), content.size());
+        cass_statement_bind_int64(stmt3, 6, static_cast<cass_int64_t>(msg.timestamp()));
+        cass_batch_add_statement(batch, stmt3);
+        cass_statement_free(stmt3);
+    }
+
+    CassFuture* future = cass_session_execute_batch(session, batch);
+    cass_future_wait(future);
+
+    bool ok = true;
+    if (cass_future_error_code(future) != CASS_OK) {
+        LOG_ERROR("Scylla batch insert failed: {}", CassFutureError(future));
+        ok = false;
+    }
+
+    cass_future_free(future);
+    cass_batch_free(batch);
+    return ok;
+}
+
 std::vector<im::P2PMessage> MsgScyllaDao::GetMessagesForUser(uint64_t user_id) {
     std::vector<im::P2PMessage> result;
     auto* session = ScyllaSession::Instance()->Session();

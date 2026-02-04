@@ -1,8 +1,11 @@
 #include "msg_service.h"
 #include <ctime>
+#include "../dao/async_msg_writer.h"
 #include "../log/log.h"
 
-MsgService::MsgService(PushService* push_service) : push_service_(push_service) {}
+MsgService::MsgService(PushService* push_service) : push_service_(push_service) {
+    AsyncMsgWriter::GetInstance()->Start();
+}
 
 void MsgService::send_p2p_message(uint64_t sender_id, const im::P2PMessage& req, im::MessageAck* resp) {
     if (sender_id == 0) {
@@ -21,12 +24,7 @@ void MsgService::send_p2p_message(uint64_t sender_id, const im::P2PMessage& req,
         return;
     }
 
-    auto ok = msg_scylla_dao_.InsertMessage(req);
-    if (!ok) {
-        resp->set_success(false);
-        resp->set_error_msg("Failed to insert message");
-        return;
-    }
+    AsyncMsgWriter::GetInstance()->Enqueue(req);
 
     auto msg_to_push = req;
     msg_to_push.set_sender_id(sender_id);
@@ -54,11 +52,11 @@ void MsgService::sync_messages(uint64_t user_id, const im::SyncMessagesReq& req,
     }
 
     auto messages = msg_scylla_dao_.GetMessagesForUser(user_id);
-    
+
     resp->set_success(true);
     for (const auto& msg : messages) {
         *resp->add_messages() = msg;
     }
-    
+
     LOG_INFO("User[{}] synced {} messages (latest 500).", user_id, messages.size());
 }

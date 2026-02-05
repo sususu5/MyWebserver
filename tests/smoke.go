@@ -70,12 +70,8 @@ func main() {
 		}
 		latency := time.Since(msgStart)
 		totalDuration += latency
-		if latency < minLatency {
-			minLatency = latency
-		}
-		if latency > maxLatency {
-			maxLatency = latency
-		}
+		minLatency = min(minLatency, latency)
+		maxLatency = max(maxLatency, latency)
 	}
 
 	totalTime := time.Since(startTime)
@@ -184,7 +180,7 @@ func readResponse(rw *bufio.ReadWriter) (*pb.Envelope, error) {
 	}
 
 	msgLen := binary.BigEndian.Uint32(lenBuf)
-	if msgLen > 10*1024*1024 {
+	if msgLen > 10 * 1024 * 1024 {
 		return nil, fmt.Errorf("message too large: %d", msgLen)
 	}
 

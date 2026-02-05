@@ -127,10 +127,11 @@ python3 tests/test_friend.py
 python3 tests/test_message.py
 
 # Test Benchmark
-perf record -F 99 -p $(pgrep server) -g -- sleep 30
+perf record -F 99 -p $(pgrep server) -g -- sleep 120
 python3 tests/benchmark_im.py > ./log/benchmark_im.log 2>&1
 # Generate flamegraph
 perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
+
 # Test Smoke Test
 go mod tidy
 go run tests/smoke.go -addr 127.0.0.1:1316 -n 10000

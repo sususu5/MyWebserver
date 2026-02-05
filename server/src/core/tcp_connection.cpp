@@ -153,16 +153,13 @@ ssize_t TcpConnection::write(int* error_code) {
 
     // Use writev for HTTP to support zero-copy file sending
     if (conn_type_ == ConnType::HTTP && iov_cnt_ > 0) {
-        do {
+        while (true) {
             len = writev(fd_, iov_, iov_cnt_);
             if (len <= 0) {
                 *error_code = errno;
                 break;
             }
-            // All data sent
-            if (iov_[0].iov_len + (iov_cnt_ > 1 ? iov_[1].iov_len : 0) == 0) {
-                break;
-            }
+
             // Adjust iov after partial write
             if (static_cast<size_t>(len) > iov_[0].iov_len) {
                 // Header fully sent, adjust file pointer
@@ -179,15 +176,25 @@ ssize_t TcpConnection::write(int* error_code) {
                 iov_[0].iov_len -= len;
                 write_buff_.retrieve(len);
             }
-        } while (is_et || to_write_bytes() > 10240);
+
+            size_t remaining = iov_[0].iov_len + (iov_cnt_ > 1 ? iov_[1].iov_len : 0);
+            if (remaining == 0) break;
+            // In ET mode, we must write until EAGAIN or empty
+            if (!is_et && remaining < 10240) break;
+        }
     } else {
         // Simple buffer write for other protocols
-        do {
+        while (write_buff_.readable_bytes() > 0) {
             len = write_buff_.write_fd(fd_, error_code);
             if (len <= 0) {
                 break;
             }
-        } while (is_et);
+            // In ET mode, we must write until EAGAIN or empty
+            // In LT mode, we stop after one write or continue if data is large to reduce events
+            if (!is_et && write_buff_.readable_bytes() < 10240) {
+                break;
+            }
+        }
     }
     return len;
 }

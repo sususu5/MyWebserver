@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include <cstring>
 
 Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), readPos_(0), writePos_(0) {}
 
@@ -91,8 +92,8 @@ ssize_t Buffer::read_fd(int fd, int* saveErrno) {
 ssize_t Buffer::write_fd(int fd, int* saveErrno) {
     // This function writes the data in the buffer to the file descriptor
     // so needs to get the size of the readable bytes
-    size_t readSize = readable_bytes();
-    ssize_t len = write(fd, peek(), readSize);
+    auto readSize = readable_bytes();
+    auto len = write(fd, peek(), readSize);
     if (len < 0) {
         *saveErrno = errno;
         return len;

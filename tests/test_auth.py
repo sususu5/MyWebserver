@@ -8,8 +8,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..'))
 
 proto_paths = [
-    os.path.join(project_root, 'build', 'debug', 'proto'),
-    os.path.join(project_root, 'build', 'release', 'proto')
+    os.path.join(project_root, 'build', 'debug', 'proto', 'python'),
+    os.path.join(project_root, 'build', 'release', 'proto', 'python'),
+    os.path.join(project_root, 'build', 'relwithdebinfo', 'proto', 'python'),
+    os.path.join(project_root, 'build', 'macos-debug', 'proto', 'python')
 ]
 
 for p in proto_paths:

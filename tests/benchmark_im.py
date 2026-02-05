@@ -6,7 +6,7 @@ import sys
 import random
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../build/relwithdebinfo/proto'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../build/relwithdebinfo/proto/python'))
 import protocol_pb2
 import common_pb2
 import auth_service_pb2
@@ -14,8 +14,8 @@ import message_service_pb2
 
 HOST = '127.0.0.1'
 PORT = 1316
-CLIENT_COUNT = 1000
-MSGS_PER_CLIENT = 2000
+CLIENT_COUNT = 10000
+MSGS_PER_CLIENT = 200
 
 def send_packet(sock, cmd, message):
     serialized = message.SerializeToString()

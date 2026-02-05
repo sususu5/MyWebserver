@@ -37,7 +37,12 @@
                 
                 "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
                 "C_Cpp.default.cppStandard": "c++20",
-                "terminal.integrated.defaultProfile.linux": "bash"
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "go.useLanguageServer": true,
+                "go.lintTool": "golangci-lint",
+                "go.formatTool": "gofmt",
+                "go.toolsManagement.autoUpdate": true,
+                "go.autocompleteUnimportedPackages": true
             }
         }
     },

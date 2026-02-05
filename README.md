@@ -125,11 +125,15 @@ python3 tests/test_auth.py [username] [password]
 python3 tests/test_friend.py
 # Test P2P Message System
 python3 tests/test_message.py
+
 # Test Benchmark
 perf record -F 99 -p $(pgrep server) -g -- sleep 30
 python3 tests/benchmark_im.py > ./log/benchmark_im.log 2>&1
 # Generate flamegraph
 perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
+# Test Smoke Test
+go mod tidy
+go run tests/smoke.go -addr 127.0.0.1:1316 -n 10000
 
 # Run Client (FTXUI)
 ./build/debug/client/client

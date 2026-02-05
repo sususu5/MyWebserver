@@ -30,13 +30,17 @@ RUN apt-get update && apt-get install -y \
 ENV PATH=$PATH:/root/go/bin
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+RUN go install golang.org/x/tools/gopls@latest
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 RUN mv /usr/bin/perf /usr/bin/perf.wrapper || true && \
     ln -s $(find /usr/lib/linux-tools -name perf | head -n 1) /usr/bin/perf
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
+    PATH=/usr/local/cargo/bin:$PATH \
+    RUSTC=/usr/local/cargo/bin/rustc \
+    CARGO=/usr/local/cargo/bin/cargo
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain nightly --no-modify-path
 
 RUN pip3 install --break-system-packages protobuf==5.29.5

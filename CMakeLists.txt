@@ -32,6 +32,13 @@ option(BUILD_SERVER "Build the server application" ON)
 # Rust toolchain (for cpp-rs-driver) - Only needed for server
 # ---------------------------------------------------------------------------
 if(BUILD_SERVER)
+    if(CMAKE_Rust_COMPILER STREQUAL "/root/.cargo/bin/rustc")
+        unset(CMAKE_Rust_COMPILER CACHE)
+    endif()
+    if(CARGO_EXECUTABLE STREQUAL "/root/.cargo/bin/cargo")
+        unset(CARGO_EXECUTABLE CACHE)
+    endif()
+
     find_program(CMAKE_Rust_COMPILER rustc REQUIRED)
     find_program(CARGO_EXECUTABLE cargo REQUIRED)
 

@@ -15,9 +15,11 @@ public:
     ~FriendDao() = default;
 
     // Create a new friend request
-    AddFriendResult add_friend(uint64_t user_id, uint64_t friend_id);
+    std::pair<AddFriendResult, uint64_t> AddFriend(uint64_t user_id, uint64_t friend_id, const std::string& verify_msg);
     // Handle a friend request (accept/reject)
-    std::optional<uint64_t> handle_friend(uint64_t user_id, uint64_t sender_id, bool accept);
+    std::optional<uint64_t> HandleFriend(uint64_t user_id, uint64_t sender_id, bool accept);
     // Get a friend list
-    bool get_friend_list(uint64_t user_id, im::GetFriendListResp* resp);
+    bool GetFriendList(uint64_t user_id, im::GetFriendListResp* resp);
+    // Get pending friend requests
+    std::vector<im::FriendReqPush> GetPendingRequests(uint64_t user_id);
 };

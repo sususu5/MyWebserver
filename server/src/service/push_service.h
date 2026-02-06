@@ -18,7 +18,7 @@ public:
     void remove_client(uint64_t user_id);
 
     // Push Logic
-    void push_friend_req(uint64_t sender_id, const std::string& sender_name, uint64_t receiver_id,
+    void push_friend_req(uint64_t req_id, uint64_t sender_id, const std::string& sender_name, uint64_t receiver_id,
                          const std::string& verify_msg);
     void push_friend_status(uint64_t sender_id, uint64_t receiver_id, const std::string& receiver_name,
                             const im::FriendAction& action);

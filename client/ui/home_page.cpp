@@ -27,7 +27,6 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
             }
         }
     };
-
     refresh_friends();
 
     auto btn_add_friend = Button(
@@ -58,7 +57,7 @@ HomePage BuildHomePage(const std::function<void()>& on_logout, HomePageState* st
     MenuOption menu_opt;
     menu_opt.on_change = switch_to_chat;
     menu_opt.on_enter = switch_to_chat;
-    
+
     auto friend_menu = Menu(&state->friend_names, &state->selected_friend_index, menu_opt);
 
     auto left_panel = Container::Vertical({

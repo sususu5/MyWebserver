@@ -12,11 +12,13 @@ public:
     ~FriendService() = default;
 
     // Add a friend
-    void add_friend(uint64_t sender_id, const im::AddFriendReq& req, im::AddFriendResp* resp);
+    void AddFriend(uint64_t sender_id, const im::AddFriendReq& req, im::AddFriendResp* resp);
     // Handle a friend request
-    void handle_friend(uint64_t receiver_id, const im::HandleFriendReq& req, im::HandleFriendResp* resp);
+    void HandleFriend(uint64_t receiver_id, const im::HandleFriendReq& req, im::HandleFriendResp* resp);
     // Get a friend list
-    void get_friend_list(uint64_t user_id, im::GetFriendListResp* resp);
+    void GetFriendList(uint64_t user_id, im::GetFriendListResp* resp);
+    // Get pending friend requests
+    std::vector<im::FriendReqPush> GetPendingRequests(uint64_t user_id);
 
 private:
     FriendDao friend_dao_;

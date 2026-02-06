@@ -2,7 +2,6 @@
 #include <ctime>
 #include "../core/tcp_connection.h"
 #include "../log/log.h"
-#include "../utils/id_generator.h"
 #include "protocol.pb.h"
 
 void PushService::add_client(uint64_t user_id, TcpConnection* conn) {
@@ -19,15 +18,15 @@ void PushService::remove_client(uint64_t user_id) {
     }
 }
 
-void PushService::push_friend_req(uint64_t sender_id, const std::string& sender_name, uint64_t receiver_id,
-                                  const std::string& verify_msg) {
+void PushService::push_friend_req(uint64_t req_id, uint64_t sender_id, const std::string& sender_name,
+                                  uint64_t receiver_id, const std::string& verify_msg) {
     im::Envelope envelope;
     envelope.set_seq(0);
     envelope.set_cmd(im::CMD_FRIEND_REQ_PUSH);
     envelope.set_timestamp(time(nullptr));
 
     auto* push = envelope.mutable_friend_req_push();
-    push->set_req_id(IdGenerator::GenerateRandId());
+    push->set_req_id(req_id);
     push->set_sender_id(sender_id);
     push->set_sender_name(sender_name);
     push->set_verify_msg(verify_msg);

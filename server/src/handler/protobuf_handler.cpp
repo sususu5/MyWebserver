@@ -136,6 +136,27 @@ void ProtobufHandler::HandleLogin(const im::Envelope& request, im::Envelope& res
     auth_service_->user_login(conn_, req, &login_resp);
     response.set_cmd(im::CMD_LOGIN_RES);
     response.mutable_login_res()->CopyFrom(login_resp);
+
+    // Send pending friend requests to user
+    if (login_resp.success()) {
+        auto user_id = login_resp.user_info().user_id();
+        auto pending_reqs = friend_service_->GetPendingRequests(user_id);
+        for (const auto& req : pending_reqs) {
+            im::Envelope env;
+            env.set_cmd(im::CMD_FRIEND_REQ_PUSH);
+            env.set_seq(0);
+            env.set_timestamp(time(nullptr));
+            auto* payload = env.mutable_friend_req_push();
+            *payload = req;
+            std::string serialized;
+            if (env.SerializeToString(&serialized)) {
+                conn_->enqueue_message(std::move(serialized));
+                LOG_INFO("Sent pending friend request to user[{}]", user_id);
+            } else {
+                LOG_ERROR("Failed to serialize pending friend request");
+            }
+        }
+    }
 }
 
 void ProtobufHandler::HandleAddFriend(const im::Envelope& request, im::Envelope& response) {
@@ -154,7 +175,7 @@ void ProtobufHandler::HandleAddFriend(const im::Envelope& request, im::Envelope&
     LOG_INFO("Add friend request: sender={}, receiver_id={}", CurrentUserId(), req.receiver_id());
 
     im::AddFriendResp add_friend_resp;
-    friend_service_->add_friend(CurrentUserId(), req, &add_friend_resp);
+    friend_service_->AddFriend(CurrentUserId(), req, &add_friend_resp);
     response.set_cmd(im::CMD_ADD_FRIEND_RES);
     response.mutable_add_friend_res()->CopyFrom(add_friend_resp);
 }
@@ -176,7 +197,7 @@ void ProtobufHandler::HandleHandleFriend(const im::Envelope& request, im::Envelo
              req.sender_id());
 
     im::HandleFriendResp handle_friend_resp;
-    friend_service_->handle_friend(CurrentUserId(), req, &handle_friend_resp);
+    friend_service_->HandleFriend(CurrentUserId(), req, &handle_friend_resp);
     response.set_cmd(im::CMD_HANDLE_FRIEND_RES);
     response.mutable_handle_friend_res()->CopyFrom(handle_friend_resp);
 }
@@ -196,7 +217,7 @@ void ProtobufHandler::HandleGetFriendList(const im::Envelope& request, im::Envel
     LOG_INFO("Get friend list request: user={}", CurrentUserId());
 
     im::GetFriendListResp get_friend_list_resp;
-    friend_service_->get_friend_list(CurrentUserId(), &get_friend_list_resp);
+    friend_service_->GetFriendList(CurrentUserId(), &get_friend_list_resp);
     response.set_cmd(im::CMD_GET_FRIEND_LIST_RES);
     response.mutable_get_friend_list_res()->CopyFrom(get_friend_list_resp);
 }

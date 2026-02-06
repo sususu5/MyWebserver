@@ -2,8 +2,8 @@
 
 FriendService::FriendService(PushService* push_service) : push_service_(push_service) {}
 
-void FriendService::add_friend(uint64_t sender_id, const im::AddFriendReq& req, im::AddFriendResp* resp) {
-    auto result = friend_dao_.add_friend(sender_id, req.receiver_id());
+void FriendService::AddFriend(uint64_t sender_id, const im::AddFriendReq& req, im::AddFriendResp* resp) {
+    auto [result, req_id] = friend_dao_.AddFriend(sender_id, req.receiver_id(), req.verify_msg());
 
     switch (result) {
         case AddFriendResult::SUCCESS: {
@@ -11,7 +11,8 @@ void FriendService::add_friend(uint64_t sender_id, const im::AddFriendReq& req, 
 
             if (push_service_) {
                 auto sender = user_dao_.FindById(sender_id);
-                push_service_->push_friend_req(sender_id, sender.username(), req.receiver_id(), req.verify_msg());
+                push_service_->push_friend_req(req_id, sender_id, sender.username(), req.receiver_id(),
+                                               req.verify_msg());
             }
             break;
         }
@@ -26,9 +27,9 @@ void FriendService::add_friend(uint64_t sender_id, const im::AddFriendReq& req, 
     }
 }
 
-void FriendService::handle_friend(uint64_t receiver_id, const im::HandleFriendReq& req, im::HandleFriendResp* resp) {
+void FriendService::HandleFriend(uint64_t receiver_id, const im::HandleFriendReq& req, im::HandleFriendResp* resp) {
     bool accept = (req.action() == im::FriendAction::ACTION_ACCEPT);
-    auto result = friend_dao_.handle_friend(receiver_id, req.sender_id(), accept);
+    auto result = friend_dao_.HandleFriend(receiver_id, req.sender_id(), accept);
 
     if (result.has_value()) {
         resp->set_success(true);
@@ -44,12 +45,16 @@ void FriendService::handle_friend(uint64_t receiver_id, const im::HandleFriendRe
     }
 }
 
-void FriendService::get_friend_list(uint64_t user_id, im::GetFriendListResp* resp) {
-    bool success = friend_dao_.get_friend_list(user_id, resp);
+void FriendService::GetFriendList(uint64_t user_id, im::GetFriendListResp* resp) {
+    bool success = friend_dao_.GetFriendList(user_id, resp);
     if (success) {
         resp->set_success(true);
     } else {
         resp->set_success(false);
         resp->set_error_msg("Internal Database Error");
     }
+}
+
+std::vector<im::FriendReqPush> FriendService::GetPendingRequests(uint64_t user_id) {
+    return friend_dao_.GetPendingRequests(user_id);
 }

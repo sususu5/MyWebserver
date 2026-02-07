@@ -21,7 +21,7 @@
 class ProtobufHandler : public ProtocolHandler {
 public:
     ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service,
-                    MsgService* msg_service);
+                    MsgService* msg_service, ThreadPool* thread_pool);
     ~ProtobufHandler() override = default;
 
     bool Process(Buffer& read_buff, Buffer& write_buff) override;
@@ -61,6 +61,7 @@ private:
     AuthService* auth_service_;
     FriendService* friend_service_;
     MsgService* msg_service_;
+    ThreadPool* thread_pool_;
 
     // Constants
     static constexpr size_t kHeaderSize = 4;            // Length prefix size

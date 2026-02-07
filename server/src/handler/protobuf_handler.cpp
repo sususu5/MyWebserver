@@ -2,8 +2,9 @@
 #include <arpa/inet.h>
 
 ProtobufHandler::ProtobufHandler(TcpConnection* conn, AuthService* auth_service, FriendService* friend_service,
-                                 MsgService* msg_service)
-    : conn_(conn), auth_service_(auth_service), friend_service_(friend_service), msg_service_(msg_service) {}
+                                 MsgService* msg_service, ThreadPool* thread_pool)
+    : conn_(conn), auth_service_(auth_service), friend_service_(friend_service), msg_service_(msg_service),
+      thread_pool_(thread_pool) {}
 
 bool ProtobufHandler::Process(Buffer& read_buff, Buffer& write_buff) {
     im::Envelope request;
@@ -137,25 +138,30 @@ void ProtobufHandler::HandleLogin(const im::Envelope& request, im::Envelope& res
     response.set_cmd(im::CMD_LOGIN_RES);
     response.mutable_login_res()->CopyFrom(login_resp);
 
-    // Send pending friend requests to user
     if (login_resp.success()) {
         auto user_id = login_resp.user_info().user_id();
-        auto pending_reqs = friend_service_->GetPendingRequests(user_id);
-        for (const auto& req : pending_reqs) {
-            im::Envelope env;
-            env.set_cmd(im::CMD_FRIEND_REQ_PUSH);
-            env.set_seq(0);
-            env.set_timestamp(time(nullptr));
-            auto* payload = env.mutable_friend_req_push();
-            *payload = req;
-            std::string serialized;
-            if (env.SerializeToString(&serialized)) {
-                conn_->enqueue_message(std::move(serialized));
-                LOG_INFO("Sent pending friend request to user[{}]", user_id);
-            } else {
-                LOG_ERROR("Failed to serialize pending friend request");
+        auto* friend_svc = friend_service_;
+        thread_pool_->AddTask([user_id, friend_svc]() {
+            auto pending_reqs = friend_svc->GetPendingRequests(user_id);
+            if (pending_reqs.empty()) return;
+            if (TcpConnection::push_service) {
+                for (const auto& req : pending_reqs) {
+                    im::Envelope env;
+                    env.set_cmd(im::CMD_FRIEND_REQ_PUSH);
+                    env.set_seq(0);
+                    env.set_timestamp(time(nullptr));
+                    auto* payload = env.mutable_friend_req_push();
+                    *payload = req;
+                    std::string serialized;
+                    if (env.SerializeToString(&serialized)) {
+                        TcpConnection::push_service->push_to_user(user_id, std::move(serialized));
+                        LOG_INFO("Pushed {} pending friend requests to user: {}", pending_reqs.size(), user_id);
+                    } else {
+                        LOG_ERROR("Failed to serialize friend request push message");
+                    }
+                }
             }
-        }
+        });
     }
 }
 

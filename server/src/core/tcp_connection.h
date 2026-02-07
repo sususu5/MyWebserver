@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include "../buffer/buffer.h"
+#include "../pool/threadpool.h"
 #include "mpsc_queue.h"
 
 // Forward declarations
@@ -80,6 +81,7 @@ public:
     static PushService* push_service;
     static MsgService* msg_service;
     static Epoller* epoller_;
+    static ThreadPool* thread_pool;
 
 protected:
     int fd_{-1};

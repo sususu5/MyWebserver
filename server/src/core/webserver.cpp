@@ -38,6 +38,7 @@ Webserver::Webserver(int port, int trig_mode, int timeout_ms, int sql_port, cons
     TcpConnection::push_service = push_service_.get();
     TcpConnection::msg_service = msg_service_.get();
     TcpConnection::epoller_ = epoller_.get();
+    TcpConnection::thread_pool = thread_pool_.get();
 
     // Initialize timer callback
     timer_->SetCallBack([this](int fd) {

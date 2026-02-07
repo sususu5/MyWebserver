@@ -24,6 +24,9 @@ public:
                             const im::FriendAction& action);
     void push_p2p_message(const im::P2PMessage& msg);
 
+    // Generic push
+    void push_to_user(uint64_t user_id, std::string data);
+
 private:
     std::mutex mtx_;
     std::unordered_map<uint64_t, TcpConnection*> online_connections_;

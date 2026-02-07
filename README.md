@@ -92,18 +92,15 @@ This project is configured with a **DevContainer**. This is the preferred way to
 
 **Build:**
 ```bash
-cmake --preset release
-cmake --build build/release
+cmake --preset release && cmake --build build/release
 ```
 
 ```bash
-cmake --preset debug
-cmake --build build/debug
+cmake --preset debug && cmake --build build/debug
 ```
 
 ```bash
-cmake --preset perf
-cmake --build build/relwithdebinfo
+cmake --preset perf && cmake --build build/relwithdebinfo
 ```
 
 Every time the sql files are changed, the project needs to be re-compiled to generate the C++ models.

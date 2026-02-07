@@ -78,3 +78,17 @@ void PushService::push_p2p_message(const im::P2PMessage& msg) {
 
     send_envelope(msg.receiver_id(), envelope);
 }
+
+void PushService::push_to_user(uint64_t user_id, std::string data) {
+    TcpConnection* conn = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        if (online_connections_.contains(user_id)) {
+            conn = online_connections_.at(user_id);
+        }
+    }
+
+    if (conn) {
+        conn->enqueue_message(std::move(data));
+    }
+}

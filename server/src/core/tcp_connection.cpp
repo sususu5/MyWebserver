@@ -103,8 +103,7 @@ void TcpConnection::setup_iov_for_http() {
     if (!http_handler) return;
 
     // iov_[0] for response header in write buffer
-    iov_[0].iov_base = const_cast<char*>(write_buff_.peek());
-    iov_[0].iov_len = write_buff_.readable_bytes();
+    iov_[0] = write_buff_.ToIovec();
     iov_cnt_ = 1;
 
     // iov_[1] for mmap file content (zero-copy)

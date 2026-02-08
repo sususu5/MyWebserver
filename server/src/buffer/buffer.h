@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <atomic>
 #include <string>
 #include <vector>
 
@@ -43,6 +42,7 @@ public:
     // Read / write data from a file descriptor to the buffer
     ssize_t read_fd(int fd, int* Errno);
     ssize_t write_fd(int fd, int* Errno);
+    struct iovec ToIovec();
 
 private:
     char* begin_ptr() { return &*buffer_.begin(); };
@@ -51,6 +51,6 @@ private:
 
     std::vector<char> buffer_;
     // The index of the first readable and writable byte, use atomic to ensure thread safety
-    std::atomic<std::size_t> readPos_;
-    std::atomic<std::size_t> writePos_;
+    std::size_t readPos_;
+    std::size_t writePos_;
 };

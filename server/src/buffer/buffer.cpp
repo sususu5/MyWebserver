@@ -19,7 +19,6 @@ void Buffer::retrieve_until(const char* end) {
 }
 
 void Buffer::retrieve_all() {
-    bzero(&buffer_[0], buffer_.size());
     readPos_ = 0;
     writePos_ = 0;
 }
@@ -86,14 +85,20 @@ ssize_t Buffer::write_fd(int fd, int* saveErrno) {
     return len;
 }
 
+struct iovec Buffer::ToIovec() {
+    struct iovec iov;
+    iov.iov_base = const_cast<char*>(peek());
+    iov.iov_len = readable_bytes();
+    return iov;
+}
+
 void Buffer::make_space(size_t len) {
     if (writable_bytes() + prependable_bytes() < len) {
         buffer_.resize(writePos_ + len + 1);
     } else {
         size_t readable = readable_bytes();
-        std::copy(begin_ptr() + readPos_, begin_ptr() + writePos_, begin_ptr());
+        std::memmove(begin_ptr(), begin_ptr() + readPos_, readable);
         readPos_ = 0;
-        writePos_ = readPos_ + readable;
-        assert(readable == readable_bytes());
+        writePos_ = readable;
     }
 }

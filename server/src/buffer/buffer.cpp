@@ -1,24 +1,12 @@
 #include "buffer.h"
 #include <cstring>
 
-Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), readPos_(0), writePos_(0) {}
-
-size_t Buffer::readable_bytes() const { return writePos_ - readPos_; }
-
-size_t Buffer::writable_bytes() const { return buffer_.size() - writePos_; }
-
-size_t Buffer::prependable_bytes() const { return readPos_; }
-
-const char* Buffer::peek() const { return begin_ptr() + readPos_; }
-
 void Buffer::ensure_writable(size_t len) {
     if (writable_bytes() < len) {
         make_space(len);
     }
     assert(writable_bytes() >= len);
 }
-
-void Buffer::has_written(size_t len) { writePos_ += len; }
 
 void Buffer::retrieve(size_t len) {
     assert(len <= readable_bytes());
@@ -41,10 +29,6 @@ std::string Buffer::retrieve_all_to_str() {
     retrieve_all();
     return str;
 }
-
-const char* Buffer::begin_write_const() const { return begin_ptr() + writePos_; }
-
-char* Buffer::begin_write() { return begin_ptr() + writePos_; }
 
 // .data() returns a pointer to the first element in the array
 //  used internally by the string to store its owned elements.
@@ -101,11 +85,6 @@ ssize_t Buffer::write_fd(int fd, int* saveErrno) {
     readPos_ += len;
     return len;
 }
-
-char* Buffer::begin_ptr() { return &*buffer_.begin(); }
-
-// This function changes an iterator to a pointer
-const char* Buffer::begin_ptr() const { return &*buffer_.begin(); }
 
 void Buffer::make_space(size_t len) {
     if (writable_bytes() + prependable_bytes() < len) {

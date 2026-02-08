@@ -34,6 +34,7 @@ void TcpConnection::init(int socket_fd, const sockaddr_in& addr) {
     handler_.reset();
     iov_cnt_ = 0;
     user_id_ = 0;
+    events_ = 0;
     LOG_INFO("Client[{}]({}:{}) in, user_count:{}", fd_, get_ip(), get_port(), (int)user_count);
 }
 
@@ -184,7 +185,6 @@ ssize_t TcpConnection::write(int* error_code) {
             if (!is_et && remaining < 10240) break;
         }
     } else {
-        // Simple buffer write for other protocols
         while (write_buff_.readable_bytes() > 0) {
             len = write_buff_.write_fd(fd_, error_code);
             if (len <= 0) {
@@ -222,8 +222,12 @@ bool TcpConnection::flush_pending_to_buffer() {
 }
 
 void TcpConnection::notify_writable() {
-    if (!epoller_) return;
     uint32_t events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLONESHOT;
+    if (!epoller_) return;
     if (is_et) events |= EPOLLET;
-    epoller_->modFd(fd_, events);
+    if (events_ == events) return;
+
+    if (epoller_->modFd(fd_, events)) {
+        events_ = events;
+    }
 }

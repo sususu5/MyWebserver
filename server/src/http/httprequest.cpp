@@ -1,14 +1,14 @@
 #include "httprequest.h"
+#include <algorithm>
 #include "../dao/user_dao.h"
 #include "../utils/id_generator.h"
-using namespace std;
 
 // Webpage path
-const unordered_set<string> HttpRequest::DEFAULT_HTML{"/index",   "/register", "/login",
-                                                      "/welcome", "/video",    "/picture"};
+const std::unordered_set<std::string> HttpRequest::DEFAULT_HTML{"/index",   "/register", "/login",
+                                                                "/welcome", "/video",    "/picture"};
 
 // Login page and register page
-const unordered_map<string, int> HttpRequest::DEFAULT_HTML_TAG{{"/login.html", 1}, {"/register.html", 0}};
+const std::unordered_map<std::string, int> HttpRequest::DEFAULT_HTML_TAG{{"/login.html", 1}, {"/register.html", 0}};
 
 void HttpRequest::Init() {
     state_ = REQUEST_LINE;
@@ -26,8 +26,8 @@ bool HttpRequest::parse(Buffer& buff) {
     };
     while (buff.readable_bytes() && state_ != FINISH) {
         // Reads a string ends with '\r\n' for each loop
-        const char* lineEnd = search(buff.peek(), buff.begin_write_const(), END, END + 2);
-        string line(buff.peek(), lineEnd);
+        const char* lineEnd = std::search(buff.peek(), buff.begin_write_const(), END, END + 2);
+        std::string line(buff.peek(), lineEnd);
         switch (state_) {
             case REQUEST_LINE:
                 // If the request line is not parsed successfully, return false
@@ -59,9 +59,9 @@ bool HttpRequest::parse(Buffer& buff) {
     return true;
 }
 
-bool HttpRequest::ParseRequestLine_(const string& line) {
-    regex pattern("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
-    smatch Match;
+bool HttpRequest::ParseRequestLine_(const std::string& line) {
+    std::regex pattern("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
+    std::smatch Match;
     if (regex_match(line, Match, pattern)) {
         method_ = Match[1];
         path_ = Match[2];
@@ -83,9 +83,9 @@ void HttpRequest::ParsePath_() {
     }
 }
 
-void HttpRequest::ParseHeader_(const string& line) {
-    regex pattern("^([^:]*): ?(.*)$");
-    smatch Match;
+void HttpRequest::ParseHeader_(const std::string& line) {
+    std::regex pattern("^([^:]*): ?(.*)$");
+    std::smatch Match;
     if (regex_match(line, Match, pattern)) {
         header_[Match[1]] = Match[2];
     } else {
@@ -94,7 +94,7 @@ void HttpRequest::ParseHeader_(const string& line) {
     }
 }
 
-void HttpRequest::ParseBody_(const string& line) {
+void HttpRequest::ParseBody_(const std::string& line) {
     body_ = line;
     ParsePost_();
     // The state is set to FINISH, which means the parsing is complete
@@ -129,7 +129,7 @@ void HttpRequest::ParsePost_() {
 
 void HttpRequest::ParseFromUrlencoded_() {
     if (body_.size() == 0) return;
-    string key, value;
+    std::string key, value;
     int num = 0;
     int n = body_.size();
     int i = 0, j = 0;
@@ -166,7 +166,7 @@ void HttpRequest::ParseFromUrlencoded_() {
     }
 }
 
-bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin) {
+bool HttpRequest::UserVerify(const std::string& name, const std::string& pwd, bool isLogin) {
     if (name == "" || pwd == "") {
         LOG_ERROR("Username or password is empty!");
         return false;
@@ -198,21 +198,21 @@ bool HttpRequest::UserVerify(const string& name, const string& pwd, bool isLogin
     }
 }
 
-string HttpRequest::path() const { return path_; }
+std::string HttpRequest::path() const { return path_; }
 
-string& HttpRequest::path() { return path_; }
+std::string& HttpRequest::path() { return path_; }
 
-string HttpRequest::method() const { return method_; }
+std::string HttpRequest::method() const { return method_; }
 
-string HttpRequest::version() const { return version_; }
+std::string HttpRequest::version() const { return version_; }
 
-string HttpRequest::GetPost(const string& key) const {
+std::string HttpRequest::GetPost(const std::string& key) const {
     assert(key != "");
     if (post_.count(key) == 1) return post_.find(key)->second;
     return "";
 }
 
-string HttpRequest::GetPost(const char* key) const {
+std::string HttpRequest::GetPost(const char* key) const {
     assert(key != nullptr);
     if (post_.count(key) == 1) return post_.find(key)->second;
     return "";

@@ -164,7 +164,9 @@ void Webserver::AddClient_(int fd, sockaddr_in addr) {
     if (timeout_ms_ > 0) {
         timer_->Add(fd, timeout_ms_);
     }
-    epoller_->addFd(fd, EPOLLIN | conn_event_);
+    if (epoller_->addFd(fd, EPOLLIN | conn_event_)) {
+        conn_ptr->UpdateEvents(EPOLLIN | conn_event_);
+    }
     SetFdNonblock(fd);
     LOG_INFO("Client[{}] in!", conn_ptr->get_fd());
 }
@@ -221,10 +223,14 @@ void Webserver::OnRead_(TcpConnection* client) {
 void Webserver::OnProcess_(TcpConnection* client) {
     if (client->process()) {
         // If the parsing succeeds, modify the event to EPOLLOUT(write)
-        epoller_->modFd(client->get_fd(), conn_event_ | EPOLLOUT);
+        uint32_t events = conn_event_ | EPOLLOUT;
+        epoller_->modFd(client->get_fd(), events);
+        client->UpdateEvents(events);
     } else {
         // If the parsing fails, modify the event to EPOLLIN(read)
-        epoller_->modFd(client->get_fd(), conn_event_ | EPOLLIN);
+        uint32_t events = conn_event_ | EPOLLIN;
+        epoller_->modFd(client->get_fd(), events);
+        client->UpdateEvents(events);
     }
 }
 
@@ -237,13 +243,17 @@ void Webserver::OnWrite_(TcpConnection* client) {
         // Write completely
         if (client->is_keep_alive()) {
             // If the connection is persistent, modify the event to EPOLLIN
-            epoller_->modFd(client->get_fd(), conn_event_ | EPOLLIN);
+            uint32_t events = conn_event_ | EPOLLIN;
+            epoller_->modFd(client->get_fd(), events);
+            client->UpdateEvents(events);
             return;
         }
     } else if (ret < 0) {
         // The buffer is full
         if (writeErrno == EAGAIN) {
-            epoller_->modFd(client->get_fd(), conn_event_ | EPOLLOUT);
+            uint32_t events = conn_event_ | EPOLLOUT;
+            epoller_->modFd(client->get_fd(), events);
+            client->UpdateEvents(events);
             return;
         }
     }

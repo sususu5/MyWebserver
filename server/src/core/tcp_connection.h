@@ -54,10 +54,10 @@ public:
     // Change machine-readable address to human-readable address
     const char* get_ip() const { return inet_ntoa(addr_.sin_addr); }
     sockaddr_in get_addr() const { return addr_; }
+    void UpdateEvents(uint32_t ev) { events_ = ev; }
 
     Buffer& get_read_buffer() { return read_buff_; }
     Buffer& get_write_buffer() { return write_buff_; }
-
     size_t to_write_bytes();
 
     void set_user_id(uint64_t user_id);
@@ -108,4 +108,5 @@ private:
     void notify_writable();
 
     uint64_t user_id_{0};
+    std::atomic<uint32_t> events_{0};
 };
